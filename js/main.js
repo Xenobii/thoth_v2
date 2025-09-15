@@ -5,10 +5,17 @@
 // Realize 
 let APP = ATON.App.realize();
 
-// Add flares
-//APP.requireFlares(["myFlare","anotherFlare"]);
 
-APP.setup = ()=>{
+// Add flares
+// APP.requireFlares(["thoth"]);
+
+APP.setup = () => {
+	// let THOTH = new ATON.Flare("thoth");
+	let THOTH = THOTH;
+
+	THOTH.FE 	= FE;
+	THOTH.UTILS = UTILS;
+	THOTH.TOOLBOX = TOOLBOX;
 
 	// Realize base ATON and add base UI events
     ATON.realize();
