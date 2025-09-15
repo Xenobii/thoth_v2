@@ -1,38 +1,58 @@
 /*
-	THOTH launch point
+	THOTH
+
+	Developped for the TEXTaiLES Project
+
+	@author: Stelios Alvanos
+	ATHENA RC, DUTH
+	steliosalvanos@gmail.com
 
 ===============================================*/
+import UI from "./src/ui.js";
+import Utils from "./src/utils.js";
+
+
 // Realize 
-let APP = ATON.App.realize();
+let THOTH = ATON.App.realize();
+window.THOTH = THOTH;
+
+// Import
+THOTH.UI = UI;
+THOTH.Utils = Utils;
 
 
-// Add flares
-// APP.requireFlares(["thoth"]);
+THOTH.setSceneToLoad = (sid) => {
+	if (!sid) sid = THOTH.params.get('s');
 
-APP.setup = () => {
-	// let THOTH = new ATON.Flare("thoth");
-	let THOTH = THOTH;
+	// Default
+	if (!sid) sid = "samples/venus";
 
-	THOTH.FE 	= FE;
-	THOTH.UTILS = UTILS;
-	THOTH.TOOLBOX = TOOLBOX;
+	THOTH._sidToLoad = sid;
+};
 
+
+THOTH.setup = () => {
 	// Realize base ATON and add base UI events
     ATON.realize();
     ATON.UI.addBasicEvents();
 
-	// Load sample 3D model
-	ATON.createSceneNode("sample").load("samples/models/skyphos/skyphos.gltf").attachToRoot();
+	// On load
+	THOTH.setupLogic();
+};
 
-    // If our app required ore or more flares (plugins), we can also wait for them to be ready for specific setups
-    ATON.on("AllFlaresReady",()=>{
-		// Do stuff
-		console.log("All flares ready");
+
+THOTH.setupLogic = () => {
+	ATON.on("AllFlaresReady", () => {
+		if (THOTH._sidToLoad) THOTH.loadScene(THOTH._sidToLoad);
+		else ATON.UI.showModal({
+			header: "No Scene"
+		});
 	});
-};
-
-/* If you plan to use an update routine (executed continuously), you can place its logic here.
-APP.update = ()=>{
 
 };
-*/
+
+// THOTH.update = ()=>{
+// };
+
+
+// More...

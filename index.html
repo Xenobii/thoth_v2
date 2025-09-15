@@ -47,12 +47,12 @@
     <script type="text/javascript" src="/dist/ATON.min.js"></script>
 
 	<!-- Main js entry -->
-	<script type="text/javascript" src="js/main.js"></script>
-    <script type="text/javascript" src="js/src/thoth.js"></script>
-    <script type="text/javascript" src="js/src/thoth.fe.js"></script>
-    <script type="text/javascript" src="js/src/thoth.utils.js"></script>
-</head>
-
+	<script type="module" src="js/main.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            THOTH.setSceneToLoad();
+        });
+    </script>
 <body>
     <div id="toolbar" class="aton-toolbar-top"></div>
 
