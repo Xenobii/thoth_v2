@@ -37,6 +37,9 @@
 
     <title>THOTH</title>
     <link rel="stylesheet" type="text/css" href="/vendors/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="js/res/css/main.css">
+
+    <!-- Custom styling -->
     <link rel="stylesheet" type="text/css" href="/res/css/main.css">
 
     <!-- Vendors -->
@@ -54,9 +57,11 @@
         });
     </script>
 <body>
-    <div id="toolbar" class="aton-toolbar-top"></div>
+    <div id="topToolbar" class="thoth-top-toolbar"></div>
+    <div id="mainToolbar" class="aton-toolbar-left thoth-main-toolbar"></div>
+    <div id="userToolbar" class="thoth-user-toolbar"></div>
 
-    <div class="aton-poweredby" >
-        <a href="https://aton.ispc.cnr.it/site/" target="_blank"><img src="/res/aton-logo.png"></a>
+    <div class="aton-poweredby" style="right:0px; left:auto;">
+        Powered by <a href="https://aton.ispc.cnr.it/site/" target="_blank">ATON</a>
     </div>
 </body>

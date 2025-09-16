@@ -1,15 +1,14 @@
-/*
-	THOTH
+/*===========================================================================
 
-	Developped for the TEXTaiLES Project
+    THOTH
+    Launch Point
 
-	@author: Stelios Alvanos
-	ATHENA RC, DUTH
-	steliosalvanos@gmail.com
+    Author: steliosalvanos@gmail.com
 
-===============================================*/
+===========================================================================*/
 import UI from "./src/ui.js";
 import Utils from "./src/utils.js";
+import Scene from "./src/scene.js";
 
 
 // Realize 
@@ -38,6 +37,9 @@ THOTH.setup = () => {
 
 	// On load
 	THOTH.setupLogic();
+
+	// UI
+	THOTH.UI.setup();
 };
 
 

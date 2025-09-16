@@ -1,12 +1,9 @@
 # THOTH Web App
 
----
-
 [![Header](./res/Logo-Textailes-Colour-RGB-Hor.png)](https://www.echoes-eccch.eu/textailes/)
 
 The THOTH Web App is a platform based on the [ATON Framework](https://osiris.itabc.cnr.it/aton/) designed within the scope of the [TEXTaiLES](https://www.echoes-eccch.eu/textailes/) Project.
 
----
 
 ## Quick Installation
 
