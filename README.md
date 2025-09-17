@@ -30,3 +30,11 @@ npm start
 http://localhost:8080/a/thoth_v2/?s=(scene_id)
 ```
 This will open the selected scene using the THOTH web app.
+
+
+## TODO
+
+- [ ] Test Photon on this version
+- [ ] Streamline pipeline
+- [ ] Create API documentation
+- [ ] Create user manual

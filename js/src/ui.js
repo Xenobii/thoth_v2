@@ -21,6 +21,7 @@ UI.setup = () => {
     UI.populateToolbars();
 
     UI.setupPanels();
+    UI.setupLayerElements();
 };
 
 UI.setupEventListeners = () => {
@@ -69,6 +70,7 @@ UI.populateToolbars = () => {
         UI.createTextailesButton(),
         UI.createOptionsButton(),
         UI.createLayersButton(),
+        UI.createExportButton(),
     );
 
     // User Toolbar
@@ -81,6 +83,7 @@ UI.populateToolbars = () => {
         UI.createBrushButton(),
         UI.createEraserButton(),
         UI.createLassoButton(),
+        UI.createNoToolButton(),
         UI.createUndoButton(),
         UI.createRedoButton()
     );
@@ -144,10 +147,12 @@ UI.createPanelLayers = () => {
     ATON.UI.setSidePanelRight();
 
     let elLayersBody = ATON.UI.createContainer();
+    UI.elLayerList = ATON.UI.createContainer();
 
     elLayersBody.append(
         UI.createNewLayerButton(),
-        UI.createTestButton()
+        UI.createTestButton(),
+        UI.elLayerList,
     );
 
     return elLayersBody;
@@ -205,7 +210,10 @@ UI.createUserButton = ()=>{
 UI.createBrushButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "brush.png",
-        onpress : () => {},
+        onpress : () => {
+            THOTH.Toolbox.activateBrush();
+            THOTH.setUserControl(false);
+        },
         tooltip : "Brush tool"
     });
 };
@@ -213,7 +221,10 @@ UI.createBrushButton = () => {
 UI.createEraserButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "eraser.png",
-        onpress : () => {},
+        onpress : () => {
+            THOTH.Toolbox.activateEraser();
+            THOTH.setUserControl(false);
+        },
         tooltip : "Eraser tool"
     });
 };
@@ -221,15 +232,25 @@ UI.createEraserButton = () => {
 UI.createLassoButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "lasso.png",
-        onpress : () => {},
+        onpress : () => {
+            THOTH.Toolbox.activateLasso();
+            THOTH.setUserControl(false);
+        },
         tooltip : "Lasso tool"
+    });
+};
+
+UI.createNoToolButton = () => {
+    return ATON.UI.createButton({
+        icon    : UI.PATH_RES_ICONS + "none.png",
+        onpress : () => THOTH.Toolbox.deactivate(),
     });
 };
 
 UI.createUndoButton = () => {
     return ATON.UI.createButton({
-        icon    : "prev",
-        onpress : () => {},
+        icon    : UI.PATH_RES_ICONS + "undo.png",
+        onpress : () => THOTH.History.undo(),
         tooltip : "Undo"
     });
 
@@ -237,18 +258,18 @@ UI.createUndoButton = () => {
 
 UI.createRedoButton = () => {
     return ATON.UI.createButton({
-        icon    : "next",
-        onpress : () => {},
+        icon    : UI.PATH_RES_ICONS + "redo.png",
+        onpress : () => THOTH.History.redo(),
         tooltip : "Undo"
     });
 };
 
 UI.createNewLayerButton = () => {
     return ATON.UI.createButton({
-        text    : "Add New Layer",
+        text    : "Create New Layer",
         icon    : "add",
-        onpress : () => {},
-        tooltip : "Add new layer"   
+        onpress : () => THOTH.fire("addNewLayer"),
+        tooltip : "Create new layer"   
     });
 };
 
@@ -259,6 +280,89 @@ UI.createTestButton = () => {
         tooltip : "test"   
     });
 };
+
+UI.createExportButton = () => {
+    return ATON.UI.createButton({
+        icon    : "link",
+        onpress : () => THOTH.Scene.exportLayers(),
+        tooltip : "Export changes",
+    });
+};
+
+
+// Layers
+
+UI.setupLayerElements = () => {
+    UI.layerElements = new Map();
+
+    const layers = THOTH.Scene.currData.layers;
+    if (layers === undefined) return;
+
+    Object.values(layers).forEach((layer) => {
+        const id = layer.id;
+        UI.createLayer(id);
+    });
+};
+
+UI.createLayer = (id) => {
+    const elLayer = UI.createLayerController(id);
+
+    // Add to panel
+    UI._elLayersPanel.append(elLayer);
+
+    // Add to layer list
+    UI.layerElements.set(id, elLayer);
+};
+
+UI.deleteLayer = (id) => {
+    const elLayer = UI.layerElements.get(id);
+
+    // Hide
+    elLayer.classList.remove("aton-layer");
+    elLayer.classList.add("deleted-layer");
+};
+
+UI.resurrectLayer = (id) => {
+    const elLayer = UI.layerElements.get(id);
+
+    // Hide
+    elLayer.classList.remove("deleted-layer");
+    elLayer.classList.add("aton-layer");
+};
+
+UI.createLayerController = (id) => {
+    let layer = THOTH.Scene.currData.layers[id];
+
+    const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
+    const elVis = ATON.UI.createButton({
+        icon    : "visibility",
+        size    : "small",
+        onpress : () => THOTH.toggleLayerVisibility(id)
+    });
+    const elName = ATON.UI.createButton({
+        text    : layer.name,
+        size    : "small",
+        onpress : () => THOTH.Scene.activeLayer = layer,
+    });
+    const elDel = ATON.UI.createButton({
+        icon    : "trash",
+        size    : "small",
+        onpress : () => THOTH.fire("removeLayer", (id))
+    });
+
+    elLayerController.append(
+        elVis,
+        elName,
+        elDel,
+    );
+
+    return elLayerController;
+};  
+
+UI.showLayerAttributes = (id) => {
+
+};
+
 
 
 // Other 
@@ -305,10 +409,10 @@ UI.modalUser = ()=>{
     );
 };
 
-
 UI.Test = () => {
-    let root = ATON.getOrCreateSceneNode();
-    console.log(root)
+    let test = THOTH.Scene.currData.layers;
+    console.log(test)
 };
+
 
 export default UI;

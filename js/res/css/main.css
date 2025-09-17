@@ -52,3 +52,7 @@
     -webkit-backdrop-filter: blur(var(--aton-blur-radius));
     backdrop-filter: blur(var(--aton-blur-radius));
 }
+
+.deleted-layer {
+    display: none;
+}
