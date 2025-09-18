@@ -38,13 +38,14 @@ THOTH.setSceneToLoad = (sid) => {
 };
 
 THOTH.setup = () => {
+    THOTH._bLoaded = false;
+
 	// Realize base ATON and add base UI events
     ATON.realize();
     ATON.UI.addBasicEvents();
-    
+
 	// Load Scene
 	ATON.on("AllFlaresReady",  () => {
-        
         if (THOTH._sidToLoad) THOTH.loadScene(THOTH._sidToLoad);
 		else ATON.UI.showModal({
             header: "Invalid Scene Id"
@@ -54,20 +55,29 @@ THOTH.setup = () => {
 	// Load Scene JSON
 	ATON.on("SceneJSONLoaded", () => {
         ATON.on("AllNodeRequestsCompleted", () => {
+            if (THOTH._bLoaded) return;
+
             THOTH.parseAtonElements();
-    
-            THOTH.Scene.setup();
+            
+            THOTH.Scene.setup(THOTH._sidToLoad);
             THOTH.mainMesh = THOTH.Scene.mainMesh;
-    
+            
             THOTH.initRC();
-    
+            
             THOTH.Events.setup();
             THOTH.History.setup();
             THOTH.Toolbox.setup();
             
             THOTH.UI.setup();
+
+            if (!THOTH.Scene.currData.layers) {
+                THOTH.Scene.currData.layers = {};
+            };
+
+            THOTH._bLoaded = true;
         });
     });
+
 };
 
 THOTH.update = () => {
@@ -262,4 +272,11 @@ THOTH.toggleLayerVisibility = (id) => {
     else if (layer.visible === true) layer.visible = false;
 
     THOTH.updateVisibility();
+};
+
+// Photon
+
+THOTH.setupPhoton = () => {
+    ATON.Photon.connect();
+    THOTH.connected = true;
 };

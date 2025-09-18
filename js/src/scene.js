@@ -15,6 +15,9 @@ Scene.setup = (sid) => {
     Scene.id        = sid;
     Scene.root      = ATON._rootVisible;
     Scene.currData  = ATON.SceneHub.currData;
+    
+    Scene.MODE_ADD  = 0;
+    Scene.MODE_DEL  = 1;
 
     const getMainMesh = () => {
         let mesh = null;
@@ -40,7 +43,7 @@ Scene.importLayers = () => {
     console.log("Importing annotation layers...");
 
     const layers = Scene.currData.layers;
-    if (layers === undefined) return
+    if (layers === undefined) return;
 
     // Convert layer selections from arrays to sets
     Object.values(layers).forEach((layer) => {
@@ -50,9 +53,54 @@ Scene.importLayers = () => {
 };
 
 Scene.exportLayers = () => {
+    console.log("Exporting changes...");
 
+    let A = {};
+    A.layers = structuredClone(Scene.currData.layers);
+    A.objectDescriptor = structuredClone(Scene.currData.objectDescriptor);
+
+    Object.values(A.layers).forEach((layer) => {
+        layer.selection = Array.from(layer.selection);
+    });
+
+    // Remove all annotation objects and ADD them again with changes
+    Scene.patch(A, THOTH.Scene.MODE_DEL, () => {});
+    
+    // Patch changes
+    Scene.patch(A, THOTH.Scene.MODE_ADD, () => {
+        console.log("Success!");
+    });
 };
 
+
+Scene.patch = (patch, mode, onComplete)=>{
+    if (patch === undefined) return;
+    if (mode === undefined) mode = Scene.MODE_ADD;
+
+    let sid = Scene.id;
+
+    let O = {};
+    O.data = patch;
+    O.mode = (mode === Scene.MODE_DEL)? "DEL" : "ADD";
+
+    let jstr = JSON.stringify(O);
+
+    patch = null;
+    O = null;
+
+    $.ajax({
+        url: ATON.PATH_RESTAPI2 + "scenes/"+sid, //ATON.PATH_RESTAPI+"edit/scene",
+        type:"PATCH",
+        data: jstr,
+        contentType:"application/json; charset=utf-8",
+        dataType:"json",
+
+        success: (r)=>{
+            if (r) Scene.currData = r;
+            if (onComplete) onComplete();
+        }
+    });
+};
 
 // Layer Management
 
@@ -132,14 +180,14 @@ Scene.editLayer = (id, attr, value) => {
 
 Scene.syncScene = (layers) => {
     Scene.currData.layers = layers;
+    if (layers === undefined) return;
+    
+    Object.values(layers).forEach(layer => {
+        layer.selection = new Set(layer.selection);
+        THOTH.UI.createLayer(layer.id);
+    });
 
-    if (layers !== undefined) {
-        Object.values(Scene.currData.layers).forEach((layer) => {
-            layer.selection = new Set(layer.selection);
-        });
-    }
-
-    THOTH._bSynced = true;
+    THOTH.updateVisibility();
 };
 
 

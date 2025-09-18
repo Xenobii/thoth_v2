@@ -34,7 +34,7 @@ This will open the selected scene using the THOTH web app.
 
 ## TODO
 
-- [ ] Test Photon on this version
+- [x] Test Photon on this version
 - [ ] Streamline pipeline
 - [ ] Create API documentation
 - [ ] Create user manual

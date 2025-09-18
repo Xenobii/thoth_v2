@@ -15,19 +15,11 @@ UI.PATH_RES_ICONS = "../thoth_v2/js/res/icons/";
 // Setup
 
 UI.setup = () => {
-    ATON.UI.createButtonHome();
-
     UI.setupToolbars();
     UI.populateToolbars();
 
     UI.setupPanels();
     UI.setupLayerElements();
-};
-
-UI.setupEventListeners = () => {
-    // Events
-    // Keybinds
-    // VRC
 };
 
 
@@ -75,7 +67,8 @@ UI.populateToolbars = () => {
 
     // User Toolbar
     UI._elUserToolbar.append(
-        UI.createUserButton()
+        UI.createUserButton(),
+        UI.createVRCButton()
     );
 
     // Main Toolbar
@@ -288,6 +281,14 @@ UI.createExportButton = () => {
         tooltip : "Export changes",
     });
 };
+
+UI.createVRCButton = () => {
+    return ATON.UI.createButton({
+        icon    : "vrc",
+        onpress : () => THOTH.setupPhoton(),
+        tooltip : "Connect to Photon"
+    });
+};  
 
 
 // Layers

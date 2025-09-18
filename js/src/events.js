@@ -293,10 +293,6 @@ Events.setupBackgroundEventListeners = () => {
 Events.setupUIEvents = () => {
     // Create Layer
     THOTH.on("addNewLayer", () => {
-        if (!THOTH.Scene.currData.layers) {
-            THOTH.Scene.currData.layers = {};
-        };
-
         const id = THOTH.Utils.getFirstUnusedKey(THOTH.Scene.currData.layers);
         
         THOTH.fire("createLayer", (id));
@@ -490,9 +486,9 @@ Events.setupToolboxEvents = () => {
 
 Events.setupPhotonEvents = () => {
     // On new user join
-    THOTH.onPhoton("readyToSync", () => {
+    THOTH.on("VRC_UserEnter", () => {
         const layers = THOTH.Scene.currData.layers;
-
+        console.log("AHA")
         if (layers !== undefined) {
             Object.values(layers).forEach((layer) => {
                 layer.selection = Array.from(layer.selection);
