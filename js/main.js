@@ -28,12 +28,8 @@ THOTH.History   = History;
 THOTH.Events	= Events;
 
 
-THOTH.setSceneToLoad = (sid) => {
-	if (!sid) sid = THOTH.params.get('s');
-
-	// Default
-	if (!sid) sid = "samples/venus";
-
+THOTH.setSceneToLoad = () => {
+	const sid = THOTH.params.get('s');
 	THOTH._sidToLoad = sid;
 };
 
@@ -52,32 +48,25 @@ THOTH.setup = () => {
 		});
 	});
     
-	// Load Scene JSON
-	ATON.on("SceneJSONLoaded", () => {
-        ATON.on("AllNodeRequestsCompleted", () => {
-            if (THOTH._bLoaded) return;
+    // Setup THOTH modules
+    ATON.on("AllNodeRequestsCompleted", () => {
+        if (THOTH._bLoaded) return;
 
-            THOTH.parseAtonElements();
-            
-            THOTH.Scene.setup(THOTH._sidToLoad);
-            THOTH.mainMesh = THOTH.Scene.mainMesh;
-            
-            THOTH.initRC();
-            
-            THOTH.Events.setup();
-            THOTH.History.setup();
-            THOTH.Toolbox.setup();
-            
-            THOTH.UI.setup();
+        THOTH.parseAtonElements();
+        
+        THOTH.Scene.setup(THOTH._sidToLoad);
+        THOTH.Events.setup();
+        THOTH.History.setup();
+        THOTH.Toolbox.setup();
+        THOTH.UI.setup();
+        
+        THOTH.initRC();
+        if (!THOTH.Scene.currData.layers) {
+            THOTH.Scene.currData.layers = {};
+        };
 
-            if (!THOTH.Scene.currData.layers) {
-                THOTH.Scene.currData.layers = {};
-            };
-
-            THOTH._bLoaded = true;
-        });
+        THOTH._bLoaded = true;
     });
-
 };
 
 THOTH.update = () => {
@@ -141,7 +130,7 @@ THOTH.parseAtonElements = () => {
 
 	// Utils
 	THOTH.textureLoader	= ATON.Utils.textureLoader;
-    THOTH.discardAtonEventHandler = ATON.EventHub.clearEventHandlers
+    THOTH.discardAtonEventHandler = ATON.EventHub.clearEventHandlers;
 };
 
 
@@ -150,7 +139,7 @@ THOTH.parseAtonElements = () => {
 THOTH.highlightSelection = (selection, highlightColor, mesh) => {
     if (selection === undefined || selection.size === 0) return;
 
-    if (mesh === undefined) mesh = THOTH.mainMesh;
+    if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
 
     const colorAttr = mesh.geometry.attributes.color;
     const indexAttr = mesh.geometry.index;
@@ -186,14 +175,16 @@ THOTH.highlightSelection = (selection, highlightColor, mesh) => {
 };
 
 THOTH.highlightAllLayers = (mesh) => {
+    if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
+    
     // All layers
     const layers = THOTH.Scene.currData.layers;
     if (layers === undefined) return;
-
+    
     Object.values(layers).forEach((layer) => {
         if (layer.trash) return;
         if (!layer.visible) return;
-
+        
         const selection      = layer.selection;
         const highlightColor = THOTH.Utils.hex2rgb(layer.highlightColor);
 
@@ -202,6 +193,8 @@ THOTH.highlightAllLayers = (mesh) => {
 };
 
 THOTH.clearHighlights = (mesh) => {
+    if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
+    
     const colorAttr = mesh.geometry.attributes.color;
     const colorArray = colorAttr.array;
 
@@ -212,15 +205,28 @@ THOTH.clearHighlights = (mesh) => {
     colorAttr.needsUpdate = true;
 };
 
-THOTH.updateVisibility = () => {
-	const mesh = THOTH.mainMesh;
+THOTH.updateVisibility = (mesh) => {
+	if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
     THOTH.clearHighlights(mesh);
     THOTH.highlightAllLayers(mesh);
 };
 
+THOTH.toggleLayerVisibility = (id) => {
+    const layer = THOTH.Scene.currData.layers[id];
+
+    if (layer === undefined) return;
+
+    if (layer.visible === false) layer.visible = true;
+    else if (layer.visible === true) layer.visible = false;
+
+    THOTH.updateVisibility();
+};
+
+// Texture Maps
+
 THOTH.updateNormalMap = (path, mesh, intensity = 10) => {
     if (!path) return false;
-	if (mesh === undefined) mesh = THOTH.mainMesh; 
+	if (mesh === undefined) mesh = THOTH.Scene.mainMesh; 
 
     THOTH.textureLoader.load(path, (tex)=>{
         const mat = mesh.material;
@@ -244,7 +250,7 @@ THOTH.updateNormalMap = (path, mesh, intensity = 10) => {
 
 THOTH.updateTextureMap = (path, mesh) => {
     if (!path) return false;
-	if (mesh === undefined) mesh = THOTH.mainMesh; 
+	if (mesh === undefined) mesh = THOTH.Scene.mainMesh; 
 
     THOTH.textureLoader.load(path, (tex)=>{
         const mat = mesh.material;
@@ -263,16 +269,6 @@ THOTH.updateTextureMap = (path, mesh) => {
     });
 };
 
-THOTH.toggleLayerVisibility = (id) => {
-    const layer = THOTH.Scene.currData.layers[id];
-
-    if (layer === undefined) return;
-
-    if (layer.visible === false) layer.visible = true;
-    else if (layer.visible === true) layer.visible = false;
-
-    THOTH.updateVisibility();
-};
 
 // Photon
 

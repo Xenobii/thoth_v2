@@ -26,7 +26,7 @@ Toolbox.setup = () => {
     Toolbox.lassoEnabled    = false;
     
     // Internal params
-    Toolbox._tempSelection = new Set();
+    Toolbox.tempSelection       = null;
     Toolbox._screenPointerCoords = new THREE.Vector2(0.0, 0.0);
 
     // Create selector mesh
@@ -251,32 +251,13 @@ Toolbox.eraserActive = () => {
 };
 
 Toolbox.endBrush = () => {
-    const id = THOTH.Scene.activeLayer.id;
-
     // Get only faces that don't already belong to layer
-    const faces = [...Toolbox.tempSelection].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
-    
-    // Add to history
-    THOTH.fire("endBrush", {
-        id      : id, 
-        faces   : faces
-    });
-
-    delete Toolbox.tempSelection;
+    return [...Toolbox.tempSelection].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
 };
 
 Toolbox.endEraser = () => {
-    const id = THOTH.Scene.activeLayer.id;
-            
     // Get only faces that already belong to layer
-    const faces = [...Toolbox.tempSelection].filter(f => THOTH.Scene.activeLayer.selection.has(f));
-
-    THOTH.fire("endEraser", {
-        id      : id,
-        faces   : faces
-    });
-
-    delete Toolbox.tempSelection;
+    return [...Toolbox.tempSelection].filter(f => THOTH.Scene.activeLayer.selection.has(f));
 };
 
 
@@ -322,7 +303,7 @@ Toolbox.updateLasso = () => {
 };
 
 Toolbox.endLassoAdd = () => {
-    const newFaces = Toolbox.processLassoSelection(THOTH.mainMesh);
+    const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
     if (newFaces === undefined || newFaces.length === 0) return;
 
     const id = THOTH.Scene.activeLayer.id;
@@ -340,7 +321,7 @@ Toolbox.endLassoAdd = () => {
 };
 
 Toolbox.endLassoDel = () => {
-    const newFaces = Toolbox.processLassoSelection(THOTH.mainMesh);
+    const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
     if (newFaces === undefined && newFaces.length === 0) return;
 
     const id = THOTH.Scene.activeLayer.id;

@@ -10,9 +10,9 @@ let Events = {};
 
 
 Events.setup = () => {
-    Events.setupMouseEventListeners();
-    Events.setupActiveEventListeners();
-    Events.setupBackgroundEventListeners();
+    Events.setupKeyboardAndMouseEL();
+    Events.setupActiveEL();
+    Events.setupBackgroundEL();
 
     Events.setupToolboxEvents();
     Events.setupSceneEvents();
@@ -23,9 +23,9 @@ Events.setup = () => {
 
 // Event listeners
 
-Events.setupMouseEventListeners = () => {
+Events.setupKeyboardAndMouseEL = () => {
     let el  = THOTH._renderer.domElement;
-
+    // Mouse down
     el.addEventListener("mousedown", (e) => {
         if (e.button === 0) {
             THOTH.fire("MouseLeftDown");
@@ -36,7 +36,7 @@ Events.setupMouseEventListeners = () => {
             THOTH._bRightMouseDown = true;
         }
     });
-
+    // Mouse up
     el.addEventListener("mouseup", (e) => {
         if (e.button === 0) {
             THOTH.fire("MouseLeftUp");
@@ -47,135 +47,89 @@ Events.setupMouseEventListeners = () => {
             THOTH._bRightMouseDown = false;
         }
     });
-
+    // Mouse move
     el.addEventListener("mousemove", (e) => {
         THOTH.fire("MouseMove", (e));
     });
-
+    // Key down
     window.addEventListener("keydown", (e) => {
         THOTH.fire("KeyDown", (e.code), false);
     });
-
     // Existing keyup event since it doesn't support caps/other languages
     THOTH.discardAtonEventHandler("KeyUp");
-
+    // Key up
     window.addEventListener("keyup", (e) => {
         THOTH.fire("KeyUp", (e.code), false);
     });
 };
 
-Events.setupActiveEventListeners = () => {
+Events.setupActiveEL = () => {
     let el  = THOTH._renderer.domElement;
-
     // Mouse left click
     THOTH.on("MouseLeftDown", () =>{
-        if (!THOTH.Toolbox.enabled) return;
+        if (!Events.activeLayerExists()) return;
         
-        if (THOTH.Scene.activeLayer === undefined) {
-            console.log("No layer selected");
-            el.style.cursor = "not-allowed";
-            return;
-        }
-
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
-            THOTH.Toolbox.tempSelection = new Set();
-            
-            if (THOTH._queryData === undefined) return;
-            THOTH.Toolbox.brushActive();
+            THOTH.fire("useBrush");
         }
-
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
-            THOTH.Toolbox.tempSelection = new Set();
-            
-            if (THOTH._queryData === undefined) return;
-
-            THOTH.Toolbox.eraserActive();
+            THOTH.fire("useEraser");
         }
-
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
-            THOTH.Toolbox.tempSelection = new Set(THOTH.Scene.activeLayer.selection);
-
-            THOTH.Toolbox.startLasso();
+            THOTH.fire("startLasso");
         }
     });
-
     THOTH.on("MouseLeftUp", () => {
-        if (!THOTH.Toolbox.enabled) return;
-
-        if (THOTH.Scene.activeLayer === undefined) return;
-
+        if (!Events.activeLayerExists()) return;
+        
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
-            if (THOTH.Toolbox.tempSelection === undefined) return;
-            THOTH.Toolbox.endBrush();
+            THOTH.fire("endBrush");
         }
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
-            if (THOTH.Toolbox.tempSelection === undefined) return;
-            THOTH.Toolbox.endEraser();
+            THOTH.fire("endEraser");
         }
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
-            if (THOTH.Toolbox.tempSelection === undefined) return;
-            THOTH.Toolbox.endLassoAdd();
+            THOTH.fire("endLassoAdd");
         }
     });
     
     // Mouse right click
     THOTH.on("MouseRightDown", () => {
-        if (!THOTH.Toolbox.enabled) return;
+        if (!Events.activeLayerExists()) return;
         
-        if (THOTH.Scene.activeLayer === undefined) {
-            console.log("No layer selected");
-            el.style.cursor = "not-allowed";
-            return;
-        }
-
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
-            THOTH.Toolbox.tempSelection = new Set();
-            
-            if (THOTH._queryData === undefined) return;
-
-            THOTH.Toolbox.eraserActive();
+            THOTH.fire("startEraser");
         }
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
-            THOTH.Toolbox.tempSelection = new Set();
-            
-            if (THOTH._queryData === undefined) return;
-
-            THOTH.Toolbox.brushActive();
+            THOTH.fire("startBrush");
         }
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
-            THOTH.Toolbox.tempSelection = new Set(THOTH.Scene.activeLayer.selection);
-
-            THOTH.Toolbox.startLasso();
+            THOTH.fire("startLasso")
         }
     });
-
     THOTH.on("MouseRightUp", () => {
-        if (!THOTH.Toolbox.enabled) return;
-
-        if (THOTH.Scene.activeLayer === undefined) return;
+        if (!Events.activeLayerExists()) return;
 
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
-            if (THOTH.Toolbox.tempSelection === undefined) return;
-            THOTH.Toolbox.endEraser();
+            THOTH.fire("endEraser");
         }
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
-            if (THOTH.Toolbox.tempSelection === undefined) return;
-            THOTH.Toolbox.endBrush();
+            THOTH.fire("endBrush");
         }
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
-            THOTH.Toolbox.endLassoDel();
+            THOTH.fire("endLassoDel");
         }
     });
 
@@ -183,48 +137,45 @@ Events.setupActiveEventListeners = () => {
     THOTH.on("MouseMove", (e) => {
         if (!THOTH.Toolbox.enabled) return;
 
-        THOTH.Toolbox.moveSelector();
         THOTH.Toolbox.updateScreenMove(e);
         THOTH.Toolbox.updatePixelPointerCoords(e);
-        
-        if (THOTH.Scene.activeLayer === undefined) return;
 
+        if (THOTH.Toolbox.brushEnabled || THOTH.Toolbox.eraserEnabled) THOTH.Toolbox.moveSelector();
+        
+        if (!Events.activeLayerExists()) return;
+        
         if (THOTH._bLeftMouseDown) {
             // Brush
             if (THOTH.Toolbox.brushEnabled) {
-                if (THOTH._queryData === undefined) return;
-                THOTH.Toolbox.brushActive();
+                THOTH.fire("useBrush");
             }
             // Eraser
             if (THOTH.Toolbox.eraserEnabled) {
-                if (THOTH._queryData  === undefined) return;
-                THOTH.Toolbox.eraserActive();
+                THOTH.fire("useEraser");
             }
             // Lasso
             if (THOTH.Toolbox.lassoEnabled) {
-                THOTH.Toolbox.updateLasso();
+                THOTH.fire("updateLasso");
             }
         }
         
         if (THOTH._bRightMouseDown) {
             // Brush
             if (THOTH.Toolbox.brushEnabled) {
-                if (THOTH._queryData === undefined) return;
-                THOTH.Toolbox.eraserActive();
+                THOTH.fire("useEraser");
             }
             // Eraser
             if (THOTH.Toolbox.eraserEnabled) {
-                if (THOTH._queryData  === undefined) return;
-                THOTH.Toolbox.brushActive();
+                THOTH.fire("useBrush");
             }
             // Lasso
             if (THOTH.Toolbox.lassoEnabled) {
-                THOTH.Toolbox.updateLasso();
+                THOTH.fire("updateLasso");
             }
         }
     });
     
-    // Key down
+    // Key
     THOTH.on("KeyDown", (k) => {
         // Tools
         if (k === "KeyB") {
@@ -259,8 +210,6 @@ Events.setupActiveEventListeners = () => {
             THOTH.setUserControl(true);
         }
     });
-
-    // Key up
     THOTH.on("KeyUp", (k) => {
         // Shift
         if (k === "ShiftLeft") {
@@ -275,7 +224,7 @@ Events.setupActiveEventListeners = () => {
     });
 };
 
-Events.setupBackgroundEventListeners = () => {
+Events.setupBackgroundEL = () => {
     let w   = window;
 
     // Resizes
@@ -292,11 +241,11 @@ Events.setupBackgroundEventListeners = () => {
 
 Events.setupUIEvents = () => {
     // Create Layer
-    THOTH.on("addNewLayer", () => {
+    THOTH.on("createLayer", () => {
         const id = THOTH.Utils.getFirstUnusedKey(THOTH.Scene.currData.layers);
         
-        THOTH.fire("createLayer", (id));
-        THOTH.firePhoton("createLayer", (id));
+        THOTH.fire("createLayerScene", (id));
+        THOTH.firePhoton("createLayerScene", (id));
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.CREATE_LAYER,
             id
@@ -304,9 +253,9 @@ Events.setupUIEvents = () => {
     });
 
     // Delete Layer
-    THOTH.on("removeLayer", (id) => {
-        THOTH.fire("deleteLayer", (id));
-        THOTH.firePhoton("deleteLayer", (id));
+    THOTH.on("deleteLayer", (id) => {
+        THOTH.fire("deleteLayerScene", (id));
+        THOTH.firePhoton("deleteLayerScene", (id));
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.DELETE_LAYER,
             id
@@ -316,7 +265,7 @@ Events.setupUIEvents = () => {
 
 Events.setupSceneEvents = () => {
     // Local
-    THOTH.on("createLayer", (id) => {
+    THOTH.on("createLayerScene", (id) => {
         THOTH.Scene.createLayer(id);
 
         const layers = THOTH.Scene.currData.layers; 
@@ -324,21 +273,21 @@ Events.setupSceneEvents = () => {
         else THOTH.UI.createLayer(id);
     });
 
-    THOTH.on("deleteLayer", (id) => {
+    THOTH.on("deleteLayerScene", (id) => {
         THOTH.Scene.deleteLayer(id);
         THOTH.UI.deleteLayer(id);
     });
     
-    THOTH.on("editLayer", (l) => {
+    THOTH.on("editLayerScene", (l) => {
         const id    = l.id;
         const attr  = l.attr;
         const value = l.value;
         THOTH.editLayer(id, attr, value);
     });
     
-    THOTH.on("addToSelection", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.on("addToSelectionScene", (l) => {
+        const id    = l.id;
+        const faces = l.faces;
         const layer = THOTH.Scene.currData.layers[id];
         const selection = THOTH.Toolbox.addFacesToSelection(faces, layer.selection);
         
@@ -346,9 +295,9 @@ Events.setupSceneEvents = () => {
         THOTH.updateVisibility();
     });
     
-    THOTH.on("delFromSelection", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.on("delFromSelectionScene", (l) => {
+        const id    = l.id;
+        const faces = l.faces;
         const layer = THOTH.Scene.currData.layers[id];
         const selection = THOTH.Toolbox.delFacesFromSelection(faces, layer.selection);
         
@@ -357,7 +306,7 @@ Events.setupSceneEvents = () => {
     });
     
     // Photon
-    THOTH.onPhoton("createLayer", (id) => {
+    THOTH.onPhoton("createLayerScene", (id) => {
         THOTH.Scene.createLayer(id);
 
         const layers = THOTH.Scene.currData.layers; 
@@ -365,21 +314,21 @@ Events.setupSceneEvents = () => {
         else THOTH.UI.createLayer(id);
     });
     
-    THOTH.onPhoton("deleteLayer", (id) => {
+    THOTH.onPhoton("deleteLayerScene", (id) => {
         THOTH.Scene.deleteLayer(id);
         THOTH.UI.deleteLayer(id);
     });
     
-    THOTH.onPhoton("editLayer", (l) => {
+    THOTH.onPhoton("editLayerScene", (l) => {
         const id    = l.id;
         const attr  = l.attr;
         const value = l.value;
         THOTH.Scene.editLayer(id, attr, value);
     });
 
-    THOTH.onPhoton("addToSelection", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.onPhoton("addToSelectionScene", (l) => {
+        const id    = l.id;
+        const faces = l.faces;
         const layer = THOTH.Scene.currData.layers[id];
         const selection = THOTH.Toolbox.addFacesToSelection(faces, layer.selection);
 
@@ -387,9 +336,9 @@ Events.setupSceneEvents = () => {
         THOTH.updateVisibility();
     });
 
-    THOTH.onPhoton("delFromSelection", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.onPhoton("delFromSelectionScene", (l) => {
+        const id    = l.id;
+        const faces = l.faces;
         const layer = THOTH.Scene.currData.layers[id];
         const selection = THOTH.Toolbox.delFacesFromSelection(faces, layer.selection);
 
@@ -400,84 +349,120 @@ Events.setupSceneEvents = () => {
 
 Events.setupToolboxEvents = () => {
     // Brush
-    THOTH.on("endBrush", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
-        
+    THOTH.on("useBrush", () => {
+        if (THOTH.Toolbox.tempSelection === null) THOTH.Toolbox.tempSelection = new Set();
+        if (THOTH._queryData === undefined) return;
+
+        THOTH.Toolbox.brushActive();
+    });
+    THOTH.on("endBrush", () => {
+        if (THOTH.Toolbox.tempSelection.size === 0) return;
+
+        // Get only faces that don't already belong to layer
+        const id    = THOTH.Scene.activeLayer.id;
+        const faces = THOTH.Toolbox.endBrush();
+
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_ADD,
             id,
             faces
         );
-        THOTH.fire("addToSelection", {
-            id: id,
-            faces: faces
+        THOTH.fire("addToSelectionScene", {
+            id      : id,
+            faces   : faces
         });
-        THOTH.firePhoton("addToSelection", {
-            id: id,
-            faces: faces
+        THOTH.firePhoton("addToSelectionScene", {
+            id      : id,
+            faces   : faces
         });
+
+        THOTH.updateVisibility();
+
+        THOTH.Toolbox.tempSelection = null;
     });
 
     // Eraser
-    THOTH.on("endEraser", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.on("useEraser", () => {
+        if (THOTH.Toolbox.tempSelection === null) THOTH.Toolbox.tempSelection = new Set();
+        if (THOTH._queryData === undefined) return;
+
+        THOTH.Toolbox.eraserActive();
+    })
+    THOTH.on("endEraser", () => {
+        // Return if tempSelection is empty
+        if (THOTH.Toolbox.tempSelection.size === 0) return;
+
+        // Get only faces that don't already belong to layer
+        const id    = THOTH.Scene.activeLayer.id;
+        const faces = [...Toolbox.tempSelection].filter(f => THOTH.Scene.activeLayer.selection.has(f));
         
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_DEL,
             id,
             faces
         );
-        THOTH.fire("delFromSelection", {
-            id: id,
-            faces: faces
+        THOTH.fire("delFromSelectionScene", {
+            id      : id,
+            faces   : faces
         });
-        THOTH.firePhoton("delFromSelection", {
-            id: id,
-            faces: faces
+        THOTH.firePhoton("delFromSelectionScene", {
+            id      : id,
+            faces   : faces
         });
+
+        THOTH.Toolbox.tempSelection = null;
     });
 
     // Lasso add
-    THOTH.on("endLassoAdd", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.on("startLasso", () => {
+        THOTH.Toolbox.tempSelection = new Set(THOTH.Scene.activeLayer.selection);
+        THOTH.Toolbox.startLasso();
+    });
+    THOTH.on("updateLasso", () => {
+        THOTH.Toolbox.updateLasso();
+    });
+    THOTH.on("endLassoAdd", (l) => {
+        if (THOTH.Toolbox.tempSelection.size === 0) return;
+
+        THOTH.Toolbox.endLassoAdd();
+
+        const id    = l.id;
+        const faces = l.faces;
 
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_ADD,
             id,
             faces
         );
-    
-        // Fire events
-        THOTH.fire("addToSelection", {
+        THOTH.fire("addToSelectionScene", {
             id: id,
             faces: faces
         });
-        THOTH.firePhoton("addToSelection", {
+        THOTH.firePhoton("addToSelectionScene", {
             id: id,
             faces: faces
         });
     });
 
     // Lasso add
-    THOTH.on("endLassoDel", (item) => {
-        const id    = item.id;
-        const faces = item.faces;
+    THOTH.on("endLassoDel", (l) => {
+        if (THOTH.Toolbox.tempSelection.size === 0) return;
+
+        THOTH.Toolbox.endLassoDel();
+
+        const id    = l.id;
+        const faces = l.faces;
 
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_DEL,
             id,
             faces
         );
-    
-        // Fire events
-        THOTH.fire("delFromSelection", {
+        THOTH.fire("delFromSelectionScene", {
             id: id,
             faces: faces
         });
-        THOTH.firePhoton("delFromSelection", {
+        THOTH.firePhoton("delFromSelectionScene", {
             id: id,
             faces: faces
         });
@@ -488,7 +473,6 @@ Events.setupPhotonEvents = () => {
     // On new user join
     THOTH.on("VRC_UserEnter", () => {
         const layers = THOTH.Scene.currData.layers;
-        console.log("AHA")
         if (layers !== undefined) {
             Object.values(layers).forEach((layer) => {
                 layer.selection = Array.from(layer.selection);
@@ -502,6 +486,14 @@ Events.setupPhotonEvents = () => {
     THOTH.onPhoton("syncScene", (layers) => {
         THOTH.Scene.syncScene(layers);
     });
+};
+
+
+// Utils
+
+Events.activeLayerExists = () => {
+    if (THOTH.Scene.activeLayer === undefined) return false;
+    else return true;
 };
 
 

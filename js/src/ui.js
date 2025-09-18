@@ -246,7 +246,6 @@ UI.createUndoButton = () => {
         onpress : () => THOTH.History.undo(),
         tooltip : "Undo"
     });
-
 };
 
 UI.createRedoButton = () => {
@@ -261,16 +260,8 @@ UI.createNewLayerButton = () => {
     return ATON.UI.createButton({
         text    : "Create New Layer",
         icon    : "add",
-        onpress : () => THOTH.fire("addNewLayer"),
+        onpress : () => THOTH.fire("createLayer"),
         tooltip : "Create new layer"   
-    });
-};
-
-UI.createTestButton = () => {
-    return ATON.UI.createButton({
-        text    : "Test",
-        onpress : () => UI.Test(),
-        tooltip : "test"   
     });
 };
 
@@ -289,6 +280,14 @@ UI.createVRCButton = () => {
         tooltip : "Connect to Photon"
     });
 };  
+
+UI.createTestButton = () => {
+    return ATON.UI.createButton({
+        text    : "Test",
+        onpress : () => UI.Test(),
+        tooltip : "test"   
+    });
+};
 
 
 // Layers
@@ -348,7 +347,7 @@ UI.createLayerController = (id) => {
     const elDel = ATON.UI.createButton({
         icon    : "trash",
         size    : "small",
-        onpress : () => THOTH.fire("removeLayer", (id))
+        onpress : () => THOTH.fire("deleteLayer", (id))
     });
 
     elLayerController.append(
