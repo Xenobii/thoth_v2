@@ -10,9 +10,9 @@ let Events = {};
 
 
 Events.setup = () => {
-    Events.setupKeyboardAndMouseEL();
+    Events.setupInputEL();
     Events.setupActiveEL();
-    Events.setupBackgroundEL();
+    Events.setupWindowEL();
 
     Events.setupToolboxEvents();
     Events.setupSceneEvents();
@@ -23,7 +23,7 @@ Events.setup = () => {
 
 // Event listeners
 
-Events.setupKeyboardAndMouseEL = () => {
+Events.setupInputEL = () => {
     let el  = THOTH._renderer.domElement;
     // Mouse down
     el.addEventListener("mousedown", (e) => {
@@ -64,7 +64,6 @@ Events.setupKeyboardAndMouseEL = () => {
 };
 
 Events.setupActiveEL = () => {
-    let el  = THOTH._renderer.domElement;
     // Mouse left click
     THOTH.on("MouseLeftDown", () =>{
         if (!Events.activeLayerExists()) return;
@@ -113,10 +112,10 @@ Events.setupActiveEL = () => {
         }
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
-            THOTH.fire("startLasso")
+            THOTH.fire("startLasso");
         }
     });
-    THOTH.on("MouseRightUp", () => {
+    THOTH.on("MouseRightUp", (e) => {
         if (!Events.activeLayerExists()) return;
 
         // Brush
@@ -137,10 +136,10 @@ Events.setupActiveEL = () => {
     THOTH.on("MouseMove", (e) => {
         if (!THOTH.Toolbox.enabled) return;
 
-        THOTH.Toolbox.updateScreenMove(e);
-        THOTH.Toolbox.updatePixelPointerCoords(e);
+        if (e.preventDefault) e.preventDefault();
 
-        if (THOTH.Toolbox.brushEnabled || THOTH.Toolbox.eraserEnabled) THOTH.Toolbox.moveSelector();
+        THOTH.Toolbox.moveSelector();
+        THOTH.Toolbox.getPixelPointerCoords(e);
         
         if (!Events.activeLayerExists()) return;
         
@@ -207,7 +206,6 @@ Events.setupActiveEL = () => {
         // Ctrl
         if (k === "ControlLeft") {
             THOTH._bCtrlDown = true;
-            THOTH.setUserControl(true);
         }
     });
     THOTH.on("KeyUp", (k) => {
@@ -219,12 +217,11 @@ Events.setupActiveEL = () => {
         // Ctrl
         if (k === "ControlLeft") {
             THOTH._bCtrlDown = false;
-            THOTH.setUserControl(false);
         }
     });
 };
 
-Events.setupBackgroundEL = () => {
+Events.setupWindowEL = () => {
     let w   = window;
 
     // Resizes
@@ -361,7 +358,7 @@ Events.setupToolboxEvents = () => {
         // Get only faces that don't already belong to layer
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endBrush();
-
+        
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_ADD,
             id,
@@ -394,7 +391,7 @@ Events.setupToolboxEvents = () => {
 
         // Get only faces that don't already belong to layer
         const id    = THOTH.Scene.activeLayer.id;
-        const faces = [...Toolbox.tempSelection].filter(f => THOTH.Scene.activeLayer.selection.has(f));
+        const faces = THOTH.Toolbox.endEraser();
         
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_DEL,
@@ -410,24 +407,21 @@ Events.setupToolboxEvents = () => {
             faces   : faces
         });
 
+        THOTH.updateVisibility();
+
         THOTH.Toolbox.tempSelection = null;
     });
 
     // Lasso add
     THOTH.on("startLasso", () => {
-        THOTH.Toolbox.tempSelection = new Set(THOTH.Scene.activeLayer.selection);
         THOTH.Toolbox.startLasso();
     });
     THOTH.on("updateLasso", () => {
         THOTH.Toolbox.updateLasso();
     });
     THOTH.on("endLassoAdd", (l) => {
-        if (THOTH.Toolbox.tempSelection.size === 0) return;
-
-        THOTH.Toolbox.endLassoAdd();
-
-        const id    = l.id;
-        const faces = l.faces;
+        const id    = THOTH.Scene.activeLayer.id;
+        const faces = THOTH.Toolbox.endLassoAdd();
 
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_ADD,
@@ -435,23 +429,21 @@ Events.setupToolboxEvents = () => {
             faces
         );
         THOTH.fire("addToSelectionScene", {
-            id: id,
-            faces: faces
+            id      : id,
+            faces   : faces
         });
         THOTH.firePhoton("addToSelectionScene", {
-            id: id,
-            faces: faces
+            id      : id,
+            faces   : faces
         });
+
+        THOTH.updateVisibility();
+
+        THOTH.Toolbox.tempSelection = null;
     });
-
-    // Lasso add
     THOTH.on("endLassoDel", (l) => {
-        if (THOTH.Toolbox.tempSelection.size === 0) return;
-
-        THOTH.Toolbox.endLassoDel();
-
-        const id    = l.id;
-        const faces = l.faces;
+        const id    = THOTH.Scene.activeLayer.id;
+        const faces = THOTH.Toolbox.endLassoDel();
 
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_DEL,
@@ -466,6 +458,10 @@ Events.setupToolboxEvents = () => {
             id: id,
             faces: faces
         });
+
+        THOTH.updateVisibility();
+
+        THOTH.Toolbox.tempSelection = null;
     });
 };
 

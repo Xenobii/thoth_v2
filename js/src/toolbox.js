@@ -26,8 +26,7 @@ Toolbox.setup = () => {
     Toolbox.lassoEnabled    = false;
     
     // Internal params
-    Toolbox.tempSelection       = null;
-    Toolbox._screenPointerCoords = new THREE.Vector2(0.0, 0.0);
+    Toolbox.tempSelection   = null;
 
     // Create selector mesh
     Toolbox.selectorSize    = 1;
@@ -120,29 +119,19 @@ Toolbox.resizeLassoCanvas = () => {
 
 
 // Update functions
-
-Toolbox.updateScreenMove = (e) => {
-    if (!Toolbox.enabled) return;
-    if (e.preventDefault) e.preventDefault();
-
+Toolbox.getPixelPointerCoords = (e) => {
     const rect = THOTH._renderer.domElement.getBoundingClientRect();
-    Toolbox._screenPointerCoords.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    Toolbox._screenPointerCoords.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-};
-
-Toolbox.updatePixelPointerCoords = (e) => {
-    const rect = THOTH._renderer.domElement.getBoundingClientRect();
-    Toolbox._pixelPointerCoords = {
+    Toolbox.pixelPointerCoords = {
         x: (e.clientX - rect.left),
         y: (e.clientY - rect.top)
     };
 };
 
 Toolbox.moveSelector = () => {
-    if (THOTH._queryData === undefined) {
+    if (THOTH._queryData === undefined || !(THOTH.Toolbox.brushEnabled || THOTH.Toolbox.eraserEnabled)) {
         THOTH._renderer.domElement.style.cursor = 'default';
         Toolbox.selectorMesh.visible = false;
-        return false;
+        return;
     }
     THOTH._renderer.domElement.style.cursor = 'none';
     Toolbox.selectorMesh.visible = true;
@@ -273,24 +262,21 @@ Toolbox.cleanupLasso = () => {
 };
 
 Toolbox.startLasso = () => {
-    Toolbox.resizeLassoCanvas()
-    
     Toolbox._lassoIsActive = true;
     
-    Toolbox.lassoPoints = [Toolbox._pixelPointerCoords];
+    Toolbox.lassoPoints = [Toolbox.pixelPointerCoords];
 
     Toolbox.lassoCtx.beginPath();
     Toolbox.lassoCtx.moveTo(
-        Toolbox._pixelPointerCoords.x,
-        Toolbox._pixelPointerCoords.y
-    );
+        Toolbox.pixelPointerCoords.x,
+        Toolbox.pixelPointerCoords.y);
 }; 
 
 Toolbox.updateLasso = () => {
     if (!Toolbox._lassoIsActive) return;
-    
+
     const previousPos = Toolbox.lassoPoints[Toolbox.lassoPoints.length - 1];
-    const currentPos  = Toolbox._pixelPointerCoords;
+    const currentPos  = Toolbox.pixelPointerCoords;
     const dist = THOTH.Utils.pointDistance(previousPos, currentPos);
     
     // Reduce oversampling
@@ -298,7 +284,7 @@ Toolbox.updateLasso = () => {
         
     Toolbox.lassoPoints.push(currentPos);
     
-    Toolbox.lassoCtx.lineTo(Toolbox._pixelPointerCoords.x, Toolbox._pixelPointerCoords.y);
+    Toolbox.lassoCtx.lineTo(currentPos.x, currentPos.y);
     Toolbox.lassoCtx.stroke();
 };
 
@@ -306,36 +292,26 @@ Toolbox.endLassoAdd = () => {
     const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
     if (newFaces === undefined || newFaces.length === 0) return;
 
-    const id = THOTH.Scene.activeLayer.id;
-        
-    // Get only faces that don't already belong to the layer 
+    // Get only faces that don't already belong to the layer
     const faces = [...newFaces].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
-    
-    THOTH.fire("endLassoAdd", {
-        id      : id,
-        faces   : faces
-    });
 
     Toolbox.cleanupLasso();
     Toolbox._lassoIsActive = false;
+
+    return faces;
 };
 
 Toolbox.endLassoDel = () => {
     const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
     if (newFaces === undefined && newFaces.length === 0) return;
 
-    const id = THOTH.Scene.activeLayer.id;
-
     // Get only faces that already belong to layer
     const faces = [...newFaces].filter(f => THOTH.Scene.activeLayer.selection.has(f));
-    
-    THOTH.fire("endLassoDel", {
-        id      : id,
-        faces   : faces
-    });
 
     Toolbox.cleanupLasso();
     Toolbox._lassoIsActive = false;
+
+    return faces;
 };
 
 Toolbox.processLassoSelection = (mesh) => {

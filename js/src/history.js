@@ -33,7 +33,7 @@ History.setup = () => {
 
 History.pushAction = (type, id, value) => {
     if (type === undefined || id === undefined) return;
-     
+    
     const action   = {};
     action.type    = type;
     action.id      = id;
@@ -60,25 +60,25 @@ History.undo = () => {
     switch(type) {
         case History.ACTIONS.CREATE_LAYER:
             inverseType = History.ACTIONS.DELETE_LAYER;
-            THOTH.fire("deleteLayer", id);
-            THOTH.firePhoton("deleteLayer", id);
+            THOTH.fire("deleteLayerScene", id);
+            THOTH.firePhoton("deleteLayerScene", id);
             break;
 
         case History.ACTIONS.DELETE_LAYER:
             inverseType = History.ACTIONS.CREATE_LAYER;
-            THOTH.fire("createLayer", id);
-            THOTH.firePhoton("createLayer", id);
+            THOTH.fire("createLayerScene", id);
+            THOTH.firePhoton("createLayerScene", id);
             break;
 
         case History.ACTIONS.RENAME_LAYER:
             inverseType = History.ACTIONS.RENAME_LAYER;
             prevContent = content;
-            THOTH.fire("editLayer", {
+            THOTH.fire("editLayerScene", {
                 id: id,
                 attr: "name",
                 value: content.oldTitle
             }); 
-            THOTH.firePhoton("editLayer", {
+            THOTH.firePhoton("editLayerScene", {
                 id: id,
                 attr: "name",
                 value: content["oldTitle"]
@@ -88,11 +88,11 @@ History.undo = () => {
         case History.ACTIONS.SELEC_ADD:
             inverseType = History.ACTIONS.SELEC_DEL;
             prevContent = content; 
-            THOTH.fire("delFromSelection", {
+            THOTH.fire("delFromSelectionScene", {
                 id: id,
                 faces: content
             });
-            THOTH.firePhoton("delFromSelection", {
+            THOTH.firePhoton("delFromSelectionScene", {
                 id: id,
                 faces: content
             });
@@ -103,11 +103,11 @@ History.undo = () => {
         case History.ACTIONS.SELEC_DEL:
             inverseType = History.ACTIONS.SELEC_ADD;
             prevContent = content; 
-            THOTH.fire("addToSelection", {
+            THOTH.fire("addToSelectionScene", {
                 id: id,
                 faces: content
             });
-            THOTH.firePhoton("addToSelection", {
+            THOTH.firePhoton("addToSelectionScene", {
                 id: id,
                 faces: content
             });
