@@ -226,9 +226,10 @@ Toolbox.delFacesFromSelection = (newFaces, selection) => {
 // Brush
 
 Toolbox.brushActive = () => {
-    const newFaces = Toolbox.selectMultipleFaces();
-    const highlightColor = THOTH.Utils.hex2rgb(THOTH.Scene.activeLayer.highlightColor);
-    Toolbox.tempSelection = Toolbox.addFacesToSelection(newFaces, Toolbox.tempSelection);
+    const newFaces          = Toolbox.selectMultipleFaces();
+    const highlightColor    = THOTH.Utils.hex2rgb(THOTH.Scene.activeLayer.highlightColor);
+    Toolbox.tempSelection   = Toolbox.addFacesToSelection(newFaces, Toolbox.tempSelection);
+    if (!THOTH.Scene.activeLayer.visible) return;
     THOTH.highlightSelection(newFaces, highlightColor);
 };
 
@@ -236,6 +237,7 @@ Toolbox.eraserActive = () => {
     const newFaces = Toolbox.selectMultipleFaces();
     const highlightColor = THOTH.Utils.hex2rgb('#ffffff');
     Toolbox.tempSelection = Toolbox.addFacesToSelection(newFaces, Toolbox.tempSelection);
+    if (!THOTH.Scene.activeLayer.visible) return;
     THOTH.highlightSelection(newFaces, highlightColor);
 };
 
@@ -275,9 +277,9 @@ Toolbox.startLasso = () => {
 Toolbox.updateLasso = () => {
     if (!Toolbox._lassoIsActive) return;
 
-    const previousPos = Toolbox.lassoPoints[Toolbox.lassoPoints.length - 1];
-    const currentPos  = Toolbox.pixelPointerCoords;
-    const dist = THOTH.Utils.pointDistance(previousPos, currentPos);
+    const previousPos   = Toolbox.lassoPoints[Toolbox.lassoPoints.length - 1];
+    const currentPos    = Toolbox.pixelPointerCoords;
+    const dist          = THOTH.Utils.pointDistance(previousPos, currentPos);
     
     // Reduce oversampling
     if (dist < 1 / Toolbox.lassoPrecision) return;
@@ -289,11 +291,12 @@ Toolbox.updateLasso = () => {
 };
 
 Toolbox.endLassoAdd = () => {
-    const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
-    if (newFaces === undefined || newFaces.length === 0) return;
+    const newFaces2 = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
+
+    if (newFaces2 === undefined || newFaces2.length === 0) return;
 
     // Get only faces that don't already belong to the layer
-    const faces = [...newFaces].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
+    const faces = [...newFaces2].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
 
     Toolbox.cleanupLasso();
     Toolbox._lassoIsActive = false;
@@ -316,102 +319,104 @@ Toolbox.endLassoDel = () => {
 
 Toolbox.processLassoSelection = (mesh) => {
     if (!Toolbox.lassoPoints || Toolbox.lassoPoints.length < 3) return;
-
+    
     const geometry  = mesh.geometry;
     const camera    = THOTH._camera;
     const width     = Toolbox.canvas.width;
     const height    = Toolbox.canvas.height;
     const lassoPts  = Toolbox.lassoPoints;
     const dpr       = window.devicePixelRatio || 1;
-
     const posAttr   = geometry.attributes.position;
     const normAttr  = geometry.attributes.normal;
     const indexAttr = geometry.index;
-
-    const faceCount = indexAttr ? indexAttr.count / 3 : positionAttr.count / 9;
-    const cameraPos = camera.getWorldPosition(new THREE.Vector3());
-
-    const mvpMatrix = new THREE.Matrix4()
-    .multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
-    .multiply(mesh.matrixWorld);
-    const frustum = new THREE.Frustum().setFromProjectionMatrix(mvpMatrix);
+    const faceCount = indexAttr ? indexAttr.count / 3 : posAttr.count / 9;
     
-    const v1 = new THREE.Vector3();
-    const v2 = new THREE.Vector3();
-    const v3 = new THREE.Vector3();
-    const n1 = new THREE.Vector3();
-    const n2 = new THREE.Vector3();
-    const n3 = new THREE.Vector3();
-
+    // Pre-compute constants
+    const cameraPos = camera.getWorldPosition(new THREE.Vector3());
+    const mvpMatrix = new THREE.Matrix4()
+        .multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+        .multiply(mesh.matrixWorld);
+    const frustum   = new THREE.Frustum().setFromProjectionMatrix(mvpMatrix);
+    
+    const normalThreshold   = Toolbox.normalThreshold;
+    const selectObstructed  = Toolbox.selectObstructedFaces;
+    const widthDpr          = width / dpr;
+    const heightDpr         = height / dpr;
+    const worldMatrix       = mesh.matrixWorld;
+    
+    // Reusable vectors
+    const v1        = new THREE.Vector3();
+    const v2        = new THREE.Vector3();
+    const v3        = new THREE.Vector3();
     const normal    = new THREE.Vector3();
     const centroid  = new THREE.Vector3();
-    
     const camDir    = new THREE.Vector3();
-    const rayDir    = new THREE.Vector3();
     const projected = new THREE.Vector3();
+    const rayDir    = new THREE.Vector3();
+    const ray       = new THREE.Ray();
+    
+    // Batch arrays for optimization
+    const posArray      = posAttr.array;
+    const normArray     = normAttr.array;
+    const indexArray    = indexAttr?.array;
     
     const selectedFaces = [];
-
-    for (let i=0; i<faceCount; i++) {
+    
+    for (let i = 0; i < faceCount; i++) {
         let a, b, c;
-        if (indexAttr) {
-            a = indexAttr.getX(i * 3);
-            b = indexAttr.getX(i * 3 + 1);
-            c = indexAttr.getX(i * 3 + 2);
+        if (indexArray) {
+            const i3 = i * 3;
+            a = indexArray[i3];
+            b = indexArray[i3 + 1];
+            c = indexArray[i3 + 2];
         } else {
-            a = i * 3;
-            b = i * 3 + 1;
-            c = i * 3 + 2;
+            const i3 = i * 3;
+            a = i3;
+            b = i3 + 1;
+            c = i3 + 2;
         }
-        v1.fromBufferAttribute(posAttr, a);
-        v2.fromBufferAttribute(posAttr, b);
-        v3.fromBufferAttribute(posAttr, c);
-
-        n1.fromBufferAttribute(normAttr, a);
-        n2.fromBufferAttribute(normAttr, b);
-        n3.fromBufferAttribute(normAttr, c);
-
-        centroid.copy(v1).add(v2).add(v3).divideScalar(3);
-        mesh.localToWorld(centroid);
+        const a3 = a * 3, b3 = b * 3, c3 = c * 3;
+        v1.set(posArray[a3], posArray[a3 + 1], posArray[a3 + 2]);
+        v2.set(posArray[b3], posArray[b3 + 1], posArray[b3 + 2]);
+        v3.set(posArray[c3], posArray[c3 + 1], posArray[c3 + 2]);
         
-        // Filter faces out of camera frustum
+        centroid.copy(v1).add(v2).add(v3).multiplyScalar(0.33333333);
+        centroid.applyMatrix4(worldMatrix);
         
+        // Frustum culling
         if (!frustum.containsPoint(centroid)) continue;
         
-        // Filter faces that are obstructed by other faces
-
-        if (!Toolbox.selectObstructedFaces) {
+        // Project to lasso polygon
+        projected.copy(centroid).project(camera);
+        const x = ((projected.x + 1) * 0.5) * widthDpr;
+        const y = ((-projected.y + 1) * 0.5) * heightDpr;
+        
+        if (!THOTH.Utils.isPointInPolygon({x, y}, lassoPts)) continue;
+        
+        // Normal test
+        normal.set(
+            (normArray[a3] + normArray[b3] + normArray[c3]) * 0.33333333,
+            (normArray[a3 + 1] + normArray[b3 + 1] + normArray[c3 + 1]) * 0.33333333,
+            (normArray[a3 + 2] + normArray[b3 + 2] + normArray[c3 + 2]) * 0.33333333
+        ).normalize();
+        
+        camDir.subVectors(cameraPos, centroid).normalize();
+        if (normal.dot(camDir) <= normalThreshold) continue;
+        
+        // Occlusion test
+        if (!selectObstructed) {
             const maxDist = cameraPos.distanceTo(centroid);
-            
             rayDir.subVectors(centroid, cameraPos).normalize();
-            
-            const ray = new THREE.Ray(cameraPos, rayDir);
+            ray.set(cameraPos, rayDir);
             const hit = geometry.boundsTree.raycastFirst(ray, THREE.SingleSide);
-            
             if (hit && hit.distance < maxDist - 0.01) continue;
         }
         
-        // Filter faces that aren't facing the camera
-
-        normal.copy(n1).add(n2).add(n3).divideScalar(3).normalize();
-        camDir.subVectors(cameraPos, centroid).normalize();
-        
-        if (normal.dot(camDir) <= Toolbox.normalThreshold) continue;
-        
-        // Project to lasso polygon
-
-        projected.copy(centroid).project(camera);
-        
-        const x = ((projected.x + 1) / 2) * width / dpr;
-        const y = ((-projected.y + 1) / 2) * height / dpr;
-
-        if (THOTH.Utils.isPointInPolygon({x, y}, lassoPts)) {
-            selectedFaces.push(i);
-        };
+        selectedFaces.push(i);
     }
+    
     return selectedFaces;
 };
-
 
 // Activation
 

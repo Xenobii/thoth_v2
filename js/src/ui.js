@@ -236,7 +236,10 @@ UI.createLassoButton = () => {
 UI.createNoToolButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "none.png",
-        onpress : () => THOTH.Toolbox.deactivate(),
+        onpress : () => {
+            THOTH.Toolbox.deactivate();
+            THOTH.setUserControl(true);
+        },
     });
 };
 

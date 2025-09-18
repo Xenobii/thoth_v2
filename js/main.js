@@ -138,40 +138,58 @@ THOTH.parseAtonElements = () => {
 
 THOTH.highlightSelection = (selection, highlightColor, mesh) => {
     if (selection === undefined || selection.size === 0) return;
-
     if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
-
+    
     const colorAttr = mesh.geometry.attributes.color;
     const indexAttr = mesh.geometry.index;
-
-    const colors = colorAttr.array;
-    const stride = colorAttr.itemSize;
-    const r = highlightColor.r, g = highlightColor.g, b = highlightColor.b;
-
-    const writeVertex = (base) => {
-        colors[base    ] = r;
-        colors[base + 1] = g;
-        colors[base + 2] = b;
-    }
-
+    const colors    = colorAttr.array;
+    const stride    = colorAttr.itemSize;
+    
+    const r = highlightColor.r;
+    const g = highlightColor.g; 
+    const b = highlightColor.b;
+    
     if (indexAttr) {
         const indices = indexAttr.array;
-        for (const face of selection){
-            writeVertex(indices[face * 3    ] * stride);
-            writeVertex(indices[face * 3 + 1] * stride);
-            writeVertex(indices[face * 3 + 2] * stride);
+        for (const face of selection) {
+            const face3 = face * 3;
+            
+            const idx0  = indices[face3] * stride;
+            const idx1  = indices[face3 + 1] * stride;
+            const idx2  = indices[face3 + 2] * stride;
+            
+            colors[idx0]        = r;
+            colors[idx0 + 1]    = g;
+            colors[idx0 + 2]    = b;
+            
+            colors[idx1]        = r;
+            colors[idx1 + 1]    = g;
+            colors[idx1 + 2]    = b;
+            
+            colors[idx2]        = r;
+            colors[idx2 + 1]    = g;
+            colors[idx2 + 2]    = b;
         }
     } else {
-        for (const face of selection){
-            const faceStart = face * 3 * stride;
-            writeVertex(faceStart);
-            writeVertex(faceStart + stride);
-            writeVertex(faceStart + 2 * stride);
+        const stride3 = stride * 3;
+        for (const face of selection) {
+            const faceStart = face * stride3;
+            
+            colors[faceStart]       = r;
+            colors[faceStart + 1]   = g;
+            colors[faceStart + 2]   = b;
+            
+            colors[faceStart + stride]      = r;
+            colors[faceStart + stride + 1]  = g;
+            colors[faceStart + stride + 2]  = b;
+            
+            colors[faceStart + stride * 2]      = r;
+            colors[faceStart + stride * 2 + 1]  = g;
+            colors[faceStart + stride * 2 + 2]  = b;
         }
     }
-
+    
     colorAttr.needsUpdate = true;
-    return;
 };
 
 THOTH.highlightAllLayers = (mesh) => {
@@ -195,8 +213,8 @@ THOTH.highlightAllLayers = (mesh) => {
 THOTH.clearHighlights = (mesh) => {
     if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
     
-    const colorAttr = mesh.geometry.attributes.color;
-    const colorArray = colorAttr.array;
+    const colorAttr     = mesh.geometry.attributes.color;
+    const colorArray    = colorAttr.array;
 
     for (let i=0; i < colorArray.length; i++) {
         colorArray[i] = 1;
