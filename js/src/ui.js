@@ -129,6 +129,17 @@ UI.createPanelOptions = () => {
     return elOptionsBody
 };
 
+UI.createPanelHistory = () => {
+    ATON.UI.setSidePanelLeft();
+
+    let elMainBody  = ATON.UI.createContainer();
+    let elList      = ATON.UI.createContainer();
+
+    elMainBody.append(elList);
+
+    return elMainBody;
+};
+
 UI.showPanelOptions = () => {
     ATON.UI.showSidePanel({
         header  : "Options",
