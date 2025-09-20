@@ -473,7 +473,7 @@ UI.modalUser = ()=>{
 };
 
 UI.Test = () => {
-    let test = THOTH.Scene.currData.layers;
+    let test = THOTH.Toolbox.paused;
     console.log(test)
 };
 

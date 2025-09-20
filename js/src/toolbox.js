@@ -24,6 +24,7 @@ Toolbox.setup = () => {
     Toolbox.brushEnabled    = false;
     Toolbox.eraserEnabled   = false;
     Toolbox.lassoEnabled    = false;
+    Toolbox.paused          = false;
     
     // Internal params
     Toolbox.tempSelection   = null;
@@ -128,7 +129,7 @@ Toolbox.getPixelPointerCoords = (e) => {
 };
 
 Toolbox.moveSelector = () => {
-    if (THOTH._queryData === undefined || !(THOTH.Toolbox.brushEnabled || THOTH.Toolbox.eraserEnabled)) {
+    if (THOTH._queryData === undefined || !(Toolbox.brushEnabled || Toolbox.eraserEnabled) || Toolbox.paused) {
         THOTH._renderer.domElement.style.cursor = 'default';
         Toolbox.selectorMesh.visible = false;
         return;
@@ -289,29 +290,29 @@ Toolbox.updateLasso = () => {
 Toolbox.endLassoAdd = () => {
     const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
 
+    Toolbox.cleanupLasso();
+    Toolbox._lassoIsActive = false;
+
     if (!newFaces?.length) return;
 
     // Get only faces that don't already belong to the layer
     const selection = new Set(THOTH.Scene.activeLayer.selection);
     const faces = newFaces.filter(f => !selection.has(f));
 
-    Toolbox.cleanupLasso();
-    Toolbox._lassoIsActive = false;
-
     return faces;
 };
 
 Toolbox.endLassoDel = () => {
     const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
+
+    Toolbox.cleanupLasso();
+    Toolbox._lassoIsActive = false;
     
     if (!newFaces?.length === 0) return;
 
     // Get only faces that already belong to layer
     const selection = new Set(THOTH.Scene.activeLayer.selection);
     const faces = newFaces.filter(f => selection.has(f));
-
-    Toolbox.cleanupLasso();
-    Toolbox._lassoIsActive = false;
 
     return faces;
 };
@@ -452,6 +453,9 @@ Toolbox.activateLasso = () => {
 Toolbox.deactivateBrush = () => Toolbox.brushEnabled = false;
 Toolbox.deactivateEraser = () => Toolbox.eraserEnabled = false;
 Toolbox.deactivateLasso = () => Toolbox.lassoEnabled = false;
+
+Toolbox.pause   = () => Toolbox.paused = true;
+Toolbox.resume  = () => Toolbox.paused = false;
 
 
 

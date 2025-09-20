@@ -201,22 +201,37 @@ Events.setupActiveEL = () => {
         // Shift
         if (k === "ShiftLeft") {
             THOTH._bShiftDown = true;
-            THOTH.setUserControl(true);
         }
         // Ctrl
         if (k === "ControlLeft") {
             THOTH._bCtrlDown = true;
+        }
+
+        // Nav
+        if (k === "Space") {
+            if (THOTH.Toolbox.enabled) {
+                THOTH.setUserControl(true);
+                THOTH.Toolbox.pause();
+                THOTH.Toolbox.cleanupLasso();
+            }
         }
     });
     THOTH.on("KeyUp", (k) => {
         // Shift
         if (k === "ShiftLeft") {
             THOTH._bShiftDown = false;
-            THOTH.setUserControl(false);
         }
         // Ctrl
         if (k === "ControlLeft") {
             THOTH._bCtrlDown = false;
+        }
+
+        // Nav
+        if (k === "Space") {
+            if (THOTH.Toolbox.paused) {
+                THOTH.setUserControl(false);
+                THOTH.Toolbox.resume();
+            }
         }
     });
 };
@@ -231,6 +246,10 @@ Events.setupWindowEL = () => {
         THOTH._renderer.setSize(w.innerWidth, w.innerHeight);
         THOTH.Toolbox.resizeLassoCanvas();
     }, false);
+
+    w.addEventListener("blur", () => {
+        // maybe?
+    });
 };
 
 
@@ -353,12 +372,15 @@ Events.setupToolboxEvents = () => {
         THOTH.UI.hideLassoOptions();
     });
     THOTH.on("useBrush", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         if (THOTH.Toolbox.tempSelection === null) THOTH.Toolbox.tempSelection = new Set();
         if (THOTH._queryData === undefined) return;
 
         THOTH.Toolbox.brushActive();
     });
     THOTH.on("endBrush", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
+
         if (THOTH.Toolbox.tempSelection.size === 0) return;
 
         // Get only faces that don't already belong to layer
@@ -392,12 +414,15 @@ Events.setupToolboxEvents = () => {
         THOTH.UI.hideLassoOptions();
     });
     THOTH.on("useEraser", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         if (THOTH.Toolbox.tempSelection === null) THOTH.Toolbox.tempSelection = new Set();
         if (THOTH._queryData === undefined) return;
 
         THOTH.Toolbox.eraserActive();
     })
     THOTH.on("endEraser", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
+
         // Return if tempSelection is empty
         if (THOTH.Toolbox.tempSelection.size === 0) return;
 
@@ -432,12 +457,16 @@ Events.setupToolboxEvents = () => {
         THOTH.UI.hideBrushOptions();
     });
     THOTH.on("startLasso", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         THOTH.Toolbox.startLasso();
     });
     THOTH.on("updateLasso", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         THOTH.Toolbox.updateLasso();
     });
     THOTH.on("endLassoAdd", (l) => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
+
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endLassoAdd();
 
@@ -460,6 +489,8 @@ Events.setupToolboxEvents = () => {
         THOTH.Toolbox.tempSelection = null;
     });
     THOTH.on("endLassoDel", (l) => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
+
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endLassoDel();
 
@@ -488,6 +519,7 @@ Events.setupToolboxEvents = () => {
         THOTH.setUserControl(true);
         THOTH.UI.hideBrushOptions();
         THOTH.UI.hideLassoOptions();
+        THOTH.Toolbox.cleanupLasso();
     });
 };
 
