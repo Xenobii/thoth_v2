@@ -39,10 +39,20 @@
 
 .thoth-main-toolbar {
     margin: var(--thoth-ui-margin);
-    /*
-        margin-left: 0px;
-    */  
     margin-top: 100px;
+
+    max-height: calc(100% - (var(--thoth-ui-margin)*2));
+
+    background-color: rgba(var(--bs-body-bg-rgb), 0.4) !important;
+    border-radius: var(--bs-border-radius);
+
+    -webkit-backdrop-filter: blur(var(--aton-blur-radius));
+    backdrop-filter: blur(var(--aton-blur-radius));
+}
+
+.thoth-tool-options-toolbar {
+    margin: var(--thoth-ui-margin);
+    margin-top: 400px;
 
     max-height: calc(100% - (var(--thoth-ui-margin)*2));
 

@@ -3,7 +3,7 @@
     THOTH
     History Functionalities
 
-    Author: steliosalvasno@gmail.com
+    Author: steliosalvanos@gmail.com
 
 ===========================================================================*/
 let History = {};

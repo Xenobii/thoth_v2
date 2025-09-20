@@ -3,7 +3,7 @@
     THOTH
     Toolbox Functalities
 
-    Author: steliosalvasno@gmail.com
+    Author: steliosalvanos@gmail.com
 
 ===========================================================================*/
 const { INTERSECTED, NOT_INTERSECTED, CONTAINED } = window.ThreeMeshBVH;
@@ -245,6 +245,10 @@ Toolbox.endEraser = () => {
 
 
 // Lasso
+
+Toolbox.setLassoPrecision = () => {
+    
+};
 
 Toolbox.cleanupLasso = () => {
     if (!Toolbox.lassoCtx) return;

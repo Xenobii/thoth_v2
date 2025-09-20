@@ -24,14 +24,11 @@ Scene.setup = (sid) => {
         Scene.root.traverse(obj => {
             if (obj.isMesh && !mesh) {
                 mesh = obj;
-                // console.log(mesh)
             }
         });
         return mesh;
     };
     Scene.mainMesh = getMainMesh();
-    
-    Scene.importLayers();
     
     Scene.activeLayer = undefined;
 };
@@ -39,29 +36,12 @@ Scene.setup = (sid) => {
 
 // Import/Export
 
-Scene.importLayers = () => {
-    console.log("Importing annotation layers...");
-
-    const layers = Scene.currData.layers;
-    if (layers === undefined) return;
-
-    // Convert layer selections from arrays to sets
-    // Object.values(layers).forEach((layer) => {
-    //     if (layer.selection === undefined) return;
-    //     layer.selection = new Set(layer.selection);
-    // });
-};
-
 Scene.exportLayers = () => {
     console.log("Exporting changes...");
 
     let A = {};
     A.layers = structuredClone(Scene.currData.layers);
     A.objectDescriptor = structuredClone(Scene.currData.objectDescriptor);
-
-    // Object.values(A.layers).forEach((layer) => {
-    //     layer.selection = Array.from(layer.selection);
-    // });
 
     // Remove all annotation objects and ADD them again with changes
     Scene.patch(A, THOTH.Scene.MODE_DEL, () => {});
@@ -89,7 +69,7 @@ Scene.patch = (patch, mode, onComplete)=>{
     O = null;
 
     $.ajax({
-        url: ATON.PATH_RESTAPI2 + "scenes/"+sid, //ATON.PATH_RESTAPI+"edit/scene",
+        url: ATON.PATH_RESTAPI2 + "scenes/"+sid,
         type:"PATCH",
         data: jstr,
         contentType:"application/json; charset=utf-8",
@@ -183,7 +163,6 @@ Scene.syncScene = (layers) => {
     if (layers === undefined) return;
     
     Object.values(layers).forEach(layer => {
-        layer.selection = new Set(layer.selection);
         THOTH.UI.createLayer(layer.id);
     });
 

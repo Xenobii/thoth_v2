@@ -54,6 +54,8 @@ UI.setupToolbars = () => {
     UI._elTopToolbar    = ATON.UI.get("topToolbar");
     UI._elUserToolbar   = ATON.UI.get("userToolbar");
     UI._elMainToolbar   = ATON.UI.get("mainToolbar");
+
+    UI._elToolOptionsToolbar = ATON.UI.get("toolOptToolbar");
 };
 
 UI.populateToolbars = () => {
@@ -64,13 +66,13 @@ UI.populateToolbars = () => {
         UI.createLayersButton(),
         UI.createExportButton(),
     );
-
+    
     // User Toolbar
     UI._elUserToolbar.append(
         UI.createUserButton(),
         UI.createVRCButton()
     );
-
+    
     // Main Toolbar
     UI._elMainToolbar.append(
         UI.createBrushButton(),
@@ -80,23 +82,32 @@ UI.populateToolbars = () => {
         UI.createUndoButton(),
         UI.createRedoButton()
     );
+    
+    // Tool options
+    UI._elToolOptionsToolbar.append(
+        UI.createBrushOptions(),
+        UI.createLassoOptions(),
+    );
+
+    // Manage visibility
+    UI.hideBrushOptions();
+    UI.hideLassoOptions();
 };
 
 
 // Side Panels
 
 UI.setupPanels = () => {
-    UI._elOptionsPanel = UI.createPanelOptions();
-    UI._elLayersPanel = UI.createPanelLayers();
-
+    UI._elOptionsPanel      = UI.createPanelOptions();
+    UI._elLayersPanel       = UI.createPanelLayers();
 };
 
 UI.createPanelOptions = () => {
     ATON.UI.setSidePanelLeft();
 
     let elOptionsBody = ATON.UI.createContainer();
-    let elMode = ATON.UI.createContainer();
-    let elMaps = ATON.UI.createContainer();
+    let elMode  = ATON.UI.createContainer();
+    let elMaps  = ATON.UI.createContainer();
 
     // Mode container
     elMode.append(ATON.UI.createButton({
@@ -126,26 +137,12 @@ UI.createPanelOptions = () => {
         ]
     }));
     
-    return elOptionsBody
+    return elOptionsBody;
 };
 
-UI.createPanelHistory = () => {
-    ATON.UI.setSidePanelLeft();
-
-    let elMainBody  = ATON.UI.createContainer();
-    let elList      = ATON.UI.createContainer();
-
-    elMainBody.append(elList);
-
-    return elMainBody;
-};
-
-UI.showPanelOptions = () => {
-    ATON.UI.showSidePanel({
-        header  : "Options",
-        body    : UI._elOptionsPanel
-    });
-};
+UI.showPanelBrushOptions = () => {
+    ATON.UI.showElement(UI._elOptionsPanel);
+};  
 
 UI.createPanelLayers = () => {
     ATON.UI.setSidePanelRight();
@@ -214,10 +211,7 @@ UI.createUserButton = ()=>{
 UI.createBrushButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "brush.png",
-        onpress : () => {
-            THOTH.Toolbox.activateBrush();
-            THOTH.setUserControl(false);
-        },
+        onpress : () => THOTH.fire("selectBrush"),
         tooltip : "Brush tool"
     });
 };
@@ -225,10 +219,7 @@ UI.createBrushButton = () => {
 UI.createEraserButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "eraser.png",
-        onpress : () => {
-            THOTH.Toolbox.activateEraser();
-            THOTH.setUserControl(false);
-        },
+        onpress : () => THOTH.fire("selectEraser"),
         tooltip : "Eraser tool"
     });
 };
@@ -236,10 +227,7 @@ UI.createEraserButton = () => {
 UI.createLassoButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "lasso.png",
-        onpress : () => {
-            THOTH.Toolbox.activateLasso();
-            THOTH.setUserControl(false);
-        },
+        onpress : () => THOTH.fire("selectLasso"),
         tooltip : "Lasso tool"
     });
 };
@@ -247,10 +235,7 @@ UI.createLassoButton = () => {
 UI.createNoToolButton = () => {
     return ATON.UI.createButton({
         icon    : UI.PATH_RES_ICONS + "none.png",
-        onpress : () => {
-            THOTH.Toolbox.deactivate();
-            THOTH.setUserControl(true);
-        },
+        onpress : () => THOTH.fire("selectNone"),
     });
 };
 
@@ -301,6 +286,70 @@ UI.createTestButton = () => {
         onpress : () => UI.Test(),
         tooltip : "test"   
     });
+};
+
+
+// Tool options
+
+UI.createBrushOptions = () => {
+    UI._elOptionsBrush = ATON.UI.createContainer();
+
+    // Size
+    UI._elOptionsBrush.append(ATON.UI.createSlider({
+        label   : "Size",
+        range   : [0, 10],
+        value   : THOTH.Toolbox.selectorSize,
+        oninput : (v) => THOTH.Toolbox.setSelectorSize(v),
+    }));
+
+    return UI._elOptionsBrush;
+};
+
+UI.createLassoOptions = () => {
+    UI._elOptionsLasso = ATON.UI.createContainer();
+    
+    UI._elOptionsLasso.append(
+        // Lasso Precision
+        ATON.UI.createSlider({
+            label   : "Precision",
+            range   : [0.1, 1],
+            value   : THOTH.Toolbox.lassoPrecision,
+            step    : 0.1,
+            oninput : (v) => THOTH.Toolbox.lassoPrecision = v,
+        }),
+        // Normal Threshold
+        ATON.UI.createSlider({
+            label   : "Normal threshold",
+            range   : [-1, 1],
+            step    : 0.1,
+            value   : THOTH.Toolbox.normalThreshold,
+            oninput : (v) => THOTH.Toolbox.normalThreshold = v,
+        }),
+        // Select Obstructed Faces
+        ATON.UI.createButton({
+            text    : "Select occluded faces",
+            onpress : () => THOTH.Toolbox.selectObstructedFaces = !THOTH.Toolbox.selectObstructedFaces,
+            tooltip : "Select occluded faces",
+        }),
+    )
+
+    return UI._elOptionsLasso;
+};
+
+UI.showBrushOptions = () => {
+    ATON.UI.showElement(UI._elOptionsBrush);
+};
+
+UI.hideBrushOptions = () => {
+    ATON.UI.hideElement(UI._elOptionsBrush);
+};
+
+UI.showLassoOptions = () => {
+    ATON.UI.showElement(UI._elOptionsLasso);
+};
+
+UI.hideLassoOptions = () => {
+    ATON.UI.hideElement(UI._elOptionsLasso);
 };
 
 
