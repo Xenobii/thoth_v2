@@ -358,7 +358,7 @@ Events.setupToolboxEvents = () => {
         // Get only faces that don't already belong to layer
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endBrush();
-        
+
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_ADD,
             id,
@@ -392,7 +392,7 @@ Events.setupToolboxEvents = () => {
         // Get only faces that don't already belong to layer
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endEraser();
-        
+
         THOTH.History.pushAction(
             THOTH.History.ACTIONS.SELEC_DEL,
             id,

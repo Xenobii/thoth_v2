@@ -46,10 +46,10 @@ Scene.importLayers = () => {
     if (layers === undefined) return;
 
     // Convert layer selections from arrays to sets
-    Object.values(layers).forEach((layer) => {
-        if (layer.selection === undefined) return;
-        layer.selection = new Set(layer.selection);
-    });
+    // Object.values(layers).forEach((layer) => {
+    //     if (layer.selection === undefined) return;
+    //     layer.selection = new Set(layer.selection);
+    // });
 };
 
 Scene.exportLayers = () => {
@@ -59,9 +59,9 @@ Scene.exportLayers = () => {
     A.layers = structuredClone(Scene.currData.layers);
     A.objectDescriptor = structuredClone(Scene.currData.objectDescriptor);
 
-    Object.values(A.layers).forEach((layer) => {
-        layer.selection = Array.from(layer.selection);
-    });
+    // Object.values(A.layers).forEach((layer) => {
+    //     layer.selection = Array.from(layer.selection);
+    // });
 
     // Remove all annotation objects and ADD them again with changes
     Scene.patch(A, THOTH.Scene.MODE_DEL, () => {});
@@ -125,7 +125,7 @@ Scene.createLayer = (id) => {
         id              : id,
         name            : "New Layer",
         description     : " ",
-        selection       : new Set(),
+        selection       : [],
         visible         : true,
         highlightColor  : THOTH.Utils.getHighlightColor(id),
         trash           : false

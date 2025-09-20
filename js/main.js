@@ -137,7 +137,7 @@ THOTH.parseAtonElements = () => {
 // Visualization
 
 THOTH.highlightSelection = (selection, highlightColor, mesh) => {
-    if (selection === undefined || selection.size === 0) return;
+    if (selection?.size === 0) return;
     if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
     
     const colorAttr = mesh.geometry.attributes.color;

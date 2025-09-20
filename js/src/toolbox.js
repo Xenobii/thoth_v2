@@ -194,31 +194,19 @@ Toolbox.selectMultipleFaces = (mesh) => {
 };
 
 Toolbox.addFacesToSelection = (newFaces, selection) => {
-    if (newFaces === undefined || !newFaces.length) return;
+    if (!newFaces?.length) return;
     
     const newSelection = new Set(selection)
-    const newFacesSet  = new Set(newFaces);
-        
-    newFacesSet.forEach(f => {
-        if (!newSelection.has(f)) {
-            newSelection.add(f);
-        }
-    });
+    newFaces.forEach(f => newSelection.add(f));
 
     return newSelection;
 };
 
 Toolbox.delFacesFromSelection = (newFaces, selection) => {
-    if (newFaces === undefined || !newFaces.length) return;
+    if (!newFaces?.length) return;
     
     const newSelection = new Set(selection);
-    const newFacesSet  = new Set(newFaces);
-
-    newFacesSet.forEach(f => {
-        if (newSelection.has(f)) {
-            newSelection.delete(f);
-        }
-    });
+    newFaces.forEach(f => newSelection.delete(f));;
 
     return newSelection;
 };
@@ -229,6 +217,7 @@ Toolbox.brushActive = () => {
     const newFaces          = Toolbox.selectMultipleFaces();
     const highlightColor    = THOTH.Utils.hex2rgb(THOTH.Scene.activeLayer.highlightColor);
     Toolbox.tempSelection   = Toolbox.addFacesToSelection(newFaces, Toolbox.tempSelection);
+
     if (!THOTH.Scene.activeLayer.visible) return;
     THOTH.highlightSelection(newFaces, highlightColor);
 };
@@ -237,18 +226,21 @@ Toolbox.eraserActive = () => {
     const newFaces = Toolbox.selectMultipleFaces();
     const highlightColor = THOTH.Utils.hex2rgb('#ffffff');
     Toolbox.tempSelection = Toolbox.addFacesToSelection(newFaces, Toolbox.tempSelection);
+
     if (!THOTH.Scene.activeLayer.visible) return;
     THOTH.highlightSelection(newFaces, highlightColor);
 };
 
 Toolbox.endBrush = () => {
     // Get only faces that don't already belong to layer
-    return [...Toolbox.tempSelection].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
+    const activeLayerSelection = new Set(THOTH.Scene.activeLayer.selection);
+    return [...Toolbox.tempSelection].filter(f => !activeLayerSelection.has(f));
 };
 
 Toolbox.endEraser = () => {
     // Get only faces that already belong to layer
-    return [...Toolbox.tempSelection].filter(f => THOTH.Scene.activeLayer.selection.has(f));
+    const activeLayerSelection = new Set(THOTH.Scene.activeLayer.selection);
+    return [...Toolbox.tempSelection].filter(f => activeLayerSelection.has(f));
 };
 
 
@@ -291,12 +283,13 @@ Toolbox.updateLasso = () => {
 };
 
 Toolbox.endLassoAdd = () => {
-    const newFaces2 = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
+    const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
 
-    if (newFaces2 === undefined || newFaces2.length === 0) return;
+    if (!newFaces?.length) return;
 
     // Get only faces that don't already belong to the layer
-    const faces = [...newFaces2].filter(f => !THOTH.Scene.activeLayer.selection.has(f));
+    const selection = new Set(THOTH.Scene.activeLayer.selection);
+    const faces = newFaces.filter(f => !selection.has(f));
 
     Toolbox.cleanupLasso();
     Toolbox._lassoIsActive = false;
@@ -306,10 +299,12 @@ Toolbox.endLassoAdd = () => {
 
 Toolbox.endLassoDel = () => {
     const newFaces = Toolbox.processLassoSelection(THOTH.Scene.mainMesh);
-    if (newFaces === undefined && newFaces.length === 0) return;
+    
+    if (!newFaces?.length === 0) return;
 
     // Get only faces that already belong to layer
-    const faces = [...newFaces].filter(f => THOTH.Scene.activeLayer.selection.has(f));
+    const selection = new Set(THOTH.Scene.activeLayer.selection);
+    const faces = newFaces.filter(f => selection.has(f));
 
     Toolbox.cleanupLasso();
     Toolbox._lassoIsActive = false;
