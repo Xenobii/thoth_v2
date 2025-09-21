@@ -29,8 +29,95 @@ Scene.setup = (sid) => {
         return mesh;
     };
     Scene.mainMesh = getMainMesh();
+
+    Scene.getSchemaJSON();
     
     Scene.activeLayer = undefined;
+};
+
+
+// Data schema
+
+Scene.getSchemaJSON = () => {
+    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+        let check = Scene.validateSchema(data);
+        if (!check) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
+        
+        Scene.currData.objectMetadata = Scene.createPropertiesfromSchema(data);
+    });
+};
+
+Scene.validateSchema = (data) => {
+    let check = true;
+
+    for (const key in data) {
+        if (key === "required") continue;
+
+        const attr = data[key];
+        if (attr["type"]) {
+            switch (attr.type.toLowerCase()) {
+                case "string":
+                    break;
+                case "integer":
+                    break;
+                case "float": 
+                    break;
+                case "bool": 
+                    break;
+                case "enum":
+                    break;
+                case "enum-multiple": 
+                    break;
+                default: 
+                    check = false;
+            }
+        }
+        else if (typeof attr === "object") {
+            check = Scene.validateSchema(attr);
+        }
+        else check = false;
+    }
+    return check;
+};
+
+Scene.createPropertiesfromSchema = (data) => {
+    // Annotation object
+    let A = {};
+
+    for (const key in data) {
+        if (key === "required") continue;
+
+        const attr = data[key];
+        if (attr["type"]) {
+            switch (attr.type.toLowerCase()) {
+                case "string":
+                    A[key] = "-";
+                    break;
+                case "integer":
+                    A[key] = 0;
+                    break;
+                case "float": 
+                    A[key] = 0.0;
+                    break;
+                case "bool": 
+                    A[key] = false;
+                    break;
+                case "enum":
+                    A[key] = "-";
+                    break;
+                case "enum-multiple": 
+                    A[key] = [];
+                    break;
+                default: 
+                    A[key] = null;
+                    break;
+            }
+        }
+        else if (typeof attr === "object") {
+            A[key] = Scene.createPropertiesfromSchema(attr);
+        }
+    }
+    return A;
 };
 
 
@@ -41,19 +128,18 @@ Scene.exportLayers = () => {
 
     let A = {};
     A.layers = structuredClone(Scene.currData.layers);
-    A.objectDescriptor = structuredClone(Scene.currData.objectDescriptor);
+    A.objectMetadata = structuredClone(Scene.currData.objectMetadata);
 
     // Remove all annotation objects and ADD them again with changes
-    Scene.patch(A, THOTH.Scene.MODE_DEL, () => {});
+    Scene.patch(A, Scene.MODE_DEL, () => {});
     
     // Patch changes
-    Scene.patch(A, THOTH.Scene.MODE_ADD, () => {
+    Scene.patch(A, Scene.MODE_ADD, () => {
         THOTH.UI.showToast("Changes exported successfully");
     }, (error) => {
         THOTH.UI.showToast("Export failed: " + error);
     });
 };
-
 
 Scene.patch = (patch, mode, onComplete, onFail)=>{
     if (patch === undefined) return;
@@ -110,12 +196,15 @@ Scene.createLayer = (id) => {
     let layer = {
         id              : id,
         name            : "New Layer",
-        description     : " ",
+        metadata        : null,
         selection       : [],
         visible         : true,
         highlightColor  : THOTH.Utils.getHighlightColor(id),
         trash           : false
     };
+    $.getJSON(Scene.schemaPath, (data) => {
+        layer.metadata = Scene.createPropertiesfromSchema(data);
+    });
     
     layers[id] = layer;
 };

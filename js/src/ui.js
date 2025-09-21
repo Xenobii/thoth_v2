@@ -9,8 +9,6 @@
 let UI = {}
 
 
-UI.PATH_RES_ICONS = "../thoth_v2/js/res/icons/";
-
 
 // Setup
 
@@ -113,12 +111,12 @@ UI.createPanelOptions = () => {
 
     // Mode container
     elMode.append(ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "dark-mode.png",
+        icon    : THOTH.PATH_RES_ICONS + "dark-mode.png",
         onpress : () => UI.setTheme("dark"),
         tooltip : "Set to dark mode"
     }));
     elMode.append(ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "light-mode.png",
+        icon    : THOTH.PATH_RES_ICONS + "light-mode.png",
         onpress : () => UI.setTheme("light"),
         tooltip : "Set to light mode"
     }));
@@ -176,7 +174,7 @@ UI.showPanelLayers = () => {
 
 UI.createTextailesButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "textailes.png",
+        icon    : THOTH.PATH_RES_ICONS + "textailes.png",
         text    : "TEXTaiLES",
         onpress : () => window.open("https://www.echoes-eccch.eu/textailes/", "_blank"),
         tooltip : "Go to the TEXTaiLES website"
@@ -215,7 +213,7 @@ UI.createUserButton = ()=>{
 
 UI.createBrushButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "brush.png",
+        icon    : THOTH.PATH_RES_ICONS + "brush.png",
         onpress : () => THOTH.fire("selectBrush"),
         tooltip : "Brush tool"
     });
@@ -223,7 +221,7 @@ UI.createBrushButton = () => {
 
 UI.createEraserButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "eraser.png",
+        icon    : THOTH.PATH_RES_ICONS + "eraser.png",
         onpress : () => THOTH.fire("selectEraser"),
         tooltip : "Eraser tool"
     });
@@ -231,7 +229,7 @@ UI.createEraserButton = () => {
 
 UI.createLassoButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "lasso.png",
+        icon    : THOTH.PATH_RES_ICONS + "lasso.png",
         onpress : () => THOTH.fire("selectLasso"),
         tooltip : "Lasso tool"
     });
@@ -239,14 +237,14 @@ UI.createLassoButton = () => {
 
 UI.createNoToolButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "none.png",
+        icon    : THOTH.PATH_RES_ICONS + "none.png",
         onpress : () => THOTH.fire("selectNone"),
     });
 };
 
 UI.createUndoButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "undo.png",
+        icon    : THOTH.PATH_RES_ICONS + "undo.png",
         onpress : () => THOTH.History.undo(),
         tooltip : "Undo"
     });
@@ -254,7 +252,7 @@ UI.createUndoButton = () => {
 
 UI.createRedoButton = () => {
     return ATON.UI.createButton({
-        icon    : UI.PATH_RES_ICONS + "redo.png",
+        icon    : THOTH.PATH_RES_ICONS + "redo.png",
         onpress : () => THOTH.History.redo(),
         tooltip : "Undo"
     });
