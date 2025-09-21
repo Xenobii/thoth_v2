@@ -295,6 +295,11 @@ Events.setupUIEvents = () => {
         );
     });
 
+    // Edit Layer metadata
+    THOTH.on("editMetadata", (id) => {
+        
+    });
+
     // Brush
     THOTH.on("selectBrush", () => {
         THOTH.Toolbox.activateBrush();

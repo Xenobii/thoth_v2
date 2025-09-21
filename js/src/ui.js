@@ -121,9 +121,16 @@ UI.createPanelOptions = () => {
         tooltip : "Set to light mode"
     }));
 
+    // Mapping container
+    elMaps.append(ATON.UI.createButton({
+        icon    : THOTH.PATH_RES_ICONS + "light-mode.png",
+        onpress : () => console.log("placeholder")
+    }));
+
     // Options container
     elOptionsBody.append(ATON.UI.createTreeGroup({
-        items: [
+        items: 
+        [
             {
                 title   : "Mode",
                 open    : false,
@@ -374,7 +381,7 @@ UI.createLayer = (id) => {
     const elLayer = UI.createLayerController(id);
 
     // Add to panel
-    UI._elLayersPanel.append(elLayer);
+    UI.elLayerList.append(elLayer);
 
     // Add to layer list
     UI.layerElements.set(id, elLayer);
@@ -400,25 +407,37 @@ UI.createLayerController = (id) => {
     let layer = THOTH.Scene.currData.layers[id];
 
     const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
+    // Visibility
     const elVis = ATON.UI.createButton({
         icon    : "visibility",
         size    : "small",
         onpress : () => THOTH.toggleLayerVisibility(id)
     });
+    // Name
     const elName = ATON.UI.createButton({
         text    : layer.name,
         size    : "small",
         onpress : () => THOTH.Scene.activeLayer = layer,
     });
+    // Delete
     const elDel = ATON.UI.createButton({
         icon    : "trash",
         size    : "small",
         onpress : () => THOTH.fire("deleteLayer", (id))
     });
+    // Metadata
+    const elMetadata = ATON.UI.createButton({
+        text    : "Edit metadata",
+        variant : "dark",
+        icon    : "list",
+        size    : "small",
+        onpress : () => UI.modalMetadata(id),
+    });
 
     elLayerController.append(
         elVis,
         elName,
+        elMetadata,
         elDel,
     );
 
@@ -467,10 +486,9 @@ UI.showToast = (message, timeout = 2500) => {
 };
 
 
-// Other 
+// Modals
 
-UI.modalUser = ()=>{
-
+UI.modalUser = () => {
     ATON.checkAuth(
         // Logged
         (u)=>{
@@ -510,6 +528,108 @@ UI.modalUser = ()=>{
         }
     );
 };
+
+UI.modalMetadata = (id) => {
+    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+        let elMetadataBody = UI.createMetadataEditor(data)
+        ATON.UI.showModal({
+            header  : "Edit metadata",
+            body    : elMetadataBody
+        });
+    });
+    
+};
+
+
+// Other
+
+UI.createMetadataEditor = (data) => {
+    let elData = ATON.UI.createContainer();
+    
+    // Properties creation logic
+    for (const key in data) {
+        if (key === "required") continue;
+        
+        let elAttr = null;
+        const attr = data[key];
+        
+        if (attr["type"]) {
+            switch (attr.type.toLowerCase()) {
+                case "string":
+                    elAttr = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => console.log("placeholder" + v)
+                    });
+                    break;
+                case "integer":
+                    elAttr = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => console.log("placeholder" + v)
+                    });
+                    break;
+                case "float" :
+                    elAttr = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => console.log("placeholder" + v)
+                    });
+                    break;
+                case "bool":
+                    elAttr = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => console.log("placeholder" + v)
+                    });
+                    break;
+                case "enum":
+                    elAttr = ATON.UI.createContainer();
+                    
+                    const elDisplay = ATON.UI.createContainer();
+                    elDisplay.textContent = attr.value[0];
+                    
+                    const elDropdown = ATON.UI.createDropdown({
+                        title   : key,
+                        items   : attr.value.map(option => ({
+                            el  : ATON.UI.createButton({
+                                text    : option,
+                                onpress : () => {
+                                    elDisplay.textContent = option
+                                }
+                            })
+                        }))
+                    });
+                    elAttr.append(elDropdown, elDisplay);
+                    break;
+                case "enum-multiple":
+                    elAttr = ATON.UI.createContainer();
+                    for (const option of attr.value) {
+                        elAttr.append(ATON.UI.createButton({
+                            text    : option,
+                            onpress : () => {console.log(option)}
+                        }));
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        else if (typeof attr === "object") {
+            elAttr = ATON.UI.createTreeGroup({
+                items: 
+                [
+                    {
+                        title   : key,
+                        open    : false,
+                        content : UI.createMetadataEditor(attr)
+                    }
+                ]
+            });
+        }
+        if (elAttr) {
+            elData.append(elAttr);
+        }
+    }
+    return elData;
+};
+
 
 UI.Test = () => {
     let test = THOTH.Toolbox.paused;

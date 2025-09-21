@@ -63,6 +63,33 @@
     backdrop-filter: blur(var(--aton-blur-radius));
 }
 
+.thoth-layer {
+    padding: 4px;
+    display: block;
+
+    white-space: nowrap;
+
+    margin: 2px;
+
+    background-color: rgba(var(--bs-body-bg-rgb), 0.5);
+
+    border-radius: var(--bs-border-radius);
+
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.thoth-layer:hover {
+    background-color: rgba(var(--bs-body-bg-rgb), 1.0);
+}
+
+.thoth-layer-hidden {
+    opacity: 0.5;
+}
+
 .deleted-layer {
     display: none;
 }
