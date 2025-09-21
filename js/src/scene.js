@@ -48,12 +48,14 @@ Scene.exportLayers = () => {
     
     // Patch changes
     Scene.patch(A, THOTH.Scene.MODE_ADD, () => {
-        console.log("Success!");
+        THOTH.UI.showToast("Changes exported successfully");
+    }, (error) => {
+        THOTH.UI.showToast("Export failed: " + error);
     });
 };
 
 
-Scene.patch = (patch, mode, onComplete)=>{
+Scene.patch = (patch, mode, onComplete, onFail)=>{
     if (patch === undefined) return;
     if (mode === undefined) mode = Scene.MODE_ADD;
 
@@ -78,6 +80,10 @@ Scene.patch = (patch, mode, onComplete)=>{
         success: (r)=>{
             if (r) Scene.currData = r;
             if (onComplete) onComplete();
+        },
+
+        error:  (xhr, status, error) => {
+            if (onFail) onFail(error);
         }
     });
 };

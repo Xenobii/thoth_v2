@@ -20,6 +20,8 @@ UI.setup = () => {
 
     UI.setupPanels();
     UI.setupLayerElements();
+
+    UI.setupToast();
 };
 
 
@@ -140,8 +142,11 @@ UI.createPanelOptions = () => {
     return elOptionsBody;
 };
 
-UI.showPanelBrushOptions = () => {
-    ATON.UI.showElement(UI._elOptionsPanel);
+UI.showPanelOptions = () => {
+    ATON.UI.showSidePanel({
+        header  : "Layers",
+        body    : UI._elOptionsPanel
+    });
 };  
 
 UI.createPanelLayers = () => {
@@ -427,6 +432,42 @@ UI.showLayerAttributes = (id) => {
 };
 
 
+// Toast
+
+UI.setupToast = () => {
+    UI._elToast = UI.createToast();
+    ATON.UI.hideElement(UI._elToast);
+};
+
+UI.createToast = () => {
+    const elToastBody = ATON.UI.createContainer({
+        id      : "toast",
+        classes : "thoth-toast", 
+    });
+
+    elToastBody.message = document.createElement("span");
+    elToastBody.appendChild(elToastBody.message);
+    document.body.appendChild(elToastBody);
+    
+    return elToastBody;
+};
+
+UI.showToast = (message, timeout = 2500) => {
+    ATON.UI.showElement(UI._elToast)
+    UI._elToast.message.textContent = message;
+    UI._elToast.style.display = "block";
+    UI._elToast.style.opacity = 1;
+
+    if (UI._toastTimeout) clearTimeout(UI._toastTimeout)
+
+    UI._toastTimeout = setTimeout(() => {
+        UI._elToast.style.opacity = 0;
+        setTimeout(() => {
+            ATON.UI.hideElement(UI._elToast);
+        }, 300)
+    }, timeout)
+};
+
 
 // Other 
 
@@ -475,6 +516,7 @@ UI.modalUser = ()=>{
 UI.Test = () => {
     let test = THOTH.Toolbox.paused;
     console.log(test)
+    UI.showToast("test");
 };
 
 

@@ -66,18 +66,28 @@ Events.setupInputEL = () => {
 Events.setupActiveEL = () => {
     // Mouse left click
     THOTH.on("MouseLeftDown", () =>{
-        if (!Events.activeLayerExists()) return;
-        
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
+            if (!Events.activeLayerExists()) {
+                THOTH.UI.showToast("No Layer Selected");
+                return;
+            }
             THOTH.fire("useBrush");
         }
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
+            if (!Events.activeLayerExists()) {
+                THOTH.UI.showToast("No Layer Selected");
+                return;
+            }
             THOTH.fire("useEraser");
         }
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
+            if (!Events.activeLayerExists()) {
+                THOTH.UI.showToast("No Layer Selected");
+                return;
+            }
             THOTH.fire("startLasso");
         }
     });
@@ -100,18 +110,28 @@ Events.setupActiveEL = () => {
     
     // Mouse right click
     THOTH.on("MouseRightDown", () => {
-        if (!Events.activeLayerExists()) return;
-        
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
+            if (!Events.activeLayerExists()) {
+                THOTH.UI.showToast("No Layer Selected");
+                return;
+            }
             THOTH.fire("startEraser");
         }
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
+            if (!Events.activeLayerExists()) {
+                THOTH.UI.showToast("No Layer Selected");
+                return;
+            }
             THOTH.fire("startBrush");
         }
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
+            if (!Events.activeLayerExists()) {
+                THOTH.UI.showToast("No Layer Selected");
+                return;
+            }
             THOTH.fire("startLasso");
         }
     });
@@ -178,16 +198,13 @@ Events.setupActiveEL = () => {
     THOTH.on("KeyDown", (k) => {
         // Tools
         if (k === "KeyB") {
-            THOTH.Toolbox.activateBrush();
-            THOTH.setUserControl(false);
+            THOTH.fire("selectBrush")
         }
         if (k === "KeyE") {
-            THOTH.Toolbox.activateEraser();
-            THOTH.setUserControl(false);
+            THOTH.fire("selectEraser")
         }
         if (k === "KeyL") {
-            THOTH.Toolbox.activateLasso();
-            THOTH.setUserControl(false);
+            THOTH.fire("seletLasso")
         }
 
         // History
@@ -277,6 +294,39 @@ Events.setupUIEvents = () => {
             id
         );
     });
+
+    // Brush
+    THOTH.on("selectBrush", () => {
+        THOTH.Toolbox.activateBrush();
+        THOTH.setUserControl(false);
+        THOTH.UI.showBrushOptions();
+        THOTH.UI.hideLassoOptions();
+    });
+
+    // Eraser
+    THOTH.on("selectEraser", () => {
+        THOTH.Toolbox.activateEraser();
+        THOTH.setUserControl(false);
+        THOTH.UI.showBrushOptions();
+        THOTH.UI.hideLassoOptions();
+    });
+
+    // Lasso add
+    THOTH.on("selectLasso", () => {
+        THOTH.Toolbox.activateLasso();
+        THOTH.setUserControl(false);
+        THOTH.UI.showLassoOptions();
+        THOTH.UI.hideBrushOptions();
+    });
+
+    // Select no tool
+    THOTH.on("selectNone", () => {
+        THOTH.Toolbox.deactivate();
+        THOTH.setUserControl(true);
+        THOTH.UI.hideBrushOptions();
+        THOTH.UI.hideLassoOptions();
+        THOTH.Toolbox.cleanupLasso();
+    });
 };
 
 Events.setupSceneEvents = () => {
@@ -364,13 +414,6 @@ Events.setupSceneEvents = () => {
 };
 
 Events.setupToolboxEvents = () => {
-    // Brush
-    THOTH.on("selectBrush", () => {
-        THOTH.Toolbox.activateBrush();
-        THOTH.setUserControl(false);
-        THOTH.UI.showBrushOptions();
-        THOTH.UI.hideLassoOptions();
-    });
     THOTH.on("useBrush", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         if (THOTH.Toolbox.tempSelection === null) THOTH.Toolbox.tempSelection = new Set();
@@ -405,14 +448,7 @@ Events.setupToolboxEvents = () => {
 
         THOTH.Toolbox.tempSelection = null;
     });
-
-    // Eraser
-    THOTH.on("selectEraser", () => {
-        THOTH.Toolbox.activateEraser();
-        THOTH.setUserControl(false);
-        THOTH.UI.showBrushOptions();
-        THOTH.UI.hideLassoOptions();
-    });
+    
     THOTH.on("useEraser", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         if (THOTH.Toolbox.tempSelection === null) THOTH.Toolbox.tempSelection = new Set();
@@ -449,13 +485,6 @@ Events.setupToolboxEvents = () => {
         THOTH.Toolbox.tempSelection = null;
     });
 
-    // Lasso add
-    THOTH.on("selectLasso", () => {
-        THOTH.Toolbox.activateLasso();
-        THOTH.setUserControl(false);
-        THOTH.UI.showLassoOptions();
-        THOTH.UI.hideBrushOptions();
-    });
     THOTH.on("startLasso", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         THOTH.Toolbox.startLasso();
@@ -511,15 +540,6 @@ Events.setupToolboxEvents = () => {
         THOTH.updateVisibility();
 
         THOTH.Toolbox.tempSelection = null;
-    });
-
-    // No tool
-    THOTH.on("selectNone", () => {
-        THOTH.Toolbox.deactivate();
-        THOTH.setUserControl(true);
-        THOTH.UI.hideBrushOptions();
-        THOTH.UI.hideLassoOptions();
-        THOTH.Toolbox.cleanupLasso();
     });
 };
 
