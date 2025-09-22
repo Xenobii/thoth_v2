@@ -296,8 +296,26 @@ Events.setupUIEvents = () => {
     });
 
     // Edit Layer metadata
-    THOTH.on("editMetadata", (id) => {
-        
+    THOTH.on("editMetadata", (l) => {
+        const id    = l.id;
+        const data  = l.data;
+
+
+        THOTH.fire("editLayerScene", ({
+            id      : id,
+            attr    : "metadata",
+            value   : data
+        }));
+        THOTH.firePhoton("editLayerScene", ({
+            id      : id,
+            attr    : "metadata",
+            value   : data
+        }));
+        THOTH.History.pushAction(
+            THOTH.History.ACTIONS.EDIT_METADATA,
+            id,
+            data,
+        );
     });
 
     // Brush
@@ -353,7 +371,7 @@ Events.setupSceneEvents = () => {
         const id    = l.id;
         const attr  = l.attr;
         const value = l.value;
-        THOTH.editLayer(id, attr, value);
+        THOTH.Scene.editLayer(id, attr, value);
     });
     
     THOTH.on("addToSelectionScene", (l) => {

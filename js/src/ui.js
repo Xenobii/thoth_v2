@@ -161,6 +161,7 @@ UI.createPanelLayers = () => {
     UI.elLayerList = ATON.UI.createContainer();
 
     elLayersBody.append(
+        UI.createObjectController(),
         UI.createNewLayerButton(),
         UI.createTestButton(),
         UI.elLayerList,
@@ -403,6 +404,28 @@ UI.resurrectLayer = (id) => {
     elLayer.classList.add("aton-layer");
 };
 
+UI.createObjectController = () => {
+    const elObjectController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
+    // Name
+    const elName = ATON.UI.createButton({
+        text    : "Object",
+        size    : "small",
+    });
+    // Metadata
+    const elMetadata = ATON.UI.createButton({
+        text    : "Edit metadata",
+        variant : "dark",
+        icon    : "list",
+        size    : "small",
+        onpress : () => UI.showToast("TBI"),
+    });
+    elObjectController.append(
+        elName,
+        elMetadata,
+    );
+    return elObjectController;
+};
+
 UI.createLayerController = (id) => {
     let layer = THOTH.Scene.currData.layers[id];
 
@@ -475,7 +498,7 @@ UI.showToast = (message, timeout = 2500) => {
     UI._elToast.style.display = "block";
     UI._elToast.style.opacity = 1;
 
-    if (UI._toastTimeout) clearTimeout(UI._toastTimeout)
+    if (UI._toastTimeout) clearTimeout(UI._toastTimeout);
 
     UI._toastTimeout = setTimeout(() => {
         UI._elToast.style.opacity = 0;
@@ -530,86 +553,140 @@ UI.modalUser = () => {
 };
 
 UI.modalMetadata = (id) => {
+    const data_temp = structuredClone(THOTH.Scene.currData.layers[id].metadata);
     $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
-        let elMetadataBody = UI.createMetadataEditor(data)
+        // Main body
+        let elMetadataBody = UI.createMetadataEditor(data, data_temp);
+        // Buttons
+        let elMetadataFooter = ATON.UI.createContainer();
+        // OK Button
+        let l   = {};
+        l.id    = id;
+        l.data  = data_temp;
+        elMetadataFooter.append(ATON.UI.createButton({
+            text    : "Save changes",
+            size    : "large",
+            variant : "success",
+            onpress : () => {
+                THOTH.fire("editMetadata", l);
+                ATON.UI.hideModal();
+            }
+        }));
+        // Cancel
+        elMetadataFooter.append(ATON.UI.createButton({
+            text    : "Cancel",
+            size    : "large",
+            variant : "secondary",
+            onpress : () => ATON.UI.hideModal(),
+        }));
         ATON.UI.showModal({
             header  : "Edit metadata",
-            body    : elMetadataBody
+            body    : elMetadataBody,
+            footer  : elMetadataFooter
         });
     });
-    
 };
 
 
 // Other
 
-UI.createMetadataEditor = (data) => {
+UI.createMetadataEditor = (data, data_temp) => {
     let elData = ATON.UI.createContainer();
     
     // Properties creation logic
     for (const key in data) {
         if (key === "required") continue;
         
-        let elAttr = null;
-        const attr = data[key];
-        
+        let elAttr      = ATON.UI.createContainer();
+        let elDisplay   = ATON.UI.createContainer();
+        let elInput     = null;
+
+        const attr      = data[key];
+        elDisplay.textContent = data_temp[key];
+        // let value       = data_temp[key];
+
         if (attr["type"]) {
             switch (attr.type.toLowerCase()) {
                 case "string":
-                    elAttr = ATON.UI.createInputText({
+                    elInput = ATON.UI.createInputText({
                         label   : key,
-                        oninput : (v) => console.log("placeholder" + v)
+                        oninput : (v) => {
+                            data_temp[key] = v;
+                            elInput.textContent = v;
+                        }
                     });
                     break;
                 case "integer":
-                    elAttr = ATON.UI.createInputText({
+                    elInput = ATON.UI.createInputText({
                         label   : key,
-                        oninput : (v) => console.log("placeholder" + v)
+                        oninput : (v) => {
+                            data_temp[key] = v;
+                            elDisplay.textContent = v;
+                        }
                     });
                     break;
                 case "float" :
-                    elAttr = ATON.UI.createInputText({
+                    elInput = ATON.UI.createInputText({
                         label   : key,
-                        oninput : (v) => console.log("placeholder" + v)
+                        oninput : (v) => {
+                            data_temp[key] = v;
+                            elDisplay.textContent = v;
+                        }
                     });
                     break;
                 case "bool":
-                    elAttr = ATON.UI.createInputText({
-                        label   : key,
-                        oninput : (v) => console.log("placeholder" + v)
+                    elInput = ATON.UI.createDropdown({
+                        title   : key,
+                        items   : 
+                        [
+                            ATON.UI.createButton({
+                                text    : "True",
+                                onpress : () => {
+                                    data_temp[key] = true;
+                                    elDisplay.textContent = "True";
+                                }
+                            }),
+                            ATON.UI.createButton({
+                                text    : "False",
+                                onpress : () => {
+                                    data_temp[key] = false;
+                                    elDisplay.textContent = "False";
+                                }
+                            }),
+                        ]
                     });
                     break;
                 case "enum":
-                    elAttr = ATON.UI.createContainer();
-                    
-                    const elDisplay = ATON.UI.createContainer();
-                    elDisplay.textContent = attr.value[0];
-                    
-                    const elDropdown = ATON.UI.createDropdown({
+                    elInput = ATON.UI.createDropdown({
                         title   : key,
                         items   : attr.value.map(option => ({
                             el  : ATON.UI.createButton({
                                 text    : option,
                                 onpress : () => {
-                                    elDisplay.textContent = option
+                                    data_temp[key] = option;
+                                    elDisplay.textContent = option;
                                 }
                             })
                         }))
                     });
-                    elAttr.append(elDropdown, elDisplay);
+                    
                     break;
                 case "enum-multiple":
-                    elAttr = ATON.UI.createContainer();
+                    elInput = ATON.UI.createContainer();
                     for (const option of attr.value) {
-                        elAttr.append(ATON.UI.createButton({
+                        elInput.append(ATON.UI.createButton({
                             text    : option,
-                            onpress : () => {console.log(option)}
+                            onpress : () => {
+                                data_temp[key].push(option);
+                                elDisplay.textContent = data_temp[key];
+                            }
                         }));
                     }
                     break;
                 default:
                     break;
             }
+            elAttr.append(elInput, elDisplay);
         }
         else if (typeof attr === "object") {
             elAttr = ATON.UI.createTreeGroup({
@@ -618,7 +695,7 @@ UI.createMetadataEditor = (data) => {
                     {
                         title   : key,
                         open    : false,
-                        content : UI.createMetadataEditor(attr)
+                        content : UI.createMetadataEditor(attr, data_temp[key])
                     }
                 ]
             });

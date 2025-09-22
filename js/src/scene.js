@@ -68,7 +68,7 @@ Scene.validateSchema = (data) => {
                     break;
                 case "enum-multiple": 
                     break;
-                default: 
+                default:
                     check = false;
             }
         }
@@ -202,7 +202,10 @@ Scene.createLayer = (id) => {
         highlightColor  : THOTH.Utils.getHighlightColor(id),
         trash           : false
     };
-    $.getJSON(Scene.schemaPath, (data) => {
+    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+        let check = Scene.validateSchema(data);
+        if (!check) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
+        
         layer.metadata = Scene.createPropertiesfromSchema(data);
     });
     

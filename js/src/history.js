@@ -11,12 +11,12 @@ let History = {};
 
 // Action list
 History.ACTIONS = {};
-History.ACTIONS.CREATE_LAYER = 0;
-History.ACTIONS.DELETE_LAYER = 1;
-History.ACTIONS.RENAME_LAYER = 2;
-History.ACTIONS.CHANGE_DESCR = 3;
-History.ACTIONS.SELEC_ADD    = 4;
-History.ACTIONS.SELEC_DEL    = 5;
+History.ACTIONS.CREATE_LAYER    = 0;
+History.ACTIONS.DELETE_LAYER    = 1;
+History.ACTIONS.RENAME_LAYER    = 2;
+History.ACTIONS.EDIT_METADATA   = 3;
+History.ACTIONS.SELEC_ADD       = 4;
+History.ACTIONS.SELEC_DEL       = 5;
 
 
 // Setup
@@ -74,15 +74,30 @@ History.undo = () => {
             inverseType = History.ACTIONS.RENAME_LAYER;
             prevContent = content;
             THOTH.fire("editLayerScene", {
-                id: id,
-                attr: "name",
-                value: content.oldTitle
+                id      : id,
+                attr    : "name",
+                value   : content.oldTitle
             }); 
             THOTH.firePhoton("editLayerScene", {
-                id: id,
-                attr: "name",
-                value: content["oldTitle"]
+                id      : id,
+                attr    : "name",
+                value   : content.oldTitle
             }); 
+            break;
+
+        case History.ACTIONS.EDIT_METADATA:
+            inverseType = History.ACTIONS.EDIT_METADATA;
+            prevContent = content;
+            THOTH.fire("editLayerScene", {
+                id      : id,
+                attr    : "metadata",
+                value   : content.oldData
+            });
+            THOTH.firePhoton("editLayerScene", {
+                id      : id,
+                attr    : "metadata",
+                value   : content.oldData
+            });
             break;
 
         case History.ACTIONS.SELEC_ADD:
