@@ -270,6 +270,7 @@ UI.createNewLayerButton = () => {
     return ATON.UI.createButton({
         text    : "Create New Layer",
         icon    : "add",
+        variant : "success",
         onpress : () => THOTH.fire("createLayer"),
         tooltip : "Create new layer"   
     });
@@ -408,7 +409,7 @@ UI.createObjectController = () => {
     const elObjectController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
     // Name
     const elName = ATON.UI.createButton({
-        text    : "Object",
+        text    : "Object: " + THOTH.Scene.modelName,
         size    : "small",
     });
     // Metadata
@@ -431,10 +432,20 @@ UI.createLayerController = (id) => {
 
     const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
     // Visibility
+    let classes = null;
+    if (layer.visible) classes = "aton-btn-highlight";
     const elVis = ATON.UI.createButton({
         icon    : "visibility",
         size    : "small",
-        onpress : () => THOTH.toggleLayerVisibility(id)
+        classes : classes,
+        onpress : () => {
+            if (THOTH.toggleLayerVisibility(id)) {
+                elVis.classList.add("aton-btn-highlight");
+            }
+            else {
+                elVis.classList.remove("aton-btn-highlight");
+            }
+        }
     });
     // Name
     const elName = ATON.UI.createButton({
@@ -560,9 +571,11 @@ UI.modalMetadata = (id) => {
         // Buttons
         let elMetadataFooter = ATON.UI.createContainer();
         // OK Button
-        let l   = {};
-        l.id    = id;
-        l.data  = data_temp;
+        let l = {
+            id      : id,
+            data    : data_temp,
+            prevData: THOTH.Scene.currData.layers[id].metadata
+        };
         elMetadataFooter.append(ATON.UI.createButton({
             text    : "Save changes",
             size    : "large",
@@ -709,9 +722,8 @@ UI.createMetadataEditor = (data, data_temp) => {
 
 
 UI.Test = () => {
-    let test = THOTH.Toolbox.paused;
+    let test = THOTH.Scene.modelName;
     console.log(test)
-    UI.showToast("test");
 };
 
 

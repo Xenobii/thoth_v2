@@ -279,27 +279,27 @@ Events.setupUIEvents = () => {
         
         THOTH.fire("createLayerScene", (id));
         THOTH.firePhoton("createLayerScene", (id));
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.CREATE_LAYER,
-            id
-        );
+        THOTH.History.pushAction({
+            type    : THOTH.History.ACTIONS.CREATE_LAYER,
+            id      : id
+        });
     });
 
     // Delete Layer
     THOTH.on("deleteLayer", (id) => {
         THOTH.fire("deleteLayerScene", (id));
         THOTH.firePhoton("deleteLayerScene", (id));
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.DELETE_LAYER,
-            id
-        );
+        THOTH.History.pushAction({
+            type    : THOTH.History.ACTIONS.DELETE_LAYER,
+            id      : id
+        });
     });
 
     // Edit Layer metadata
     THOTH.on("editMetadata", (l) => {
-        const id    = l.id;
-        const data  = l.data;
-
+        const id        = l.id;
+        const data      = l.data;
+        const prevData  = l.prevData;
 
         THOTH.fire("editLayerScene", ({
             id      : id,
@@ -311,11 +311,12 @@ Events.setupUIEvents = () => {
             attr    : "metadata",
             value   : data
         }));
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.EDIT_METADATA,
-            id,
-            data,
-        );
+        THOTH.History.pushAction({
+            type        : THOTH.History.ACTIONS.EDIT_METADATA,
+            id          : id,
+            value       : data,
+            prevValue   : prevData
+        });
     });
 
     // Brush
@@ -453,11 +454,11 @@ Events.setupToolboxEvents = () => {
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endBrush();
 
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.SELEC_ADD,
-            id,
-            faces
-        );
+        THOTH.History.pushAction({
+            type    : THOTH.History.ACTIONS.SELEC_ADD,
+            id      : id,
+            value   : faces
+        });
         THOTH.fire("addToSelectionScene", {
             id      : id,
             faces   : faces
@@ -489,11 +490,11 @@ Events.setupToolboxEvents = () => {
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endEraser();
 
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.SELEC_DEL,
-            id,
-            faces
-        );
+        THOTH.History.pushAction({
+            type    : THOTH.History.ACTIONS.SELEC_DEL,
+            id      : id,
+            value   : faces
+        });
         THOTH.fire("delFromSelectionScene", {
             id      : id,
             faces   : faces
@@ -522,11 +523,11 @@ Events.setupToolboxEvents = () => {
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endLassoAdd();
 
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.SELEC_ADD,
-            id,
-            faces
-        );
+        THOTH.History.pushAction({
+            type    : THOTH.History.ACTIONS.SELEC_ADD,
+            id      : id,
+            value   : faces
+        });
         THOTH.fire("addToSelectionScene", {
             id      : id,
             faces   : faces
@@ -546,11 +547,11 @@ Events.setupToolboxEvents = () => {
         const id    = THOTH.Scene.activeLayer.id;
         const faces = THOTH.Toolbox.endLassoDel();
 
-        THOTH.History.pushAction(
-            THOTH.History.ACTIONS.SELEC_DEL,
-            id,
-            faces
-        );
+        THOTH.History.pushAction({
+            type    : THOTH.History.ACTIONS.SELEC_DEL,
+            id      : id,
+            value   : faces
+        });
         THOTH.fire("delFromSelectionScene", {
             id: id,
             faces: faces

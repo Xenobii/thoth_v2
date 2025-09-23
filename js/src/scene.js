@@ -15,6 +15,8 @@ Scene.setup = (sid) => {
     Scene.id        = sid;
     Scene.root      = ATON._rootVisible;
     Scene.currData  = ATON.SceneHub.currData;
+    Scene.modelUrl  = Scene.currData.scenegraph.nodes.main.urls[0];
+    Scene.modelName = Scene.modelUrl.split("/").filter(Boolean).pop();
     
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
@@ -128,6 +130,11 @@ Scene.exportLayers = () => {
 
     let A = {};
     A.layers = structuredClone(Scene.currData.layers);
+    // Exclude trash items
+    for (const id in A.layers) {
+        if (A.layers[id].trash === true) delete A.layers[id];
+    }
+
     A.objectMetadata = structuredClone(Scene.currData.objectMetadata);
 
     // Remove all annotation objects and ADD them again with changes

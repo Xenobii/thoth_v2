@@ -31,14 +31,9 @@ History.setup = () => {
 
 // Add to history
 
-History.pushAction = (type, id, value) => {
-    if (type === undefined || id === undefined) return;
-    
-    const action   = {};
-    action.type    = type;
-    action.id      = id;
-    action.content = value;
-    
+History.pushAction = (action) => {
+    if (action.type === undefined) return;
+
     History.undoStack.push(action);
     History.redoStack = [];
 };
@@ -48,13 +43,14 @@ History.pushAction = (type, id, value) => {
 History.undo = () => {
     if (History.undoStack.length === 0) return;
 
-    const action  = History.undoStack.pop();
-    const type    = action.type;
-    const id      = action.id;
-    const content = action.content;
+    const action    = History.undoStack.pop();
+    
+    const type      = action.type;
+    const id        = action.id;
+    let value       = action.value;
+    let prevValue   = action.prevValue;
 
-    let inverseType = undefined;
-    let prevContent = undefined;
+    let inverseType = null;
 
     // Re-enact the inverse action
     switch(type) {
@@ -72,163 +68,179 @@ History.undo = () => {
 
         case History.ACTIONS.RENAME_LAYER:
             inverseType = History.ACTIONS.RENAME_LAYER;
-            prevContent = content;
+            // Swap
+            [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
                 id      : id,
                 attr    : "name",
-                value   : content.oldTitle
+                value   : value
             }); 
             THOTH.firePhoton("editLayerScene", {
                 id      : id,
                 attr    : "name",
-                value   : content.oldTitle
-            }); 
+                value   : value
+            });
             break;
 
         case History.ACTIONS.EDIT_METADATA:
             inverseType = History.ACTIONS.EDIT_METADATA;
-            prevContent = content;
+            // Swap
+            [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
                 id      : id,
                 attr    : "metadata",
-                value   : content.oldData
+                value   : value
             });
             THOTH.firePhoton("editLayerScene", {
                 id      : id,
                 attr    : "metadata",
-                value   : content.oldData
+                value   : value
             });
             break;
 
         case History.ACTIONS.SELEC_ADD:
             inverseType = History.ACTIONS.SELEC_DEL;
-            prevContent = content; 
             THOTH.fire("delFromSelectionScene", {
-                id: id,
-                faces: content
+                id      : id,
+                faces   : value
             });
             THOTH.firePhoton("delFromSelectionScene", {
-                id: id,
-                faces: content
+                id      : id,
+                faces   : value
             });
-
             THOTH.updateVisibility();
             break;
 
         case History.ACTIONS.SELEC_DEL:
             inverseType = History.ACTIONS.SELEC_ADD;
-            prevContent = content; 
             THOTH.fire("addToSelectionScene", {
-                id: id,
-                faces: content
+                id      : id,
+                faces   : value
             });
             THOTH.firePhoton("addToSelectionScene", {
-                id: id,
-                faces: content
+                id      : id,
+                faces   : value
             });
-
             THOTH.updateVisibility();
             break;
 
         default:
+            THOTH.UI.showToast("Invalid action type: " + type);
             console.warn("Invalid action: " + type);
             return;
     }
 
     // Store inverse action in redo stack
-    const inverseAction   = {};
-    inverseAction.type    = inverseType;
-    inverseAction.id      = id;
-    inverseAction.content = prevContent;
+    const inverseAction   = {
+        type        : inverseType,
+        id          : id,
+        value       : value,
+        prevValue   : prevValue
+    };
 
     History.redoStack.push(inverseAction);
-
     History.historyIdx -= 1;
 };
 
 History.redo = () => {
     if (History.redoStack.length === 0) return;
 
-    const action  = History.redoStack.pop();
-    const type    = action.type;
-    const id      = action.id;
-    const content = action.content;
+    const action    = History.redoStack.pop();
+
+    const type      = action.type;
+    const id        = action.id;
+    let value       = action.value;
+    let prevValue   = action.prevValue;
 
     let inverseType = undefined;
-    let prevContent = undefined;
 
     // Re-enact the inverse action
     switch(type) {
         case History.ACTIONS.CREATE_LAYER:
             inverseType = History.ACTIONS.DELETE_LAYER;
-            THOTH.fire("deleteLayer", id);
-            THOTH.firePhoton("deleteLayer", id);
+            THOTH.fire("deleteLayerScene", id);
+            THOTH.firePhoton("deleteLayerScene", id);
             break;
 
         case History.ACTIONS.DELETE_LAYER:
             inverseType = History.ACTIONS.CREATE_LAYER;
-            THOTH.fire("createLayer", id);
-            THOTH.firePhoton("createLayer", id);
+            THOTH.fire("createLayerScene", id);
+            THOTH.firePhoton("createLayerScene", id);
             break;
 
         case History.ACTIONS.RENAME_LAYER:
             inverseType = History.ACTIONS.RENAME_LAYER;
-            prevContent = content;
-            THOTH.fire("editLayer", {
-                id: id,
-                attr: "name",
-                value: content.newTitle
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.fire("editLayerScene", {
+                id      : id,
+                attr    : "name",
+                value   : value
             }); 
-            THOTH.firePhoton("editLayer", {
-                id: id,
-                attr: "name",
-                value: content.newTitle
-            }); 
+            THOTH.firePhoton("editLayerScene", {
+                id      : id,
+                attr    : "name",
+                value   : value
+            });
+            break;
+
+        case History.ACTIONS.EDIT_METADATA:
+            inverseType = History.ACTIONS.EDIT_METADATA;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.fire("editLayerScene", {
+                id      : id,
+                attr    : "metadata",
+                value   : value
+            });
+            THOTH.firePhoton("editLayerScene", {
+                id      : id,
+                attr    : "metadata",
+                value   : value
+            });
             break;
 
         case History.ACTIONS.SELEC_ADD:
             inverseType = History.ACTIONS.SELEC_DEL;
-            prevContent = content;
-            THOTH.fire("delFromSelection", {
-                id: id,
-                faces: content
+            THOTH.fire("delFromSelectionScene", {
+                id      : id,
+                faces   : value
             });
-            THOTH.firePhoton("delFromSelection", {
-                id: id,
-                faces: content
+            THOTH.firePhoton("delFromSelectionScene", {
+                id      : id,
+                faces   : value
             });
-
             THOTH.updateVisibility();
             break;
 
         case History.ACTIONS.SELEC_DEL:
             inverseType = History.ACTIONS.SELEC_ADD;
-            prevContent = content;
-            THOTH.fire("addToSelection", {
-                id: id,
-                faces: content
+            THOTH.fire("addToSelectionScene", {
+                id      : id,
+                faces   : value
             });
-            THOTH.firePhoton("addToSelection", {
-                id: id,
-                faces: content
+            THOTH.firePhoton("addToSelectionScene", {
+                id      : id,
+                faces   : value
             });
-
             THOTH.updateVisibility();
             break;
 
         default:
+            THOTH.UI.showToast("Invalid action type: " + type);
             console.warn("Invalid action: " + type);
             return;
     }
 
     // Store inverse action in undo stack
-    const inverseAction   = {};
-    inverseAction.type    = inverseType;
-    inverseAction.id      = id;
-    inverseAction.content = prevContent;
+    const inverseAction   = {
+        type        : inverseType,
+        id          : id,
+        value       : value,
+        prevValue   : prevValue
+    };
 
     History.undoStack.push(inverseAction);
-
     History.historyIdx += 1;
 };
 

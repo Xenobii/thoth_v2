@@ -245,6 +245,8 @@ THOTH.toggleLayerVisibility = (id) => {
     else if (layer.visible === true) layer.visible = false;
 
     THOTH.updateVisibility();
+
+    return layer.visible;
 };
 
 
