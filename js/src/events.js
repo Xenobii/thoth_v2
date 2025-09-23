@@ -207,6 +207,15 @@ Events.setupActiveEL = () => {
             THOTH.fire("seletLasso")
         }
 
+        // Tool size
+        if (k === "BracketLeft") {
+            THOTH.Toolbox.decreaseSelectorSize();
+            // Todo update the ui as well
+        }
+        if (k === "BracketRight") {
+            THOTH.Toolbox.increaseSelectorSize();
+        }
+
         // History
         if (k === "KeyZ") {
             if (THOTH._bCtrlDown) THOTH.History.undo();

@@ -163,7 +163,6 @@ UI.createPanelLayers = () => {
     elLayersBody.append(
         UI.createObjectController(),
         UI.createNewLayerButton(),
-        UI.createTestButton(),
         UI.elLayerList,
     );
 
@@ -268,7 +267,7 @@ UI.createRedoButton = () => {
 
 UI.createNewLayerButton = () => {
     return ATON.UI.createButton({
-        text    : "Create New Layer",
+        text    : "New Layer",
         icon    : "add",
         variant : "success",
         onpress : () => THOTH.fire("createLayer"),
@@ -307,12 +306,13 @@ UI.createBrushOptions = () => {
     UI._elOptionsBrush = ATON.UI.createContainer();
 
     // Size
-    UI._elOptionsBrush.append(ATON.UI.createSlider({
+    UI._elBrushSlider = ATON.UI.createSlider({
         label   : "Size",
         range   : [0, 10],
         value   : THOTH.Toolbox.selectorSize,
         oninput : (v) => THOTH.Toolbox.setSelectorSize(v),
-    }));
+    });
+    UI._elOptionsBrush.append(UI._elBrushSlider);
 
     return UI._elOptionsBrush;
 };
@@ -410,7 +410,6 @@ UI.createObjectController = () => {
     // Name
     const elName = ATON.UI.createButton({
         text    : "Object: " + THOTH.Scene.modelName,
-        size    : "small",
     });
     // Metadata
     const elMetadata = ATON.UI.createButton({

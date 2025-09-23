@@ -66,19 +66,19 @@ Toolbox.createSelectorMesh = (radius) => {
 };
 
 Toolbox.increaseSelectorSize = () => {
-    Toolbox.selectorSize += 1;
+    if (Toolbox.selectorSize < 10) Toolbox.selectorSize += 1;
     Toolbox.selectorRadius = THOTH.Utils.computeRadius(Toolbox.selectorSize);
     Toolbox.selectorMesh.scale.setScalar(Toolbox.selectorRadius);
 };
 
 Toolbox.decreaseSelectorSize = () => {
-    Toolbox.selectorSize -= 1;
+    if (Toolbox.selectorSize > 0) Toolbox.selectorSize -= 1;
     Toolbox.selectorRadius = THOTH.Utils.computeRadius(Toolbox.selectorSize);
     Toolbox.selectorMesh.scale.setScalar(Toolbox.selectorRadius);
 };
 
 Toolbox.setSelectorSize = (size) => {
-    Toolbox.selectorSize = size;
+    Toolbox.selectorSize = parseInt(size);
     Toolbox.selectorRadius = THOTH.Utils.computeRadius(Toolbox.selectorSize);
     Toolbox.selectorMesh.scale.setScalar(Toolbox.selectorRadius);
 };
