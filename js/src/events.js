@@ -360,6 +360,53 @@ Events.setupUIEvents = () => {
         THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
     });
+
+    // Dlclick rename
+    THOTH.Events.enableRename = (buttonElement, id) => {
+
+        buttonElement.classList.add('renamable');
+        const layer 	= THOTH.Scene.currData.layers[id];
+        const attr 		= "name";
+
+        buttonElement.addEventListener('dblclick', () => {
+            const input            = document.createElement('input');
+            input.type             = 'text';
+            input.value            = layer[attr];
+            input.style.width      = `${buttonElement.offsetWidth}px`;
+            input.style.fontSize   = 'inherit';
+            input.style.border     = 'none';
+            input.style.outline    = 'none';
+            input.style.background = 'white';
+            input.style.color      = 'gray';
+
+            THOTH._bListenKeyboardEvents = false;
+
+            const applyRename = () => {
+                const newTitle = input.value.trim();
+                if (newTitle !== '') {
+                    buttonElement.textContent = newTitle;
+                    layer[attr] = newTitle;
+
+                    // Update the scene with the new name
+                    THOTH.fire("editLayerScene", { id: id, attr: "name", value: newTitle });
+                    THOTH.firePhoton("editLayerScene", { id: id, attr: "name", value: newTitle });
+                }
+                input.replaceWith(buttonElement);
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') applyRename();
+            });
+            input.addEventListener('blur', () => {
+                applyRename();
+            });
+
+            buttonElement.replaceWith(input);
+            input.focus();
+            input.select();
+        });
+    };
+
 };
 
 Events.setupSceneEvents = () => {

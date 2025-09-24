@@ -452,6 +452,10 @@ UI.createLayerController = (id) => {
         size    : "small",
         onpress : () => THOTH.Scene.activeLayer = layer,
     });
+
+    THOTH.Events.enableRename(elName, id);
+    
+
     // Delete
     const elDel = ATON.UI.createButton({
         icon    : "trash",
