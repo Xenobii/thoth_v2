@@ -65,6 +65,7 @@ UI.populateToolbars = () => {
         UI.createOptionsButton(),
         UI.createLayersButton(),
         UI.createExportButton(),
+        UI.createInfoButton(),
     );
     
     // User Toolbar
@@ -291,6 +292,14 @@ UI.createVRCButton = () => {
     });
 };  
 
+UI.createInfoButton = () => {
+    return ATON.UI.createButton({
+        icon    : "info",
+        onpress : () => window.open("https://xenobii.github.io/thoth-documentation/", "_blank"),
+        tooltip : "Open documentation"
+    });
+};
+
 UI.createTestButton = () => {
     return ATON.UI.createButton({
         text    : "Test",
@@ -417,7 +426,7 @@ UI.createObjectController = () => {
         variant : "dark",
         icon    : "list",
         size    : "small",
-        onpress : () => UI.showToast("TBI"),
+        onpress : () => UI.modalMetadata(-1),
     });
     elObjectController.append(
         elName,
@@ -563,40 +572,87 @@ UI.modalUser = () => {
 };
 
 UI.modalMetadata = (id) => {
-    const data_temp = structuredClone(THOTH.Scene.currData.layers[id].metadata);
-    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
-        // Main body
-        let elMetadataBody = UI.createMetadataEditor(data, data_temp);
-        // Buttons
-        let elMetadataFooter = ATON.UI.createContainer();
-        // OK Button
-        let l = {
-            id      : id,
-            data    : data_temp,
-            prevData: THOTH.Scene.currData.layers[id].metadata
-        };
-        elMetadataFooter.append(ATON.UI.createButton({
-            text    : "Save changes",
-            size    : "large",
-            variant : "success",
-            onpress : () => {
-                THOTH.fire("editMetadata", l);
-                ATON.UI.hideModal();
-            }
-        }));
-        // Cancel
-        elMetadataFooter.append(ATON.UI.createButton({
-            text    : "Cancel",
-            size    : "large",
-            variant : "secondary",
-            onpress : () => ATON.UI.hideModal(),
-        }));
-        ATON.UI.showModal({
-            header  : "Edit metadata",
-            body    : elMetadataBody,
-            footer  : elMetadataFooter
+    let data_temp = null;
+    if (id === -1) {
+        data_temp = structuredClone(THOTH.Scene.currData.objectMetadata);
+        $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+            // Main body
+            let elMetadataBody = UI.createMetadataEditor(data, data_temp);
+            // Buttons
+            let elMetadataFooter = ATON.UI.createContainer();
+            // OK Button
+            let l = {
+                id      : id,
+                data    : data_temp,
+                prevData: THOTH.Scene.currData.objectMetadata
+            };
+            elMetadataFooter.append(ATON.UI.createButton({
+                text    : "Save changes",
+                size    : "large",
+                variant : "success",
+                onpress : () => {
+                    THOTH.fire("editMetadata", l);
+                    ATON.UI.hideModal();
+                }
+            }));
+            // Cancel
+            elMetadataFooter.append(ATON.UI.createButton({
+                text    : "Cancel",
+                size    : "large",
+                variant : "secondary",
+                onpress : () => ATON.UI.hideModal(),
+            }));
+            ATON.UI.showModal({
+                header  : `Edit object metadata (${THOTH.Scene.modelName})`,
+                body    : elMetadataBody,
+                footer  : elMetadataFooter
+            });
         });
-    });
+    }
+    else {
+        data_temp = structuredClone(THOTH.Scene.currData.layers[id].metadata);
+    
+        $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+            // Main body
+            let elMetadataBody = UI.createMetadataEditor(data, data_temp);
+            // Buttons
+            let elMetadataFooter = ATON.UI.createContainer();
+            // Inherit attributes
+            elMetadataFooter.append(ATON.UI.createButton({
+                text    : "Inherit from object",
+                size    : "large",
+                variant : "primary",
+                onpress : () => UI.showToast("TBI")
+            }));
+            // OK Button
+            let l = {
+                id      : id,
+                data    : data_temp,
+                prevData: THOTH.Scene.currData.layers[id].metadata
+            };
+            elMetadataFooter.append(ATON.UI.createButton({
+                text    : "Save changes",
+                size    : "large",
+                variant : "success",
+                onpress : () => {
+                    THOTH.fire("editMetadata", l);
+                    ATON.UI.hideModal();
+                }
+            }));
+            // Cancel
+            elMetadataFooter.append(ATON.UI.createButton({
+                text    : "Cancel",
+                size    : "large",
+                variant : "secondary",
+                onpress : () => ATON.UI.hideModal(),
+            }));
+            ATON.UI.showModal({
+                header  : "Edit metadata for layer " + id,
+                body    : elMetadataBody,
+                footer  : elMetadataFooter
+            });
+        });
+    }
 };
 
 

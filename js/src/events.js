@@ -204,7 +204,7 @@ Events.setupActiveEL = () => {
             THOTH.fire("selectEraser")
         }
         if (k === "KeyL") {
-            THOTH.fire("seletLasso")
+            THOTH.fire("selectLasso")
         }
 
         // Tool size
@@ -310,22 +310,38 @@ Events.setupUIEvents = () => {
         const data      = l.data;
         const prevData  = l.prevData;
 
-        THOTH.fire("editLayerScene", ({
-            id      : id,
-            attr    : "metadata",
-            value   : data
-        }));
-        THOTH.firePhoton("editLayerScene", ({
-            id      : id,
-            attr    : "metadata",
-            value   : data
-        }));
-        THOTH.History.pushAction({
-            type        : THOTH.History.ACTIONS.EDIT_METADATA,
-            id          : id,
-            value       : data,
-            prevValue   : prevData
-        });
+        if (id === -1) {
+            THOTH.fire("editObjectScene", ({
+                value   : data
+            }));
+            THOTH.firePhoton("editObjectScene", ({
+                value   : data
+            }));
+            THOTH.History.pushAction({
+                type        : THOTH.History.ACTIONS.EDIT_METADATA_OBJECT,
+                value       : data,
+                prevValue   : prevData
+            });
+        }
+        else {
+            THOTH.fire("editLayerScene", ({
+                id      : id,
+                attr    : "metadata",
+                value   : data
+            }));
+            THOTH.firePhoton("editLayerScene", ({
+                id      : id,
+                attr    : "metadata",
+                value   : data
+            }));
+            THOTH.History.pushAction({
+                type        : THOTH.History.ACTIONS.EDIT_METADATA_LAYER,
+                id          : id,
+                value       : data,
+                prevValue   : prevData
+            });
+        }
+
     });
 
     // Brush
@@ -383,12 +399,16 @@ Events.setupSceneEvents = () => {
         const value = l.value;
         THOTH.Scene.editLayer(id, attr, value);
     });
+
+    THOTH.on("editObjectScene", (l) => {
+        THOTH.Scene.editObject(l.value);
+    });
     
     THOTH.on("addToSelectionScene", (l) => {
         const id    = l.id;
         const faces = l.faces;
         const layer = THOTH.Scene.currData.layers[id];
-        const selection = THOTH.Toolbox.addFacesToSelection(faces, layer.selection);
+        const selection = [...THOTH.Toolbox.addFacesToSelection(faces, layer.selection)];
         
         THOTH.Scene.editLayer(id, "selection", selection);
         THOTH.updateVisibility();
@@ -398,7 +418,7 @@ Events.setupSceneEvents = () => {
         const id    = l.id;
         const faces = l.faces;
         const layer = THOTH.Scene.currData.layers[id];
-        const selection = THOTH.Toolbox.delFacesFromSelection(faces, layer.selection);
+        const selection = [...THOTH.Toolbox.delFacesFromSelection(faces, layer.selection)];
         
         THOTH.Scene.editLayer(id, "selection", selection);
         THOTH.updateVisibility();

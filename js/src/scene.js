@@ -143,6 +143,7 @@ Scene.exportLayers = () => {
     // Patch changes
     Scene.patch(A, Scene.MODE_ADD, () => {
         THOTH.UI.showToast("Changes exported successfully");
+        console.log("Changes exported successfully");
     }, (error) => {
         THOTH.UI.showToast("Export failed: " + error);
     });
@@ -180,6 +181,7 @@ Scene.patch = (patch, mode, onComplete, onFail)=>{
         }
     });
 };
+
 
 // Layer Management
 
@@ -258,6 +260,14 @@ Scene.editLayer = (id, attr, value) => {
 
     // Edit layer
     layer[attr] = value;
+};
+
+
+// Object management
+
+Scene.editObject = (value) => {
+    if (value === undefined) return;
+    Scene.currData.objectMetadata = value;
 };
 
 

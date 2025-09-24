@@ -6,7 +6,7 @@
     </a>
 </p>
 
-THOTH is a web app based developed as part of the [TEXTaiLES](https://www.echoes-eccch.eu/textailes/) toolbox as a dedicated 3D viewer and annotator.
+THOTH is a web app developed as part of the [TEXTaiLES](https://www.echoes-eccch.eu/textailes/) toolbox as a dedicated 3D viewer and annotator.
 
 THOTH is based on the [ATON Framework](https://osiris.itabc.cnr.it/aton/), a 3D viewer designed for uses in cultural heritage. Both THOTH and ATON are in turn built on [Node.js](https://nodejs.org/en) using [Three.js](https://threejs.org/).
 

@@ -14,10 +14,11 @@ History.ACTIONS = {};
 History.ACTIONS.CREATE_LAYER    = 0;
 History.ACTIONS.DELETE_LAYER    = 1;
 History.ACTIONS.RENAME_LAYER    = 2;
-History.ACTIONS.EDIT_METADATA   = 3;
 History.ACTIONS.SELEC_ADD       = 4;
 History.ACTIONS.SELEC_DEL       = 5;
 
+History.ACTIONS.EDIT_METADATA_LAYER     = 3;
+History.ACTIONS.EDIT_METADATA_OBJECT    = 6;
 
 // Setup
 
@@ -82,8 +83,8 @@ History.undo = () => {
             });
             break;
 
-        case History.ACTIONS.EDIT_METADATA:
-            inverseType = History.ACTIONS.EDIT_METADATA;
+        case History.ACTIONS.EDIT_METADATA_LAYER:
+            inverseType = History.ACTIONS.EDIT_METADATA_LAYER;
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
@@ -94,6 +95,18 @@ History.undo = () => {
             THOTH.firePhoton("editLayerScene", {
                 id      : id,
                 attr    : "metadata",
+                value   : value
+            });
+            break;
+
+        case History.ACTIONS.EDIT_METADATA_OBJECT:
+            inverseType = History.ACTIONS.EDIT_METADATA_OBJECT;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.fire("editObjectScene", {
+                value   : value
+            });
+            THOTH.firePhoton("editObjectScene", {
                 value   : value
             });
             break;
@@ -184,8 +197,8 @@ History.redo = () => {
             });
             break;
 
-        case History.ACTIONS.EDIT_METADATA:
-            inverseType = History.ACTIONS.EDIT_METADATA;
+        case History.ACTIONS.EDIT_METADATA_LAYER:
+            inverseType = History.ACTIONS.EDIT_METADATA_LAYER;
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
@@ -196,6 +209,18 @@ History.redo = () => {
             THOTH.firePhoton("editLayerScene", {
                 id      : id,
                 attr    : "metadata",
+                value   : value
+            });
+            break;
+
+        case History.ACTIONS.EDIT_METADATA_OBJECT:
+            inverseType = History.ACTIONS.EDIT_METADATA_OBJECT;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.fire("editObjectScene", {
+                value   : value
+            });
+            THOTH.firePhoton("editObjectScene", {
                 value   : value
             });
             break;

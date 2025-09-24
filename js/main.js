@@ -73,6 +73,7 @@ THOTH.setup = () => {
         };
 
         THOTH._bLoaded = true;
+        THOTH.updateVisibility()
     });
 };
 
