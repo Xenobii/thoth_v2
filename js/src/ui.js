@@ -450,12 +450,21 @@ UI.createLayerController = (id) => {
     const elName = ATON.UI.createButton({
         text    : layer.name,
         size    : "small",
-        onpress : () => THOTH.Scene.activeLayer = layer,
+        onpress : () => {
+            THOTH.Scene.activeLayer = layer;
+
+            const allLayerControllers = document.querySelectorAll('.aton-layer'); //NodeList of class aton-layer
+            allLayerControllers.forEach((el) => {
+                if (el === elLayerController) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 1.0)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                }
+            });
+        }
     });
 
     THOTH.Events.enableRename(elName, id);
-    
-
     // Delete
     const elDel = ATON.UI.createButton({
         icon    : "trash",
