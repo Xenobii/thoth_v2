@@ -111,3 +111,34 @@
     backdrop-filter: blur(var(--aton-blur-radius));
     pointer-events: none;
 }
+
+.thothToken {
+    display: inline-flex;
+        align-items: center;
+        background-color: #d0d0d099; /* Same as atonToken's light blue background */
+        color: white; /* White text color */
+        padding: 6px 12px; /* Padding inside the token */
+        border-radius: 10px; /* Rounded corners */
+        margin: 5px; /* Space between tokens */
+        font-size: 14px; /* Text size */
+        font-weight: 600; /* Bold text */
+        cursor: pointer; /* Make tokens clickable */
+        transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition for hover effects */
+}
+
+.thothToken .remove-token-btn {
+    margin-left: 12px; /* Adds space between token text and the '×' button */
+    margin-bottom: 3px;
+    background: transparent;
+    color: white;
+    border: none;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.thothToken .remove-token-btn:hover {
+    color: #fd576de5;
+}

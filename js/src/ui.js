@@ -697,16 +697,48 @@ UI.createMetadataEditor = (data, data_temp) => {
                     
                     break;
                 case "enum-multiple":
+                    // Token Box for multiple selections
                     elInput = ATON.UI.createContainer();
-                    for (const option of attr.value) {
-                        elInput.append(ATON.UI.createButton({
-                            text    : option,
-                            onpress : () => {
-                                data_temp[key].push(option);
-                                elDisplay.textContent = data_temp[key];
-                            }
-                        }));
-                    }
+                    const selectedTokens = new Set(data_temp[key] || []); // Initialize with existing values
+                    const renderTokens = () => {
+                        const tokens = Array.from(selectedTokens).map(v => 
+                            `<span class="thothToken" data-v="${v}">${v}<button type="button" class="remove-token-btn">×</button></span>`
+                        ).join("");
+                        elDisplay.innerHTML = tokens;
+                    };
+                    
+                    // Function to add tokens
+                    const addToken = (value) => {
+                        selectedTokens.add(value);
+                        renderTokens();
+                    };
+
+                    // Function to remove tokens
+                    elDisplay.addEventListener("click", (event) => {
+                        if (event.target.tagName === "BUTTON") {
+                            const tokenValue = event.target.parentElement.getAttribute("data-v");
+                            selectedTokens.delete(tokenValue);
+                            renderTokens();
+                        }
+                    });
+
+                    // Render the existing tokens
+                    renderTokens();
+                    // Create the dropdown button list for options
+                    const dropdownContainer = ATON.UI.createDropdown({
+                        title: key, 
+                        items: attr.value.map(option => ({
+                            el: ATON.UI.createButton({
+                                text: option,
+                                onpress: () => {
+                                    addToken(option); // Add the selected option as a token
+                                }
+                            })
+                        }))
+                    });
+
+                    // Append the dropdown to the input container
+                    elInput.append(dropdownContainer);
                     break;
                 default:
                     break;
