@@ -142,3 +142,52 @@
 .thothToken .remove-token-btn:hover {
     color: #fd576de5;
 }
+
+.thoth-bool {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px;
+    margin: 2px;
+    min-height: 40px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.thoth-bool input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--aton-colors-accent);
+}
+
+.thoth-bool label {
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.thoth-bool img {
+    width: 1.5em;
+    height: 1.5em;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.thoth-bool-highlight {
+    background-color: rgba(var(--aton-colors-accent-rgb), 0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+.thoth-bool-highlight:hover {
+    background-color: rgba(var(--aton-colors-accent-rgb), 0.4);
+}
+
+.thoth-bool-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}

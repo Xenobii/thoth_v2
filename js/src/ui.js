@@ -31,7 +31,7 @@ UI.setTheme = (theme) => {
 };
 
 UI.setBackground = () => {
-    
+    // TBI
 };
 
 UI.hideToolbars = () => {
@@ -44,7 +44,43 @@ UI.showToolbars = () => {
 };
 
 UI.changeScale = () => {
+    // TBI
+};
 
+UI.createBool = (options) => {
+    let container = document.createElement('div');
+    container.classList.add('form-check', 'thoth-bool');
+
+    let el = document.createElement('input');
+    el.classList.add('form-check-input');
+    el.setAttribute('type', 'checkbox');
+
+    if (options.value) el.checked = options.value;
+
+    if (options.text) {
+        let label = document.createElement('label');
+        label.classList.add('form-check-label');
+        label.innerHTML = options.text;
+        if (options.icon) ATON.UI.prependIcon(label, options.icon);
+        container.appendChild(label);
+        container.appendChild(el);
+    }
+    else container.appendChild(el);
+
+    if (options.variant) container.classList.add("form-check-" + options.variant);
+
+    if (options.size) {
+        if (options.size === "large") el.classList.add("form-check-lg");
+        if (options.size === "small") el.classList.add("form-check-sm");
+    }
+
+    if (options.classes) el.className = el.className + " " + options.classes;
+
+    if (options.tooltip) el.setAttribute("title", options.tooltip);
+
+    if (options.onchange) el.onchange = () => options.onchange(el.checked);
+
+    return container;
 };
 
 
@@ -347,9 +383,9 @@ UI.createLassoOptions = () => {
             oninput : (v) => THOTH.Toolbox.normalThreshold = v,
         }),
         // Select Obstructed Faces
-        ATON.UI.createButton({
+        UI.createBool({
             text    : "Select occluded faces",
-            onpress : () => THOTH.Toolbox.selectObstructedFaces = !THOTH.Toolbox.selectObstructedFaces,
+            onpress : (input) => THOTH.Toolbox.selectObstructedFaces = input,
             tooltip : "Select occluded faces",
         }),
     )
@@ -684,7 +720,6 @@ UI.createMetadataEditor = (data, data_temp) => {
 
         const attr      = data[key];
         elDisplay.textContent = data_temp[key];
-        // let value       = data_temp[key];
 
         if (attr["type"]) {
             switch (attr.type.toLowerCase()) {
@@ -716,25 +751,9 @@ UI.createMetadataEditor = (data, data_temp) => {
                     });
                     break;
                 case "bool":
-                    elInput = ATON.UI.createDropdown({
-                        title   : key,
-                        items   : 
-                        [
-                            ATON.UI.createButton({
-                                text    : "True",
-                                onpress : () => {
-                                    data_temp[key] = true;
-                                    elDisplay.textContent = "True";
-                                }
-                            }),
-                            ATON.UI.createButton({
-                                text    : "False",
-                                onpress : () => {
-                                    data_temp[key] = false;
-                                    elDisplay.textContent = "False";
-                                }
-                            }),
-                        ]
+                    elInput = UI.createBool({
+                        text    : key,
+                        onchange: (input) => data_temp[key] = input
                     });
                     break;
                 case "enum":
@@ -820,6 +839,8 @@ UI.createMetadataEditor = (data, data_temp) => {
     return elData;
 };
 
+
+// Testing
 
 UI.Test = () => {
     let test = THOTH.Scene.modelName;
