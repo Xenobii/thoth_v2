@@ -191,3 +191,20 @@
     opacity: 0.5;
     pointer-events: none;
 }
+
+/* Styling for the right-aligned buttons */
+.rlight-buttons {
+    display: flex;
+    justify-content: flex-end; /* Align the other buttons to the right */
+    gap: 10px; /* Adjust space between the buttons */
+    margin-top: -45px;
+    margin-right: 35px;
+}
+
+.right-buttons {
+    display: flex;
+    justify-content: flex-end; /* Align the other buttons to the right */
+    gap: 10px; /* Adjust space between the buttons */
+    margin-top: -45px;
+    margin-left: 10px;
+}

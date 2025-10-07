@@ -485,9 +485,11 @@ UI.createLayerController = (id) => {
         onpress : () => {
             if (THOTH.toggleLayerVisibility(id)) {
                 elVis.classList.add("aton-btn-highlight");
+                console.log(THOTH.toggleLayerVisibility(id));
             }
             else {
                 elVis.classList.remove("aton-btn-highlight");
+                console.log(THOTH.toggleLayerVisibility(id));
             }
         }
     });
@@ -518,19 +520,22 @@ UI.createLayerController = (id) => {
     });
     // Metadata
     const elMetadata = ATON.UI.createButton({
-        text    : "Edit metadata",
         variant : "dark",
         icon    : "list",
         size    : "small",
+        tooltip : "Edit metadata",
         onpress : () => UI.modalMetadata(id),
     });
 
-    elLayerController.append(
-        elVis,
-        elName,
-        elMetadata,
-        elDel,
-    );
+    // Align right buttons
+    const rlightButtons = ATON.UI.createElementFromHTMLString('<div class="rlight-buttons"></div>');
+    rlightButtons.append(elMetadata); 
+
+    const rightButtons = ATON.UI.createElementFromHTMLString('<div class="right-buttons"></div>');
+    rightButtons.append(elDel); // Add "Bin" to right
+
+    // Append groups to the controller
+    elLayerController.append(elVis, elName, rlightButtons, rightButtons);
 
     return elLayerController;
 };  
