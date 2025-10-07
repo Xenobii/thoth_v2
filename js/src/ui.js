@@ -762,18 +762,46 @@ UI.createMetadataEditor = (data, data_temp) => {
                     });
                     break;
                 case "enum":
-                    elInput = ATON.UI.createDropdown({
-                        title   : key,
-                        items   : attr.value.map(option => ({
-                            el  : ATON.UI.createButton({
-                                text    : option,
-                                onpress : () => {
-                                    data_temp[key] = option;
-                                    elDisplay.textContent = option;
+                    elInput = ATON.UI.createContainer();
+                    const renderToken = (value) => {
+                        if (value) {
+                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
+                            elDisplay.innerHTML = tokenHTML; // Display the token
+                        } else {
+                            elDisplay.innerHTML = ""; // Clear token if there's no value
+                        }
+                    };
+
+                    elDisplay.addEventListener("click", (event) => {
+                        if (event.target.tagName === "BUTTON") {
+                            data_temp[key] = null; // Reset the selected value
+                            renderToken(null); // Clear the token
+                        }
+                    });
+
+                    // Initialize with the existing selected value (if any)
+                    if (data_temp[key]) {
+                        renderToken(data_temp[key]);
+                    }
+
+                    // Create the dropdown button list for options
+                    const dropdContainer = ATON.UI.createDropdown({
+                        title: key,
+                        items: attr.value.map(option => ({
+                            el: ATON.UI.createButton({
+                                text: option,
+                                onpress: () => {
+                                    data_temp[key] = option; // Set the selected value
+                                    renderToken(option); // Update the token display
                                 }
                             })
                         }))
                     });
+
+                    // Append the dropdown to the input container
+                    elInput.append(dropdContainer);
+
+                    renderToken(null);
                     
                     break;
                 case "enum-multiple":
