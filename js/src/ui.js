@@ -256,50 +256,128 @@ UI.createUserButton = ()=>{
 };
 
 UI.createBrushButton = () => {
-    return ATON.UI.createButton({
+    const brushBtn = ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "brush.png",
-        onpress : () => THOTH.fire("selectBrush"),
-        tooltip : "Brush tool"
+        tooltip : "Brush tool",
+        onpress : () => {
+            THOTH.fire("selectBrush");
+            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            allBtns.forEach((el) => {
+                if (el === brushBtn) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
+                }
+            });
+        }
     });
+    brushBtn.classList.add("aton-btn");
+
+    return brushBtn;
 };
 
 UI.createEraserButton = () => {
-    return ATON.UI.createButton({
+    const eraserBtn = ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "eraser.png",
-        onpress : () => THOTH.fire("selectEraser"),
-        tooltip : "Eraser tool"
+        tooltip : "Eraser tool",
+        onpress : () => {
+            THOTH.fire("selectEraser");
+            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            allBtns.forEach((el) => {
+                if (el === eraserBtn) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
+                }
+            });
+        }
     });
+    eraserBtn.classList.add("aton-btn");
+
+    return eraserBtn;
 };
 
 UI.createLassoButton = () => {
-    return ATON.UI.createButton({
+    const lassoBtn = ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "lasso.png",
-        onpress : () => THOTH.fire("selectLasso"),
-        tooltip : "Lasso tool"
+        tooltip : "Lasso tool",
+        onpress : () => {
+            THOTH.fire("selectLasso");
+            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            allBtns.forEach((el) => {
+                if (el === lassoBtn) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
+                }
+            });
+        }
     });
+    lassoBtn.classList.add("aton-btn");
+
+    return lassoBtn;
 };
 
 UI.createNoToolButton = () => {
-    return ATON.UI.createButton({
+    const noBtn = ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "none.png",
-        onpress : () => THOTH.fire("selectNone"),
+        onpress : () => {
+            THOTH.fire("selectNone");
+            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            allBtns.forEach((el) => {
+                if (el === noBtn) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
+                }
+            });
+        }
     });
+    noBtn.classList.add("aton-btn");
+
+    return noBtn;
 };
 
 UI.createUndoButton = () => {
-    return ATON.UI.createButton({
+    const undoBtn = ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "undo.png",
-        onpress : () => THOTH.History.undo(),
-        tooltip : "Undo"
+        tooltip : "Undo",
+        onpress : () => {
+            THOTH.History.undo();
+            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            allBtns.forEach((el) => {
+                if (el === undoBtn) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
+                }
+            });
+        }
     });
+    undoBtn.classList.add("aton-btn");
+
+    return undoBtn;
 };
 
 UI.createRedoButton = () => {
-    return ATON.UI.createButton({
+    const redoBtn = ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "redo.png",
-        onpress : () => THOTH.History.redo(),
-        tooltip : "Undo"
+        tooltip : "Redo",
+        onpress : () => {
+            THOTH.History.redo();
+            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            allBtns.forEach((el) => {
+                if (el === redoBtn) {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
+                } else {
+                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
+                }
+            });
+        }
     });
+    redoBtn.classList.add("aton-btn");
+
+    return redoBtn;
 };
 
 UI.createNewLayerButton = () => {
