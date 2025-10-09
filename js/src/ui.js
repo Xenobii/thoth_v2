@@ -131,7 +131,6 @@ UI.populateToolbars = () => {
     UI.hideLassoOptions();
 };
 
-
 // Side Panels
 
 UI.setupPanels = () => {
@@ -226,19 +225,25 @@ UI.createTextailesButton = () => {
 };
 
 UI.createOptionsButton = () => {
-    return ATON.UI.createButton({
+    const OptionsBtn = ATON.UI.createButton({
         icon    : "settings",
         onpress : () => UI.showPanelOptions(),
         tooltip : "Options"
     });
+    OptionsBtn.classList.add("thoth-dark-btn");
+
+    return OptionsBtn;
 };
 
 UI.createLayersButton = () => {
-    return ATON.UI.createButton({
+    const LayerBtn = ATON.UI.createButton({
         icon    : "layers",
         onpress : () => UI.showPanelLayers(),
         tooltop : "Layers"
     });
+    LayerBtn.classList.add("thoth-dark-btn");
+
+    return LayerBtn;    
 };
 
 UI.createUserButton = ()=>{
@@ -251,6 +256,7 @@ UI.createUserButton = ()=>{
     ATON.checkAuth((u)=>{
         UI._elUserBTN.classList.add("aton-btn-highlight");
     });
+    UI._elUserBTN.classList.add("thoth-dark-btn");
 
     return UI._elUserBTN;
 };
@@ -272,6 +278,7 @@ UI.createBrushButton = () => {
         }
     });
     brushBtn.classList.add("aton-btn");
+    brushBtn.classList.add("thoth-btn");
 
     return brushBtn;
 };
@@ -293,6 +300,7 @@ UI.createEraserButton = () => {
         }
     });
     eraserBtn.classList.add("aton-btn");
+    eraserBtn.classList.add("thoth-btn");
 
     return eraserBtn;
 };
@@ -314,6 +322,7 @@ UI.createLassoButton = () => {
         }
     });
     lassoBtn.classList.add("aton-btn");
+    lassoBtn.classList.add("thoth-btn");
 
     return lassoBtn;
 };
@@ -334,6 +343,7 @@ UI.createNoToolButton = () => {
         }
     });
     noBtn.classList.add("aton-btn");
+    noBtn.classList.add("thoth-btn");
 
     return noBtn;
 };
@@ -355,6 +365,7 @@ UI.createUndoButton = () => {
         }
     });
     undoBtn.classList.add("aton-btn");
+    undoBtn.classList.add("thoth-btn");
 
     return undoBtn;
 };
@@ -376,6 +387,7 @@ UI.createRedoButton = () => {
         }
     });
     redoBtn.classList.add("aton-btn");
+    redoBtn.classList.add("thoth-btn");
 
     return redoBtn;
 };
@@ -391,27 +403,36 @@ UI.createNewLayerButton = () => {
 };
 
 UI.createExportButton = () => {
-    return ATON.UI.createButton({
+    const ExportBtn = ATON.UI.createButton({
         icon    : "link",
         onpress : () => THOTH.Scene.exportLayers(),
         tooltip : "Export changes",
     });
+    ExportBtn.classList.add("thoth-dark-btn");
+
+    return ExportBtn;
 };
 
 UI.createVRCButton = () => {
-    return ATON.UI.createButton({
+    const VRCBtn = ATON.UI.createButton({
         icon    : "vrc",
         onpress : () => THOTH.setupPhoton(),
         tooltip : "Connect to Photon"
     });
+    VRCBtn.classList.add("thoth-dark-btn");
+
+    return VRCBtn;
 };  
 
 UI.createInfoButton = () => {
-    return ATON.UI.createButton({
+    const InfoBtn = ATON.UI.createButton({
         icon    : "info",
         onpress : () => window.open("https://xenobii.github.io/thoth-documentation/", "_blank"),
         tooltip : "Open documentation"
     });
+    InfoBtn.classList.add("thoth-dark-btn");
+
+    return InfoBtn;
 };
 
 UI.createTestButton = () => {

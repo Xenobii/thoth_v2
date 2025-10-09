@@ -48,6 +48,8 @@
 
     -webkit-backdrop-filter: blur(var(--aton-blur-radius));
     backdrop-filter: blur(var(--aton-blur-radius));
+
+    overflow-y: auto;
 }
 
 .thoth-tool-options-toolbar {
@@ -61,6 +63,14 @@
 
     -webkit-backdrop-filter: blur(var(--aton-blur-radius));
     backdrop-filter: blur(var(--aton-blur-radius));
+}
+
+.thoth-btn:hover {
+    background-color: rgba(var(--bs-body-bg-rgb), 0.5);
+}
+
+.thoth-dark-btn:hover {
+    background-color: rgba(var(--bs-body-bg-rgb), 1.0);
 }
 
 .thoth-layer {
