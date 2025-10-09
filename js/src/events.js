@@ -398,7 +398,10 @@ Events.setupUIEvents = () => {
             THOTH._bListenKeyboardEvents = false;
 
             const applyRename = () => {
-                const newTitle = input.value.trim();
+                let newTitle = input.value.trim();
+                if (newTitle.length > 23) {
+                    newTitle = newTitle.substring(0, 23) + ".."; // Trim to 24 characters
+                } 
                 if (newTitle !== '') {
                     buttonElement.textContent = newTitle;
                     layer[attr] = newTitle;

@@ -267,7 +267,7 @@ UI.createBrushButton = () => {
         tooltip : "Brush tool",
         onpress : () => {
             THOTH.fire("selectBrush");
-            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
             allBtns.forEach((el) => {
                 if (el === brushBtn) {
                     el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
@@ -289,7 +289,7 @@ UI.createEraserButton = () => {
         tooltip : "Eraser tool",
         onpress : () => {
             THOTH.fire("selectEraser");
-            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
             allBtns.forEach((el) => {
                 if (el === eraserBtn) {
                     el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
@@ -311,7 +311,7 @@ UI.createLassoButton = () => {
         tooltip : "Lasso tool",
         onpress : () => {
             THOTH.fire("selectLasso");
-            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
             allBtns.forEach((el) => {
                 if (el === lassoBtn) {
                     el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
@@ -332,7 +332,7 @@ UI.createNoToolButton = () => {
         icon    : THOTH.PATH_RES_ICONS + "none.png",
         onpress : () => {
             THOTH.fire("selectNone");
-            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
             allBtns.forEach((el) => {
                 if (el === noBtn) {
                     el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
@@ -354,7 +354,7 @@ UI.createUndoButton = () => {
         tooltip : "Undo",
         onpress : () => {
             THOTH.History.undo();
-            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
             allBtns.forEach((el) => {
                 if (el === undoBtn) {
                     el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
@@ -376,7 +376,7 @@ UI.createRedoButton = () => {
         tooltip : "Redo",
         onpress : () => {
             THOTH.History.redo();
-            const allBtns = document.querySelectorAll('.aton-btn'); //NodeList of class aton-layer
+            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
             allBtns.forEach((el) => {
                 if (el === redoBtn) {
                     el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
@@ -393,13 +393,15 @@ UI.createRedoButton = () => {
 };
 
 UI.createNewLayerButton = () => {
-    return ATON.UI.createButton({
+    const NewLayerBtn = ATON.UI.createButton({
         text    : "New Layer",
         icon    : "add",
         variant : "success",
-        onpress : () => THOTH.fire("createLayer"),
-        tooltip : "Create new layer"   
+        tooltip : "Create new layer",
+        onpress : () =>    console.log(NewLayerBtn)
+           
     });
+    return NewLayerBtn;
 };
 
 UI.createExportButton = () => {
@@ -575,20 +577,19 @@ UI.createLayerController = (id) => {
 
     const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
     // Visibility
-    let classes = null;
-    if (layer.visible) classes = "aton-btn-highlight";
+    let icon = null;
+    if (layer.visible) icon = "visibility";
     const elVis = ATON.UI.createButton({
-        icon    : "visibility",
+        icon    : icon,
         size    : "small",
-        classes : classes,
         onpress : () => {
             if (THOTH.toggleLayerVisibility(id)) {
-                elVis.classList.add("aton-btn-highlight");
-                console.log(THOTH.toggleLayerVisibility(id));
+                const imgElement = elVis.querySelector("img"); // Select the image inside the button
+                imgElement.src = "http://localhost:8080/res/icons/visibility.png"; // Change the src to the visibility icon
             }
             else {
-                elVis.classList.remove("aton-btn-highlight");
-                console.log(THOTH.toggleLayerVisibility(id));
+                const imgElement = elVis.querySelector("img"); // Select the image inside the button
+                imgElement.src = "http://localhost:8080/res/icons/visibility_no.png"; // Change the src to the visibility_no icon
             }
         }
     });
