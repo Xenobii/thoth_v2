@@ -398,7 +398,7 @@ UI.createNewLayerButton = () => {
         icon    : "add",
         variant : "success",
         tooltip : "Create new layer",
-        onpress : () =>    console.log(NewLayerBtn)
+        onpress : () => THOTH.fire("createLayer")
            
     });
     return NewLayerBtn;
@@ -610,8 +610,39 @@ UI.createLayerController = (id) => {
             });
         }
     });
-
     THOTH.Events.enableRename(elName, id);
+    //HighlightColor Selection
+    const elColor = ATON.UI.createButton({
+        icon    : "color-palette",
+        size    : "small"
+    });
+    // Create an input element of type 'color'
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";  // This creates a color picker in most browsers
+    colorInput.value = layer.highlightColor;  // Set initial value to current highlightColor
+    colorInput.style.width = '30px';
+    colorInput.style.height = '26px';
+    colorInput.style.position = 'absolute';
+    colorInput.style.right = '105px';
+    colorInput.style.opacity= '0';
+    
+    // Append the color picker to the Colorbtn
+    elColor.appendChild(colorInput);
+
+    // Listen for color change
+    colorInput.addEventListener("input", (e) => {
+        const selectedColor = e.target.value;  // Get the color selected by the user
+        layer.highlightColor = selectedColor;  // Update the layer's highlight color
+
+        // You can perform additional operations if needed (e.g., apply the color to the layer)
+        console.log("New highlight color:", selectedColor);
+
+        // Optional: Immediately update the button's icon to reflect the new color
+        elColor.style.backgroundColor = selectedColor;  // Optional, just as an example
+    });
+        // Trigger focus on the color input so the color picker appears right away
+        //colorInput.focus();
+
     // Delete
     const elDel = ATON.UI.createButton({
         icon    : "trash",
@@ -628,6 +659,9 @@ UI.createLayerController = (id) => {
     });
 
     // Align right buttons
+    const leftButtons = ATON.UI.createElementFromHTMLString('<div class="left-buttons"></div>');
+    leftButtons.append(elColor);
+
     const rlightButtons = ATON.UI.createElementFromHTMLString('<div class="rlight-buttons"></div>');
     rlightButtons.append(elMetadata); 
 
@@ -635,7 +669,7 @@ UI.createLayerController = (id) => {
     rightButtons.append(elDel); // Add "Bin" to right
 
     // Append groups to the controller
-    elLayerController.append(elVis, elName, rlightButtons, rightButtons);
+    elLayerController.append(elVis, elName, leftButtons, rlightButtons, rightButtons);
 
     return elLayerController;
 };  
@@ -829,31 +863,129 @@ UI.createMetadataEditor = (data, data_temp) => {
         if (attr["type"]) {
             switch (attr.type.toLowerCase()) {
                 case "string":
-                    elInput = ATON.UI.createInputText({
-                        label   : key,
-                        oninput : (v) => {
-                            data_temp[key] = v;
-                            elInput.textContent = v;
+                    elInput = ATON.UI.createContainer();
+                    const renderTokenS = (value) => {
+                        if (value !== undefined && value !== null && value !== "") {
+                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
+                            elDisplay.innerHTML = tokenHTML; // Display the token
+                        } else {
+                            elDisplay.innerHTML = ""; // Clear token if there's no value
+                        }
+                    };
+                    const inputSField = ATON.UI.createInputText({
+                        label: key,
+                        oninput: (v) => {
+                            // Store the string value directly
+                            if (v.trim() !== "") { // Ensure it's not an empty string
+                                data_temp[key] = v; // Store the string value
+                                renderTokenS(v); // Render the token with the string value
+                            } else {
+                                data_temp[key] = null; // Reset if the input is not a valid integer
+                                renderTokenS(null); // Remove the token
+                            }
                         }
                     });
+                    elInput.append(inputSField);
+
+                    // Handle token removal
+                    elDisplay.addEventListener("click", (event) => {
+                        if (event.target.tagName === "BUTTON") {
+                            data_temp[key] = null; // Reset the value
+                            renderTokenS(null); // Clear the token
+                        }
+                    });
+
+                    // Initialize with the existing value (if any)
+                    if (data_temp[key] !== undefined) {
+                        renderTokenS(data_temp[key]);
+                    }
+                    // Display container for token and input
+                    elInput.append(elDisplay);
+                    renderTokenS(null);
                     break;
                 case "integer":
-                    elInput = ATON.UI.createInputText({
-                        label   : key,
-                        oninput : (v) => {
-                            data_temp[key] = v;
-                            elDisplay.textContent = v;
+                    elInput = ATON.UI.createContainer();
+                    const renderTokenINT = (value) => {
+                        if (value !== undefined && value !== null && value !== "") {
+                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
+                            elDisplay.innerHTML = tokenHTML; // Display the token
+                        } else {
+                            elDisplay.innerHTML = ""; // Clear token if there's no value
+                        }
+                    };
+                    const inputField = ATON.UI.createInputText({
+                        label: key,
+                        oninput: (v) => {
+                            // Check if the value is a valid integer
+                            const parsedValue = parseInt(v, 10);
+                            if (!isNaN(parsedValue)) {
+                                data_temp[key] = parsedValue; // Store the integer value
+                                renderTokenINT(parsedValue); // Render the token with the integer
+                            } else {
+                                data_temp[key] = null; // Reset if the input is not a valid integer
+                                renderTokenINT(null); // Remove the token
+                            }
                         }
                     });
+                    elInput.append(inputField);
+
+                    // Handle token removal
+                    elDisplay.addEventListener("click", (event) => {
+                        if (event.target.tagName === "BUTTON") {
+                            data_temp[key] = null; // Reset the value
+                            renderTokenINT(null); // Clear the token
+                        }
+                    });
+
+                    // Initialize with the existing value (if any)
+                    if (data_temp[key] !== undefined) {
+                        renderTokenINT(data_temp[key]);
+                    }
+                    // Display container for token and input
+                    elInput.append(elDisplay);
+                    renderTokenINT(null);
                     break;
                 case "float" :
-                    elInput = ATON.UI.createInputText({
-                        label   : key,
-                        oninput : (v) => {
-                            data_temp[key] = v;
-                            elDisplay.textContent = v;
+                    elInput = ATON.UI.createContainer();
+                    const renderTokenF = (value) => {
+                        if (value !== undefined && value !== null && value !== "") {
+                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
+                            elDisplay.innerHTML = tokenHTML; // Display the token
+                        } else {
+                            elDisplay.innerHTML = ""; // Clear token if there's no value
+                        }
+                    };
+                    const inputFField = ATON.UI.createInputText({
+                        label: key,
+                        oninput: (v) => {
+                            // Check if the value is a valid integer
+                            const parsedValue = parseFloat(v);
+                            if (!isNaN(parsedValue)) {
+                                data_temp[key] = parsedValue; // Store the integer value
+                                renderTokenF(parsedValue); // Render the token with the integer
+                            } else {
+                                data_temp[key] = null; // Reset if the input is not a valid integer
+                                renderTokenF(null); // Remove the token
+                            }
                         }
                     });
+                    elInput.append(inputFField);
+
+                    // Handle token removal
+                    elDisplay.addEventListener("click", (event) => {
+                        if (event.target.tagName === "BUTTON") {
+                            data_temp[key] = null; // Reset the value
+                            renderTokenF(null); // Clear the token
+                        }
+                    });
+
+                    // Initialize with the existing value (if any)
+                    if (data_temp[key] !== undefined) {
+                        renderTokenF(data_temp[key]);
+                    }
+                    // Display container for token and input
+                    elInput.append(elDisplay);
+                    renderTokenF(null);
                     break;
                 case "bool":
                     elInput = UI.createBool({

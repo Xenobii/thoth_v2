@@ -285,7 +285,7 @@ Events.setupUIEvents = () => {
     // Create Layer
     THOTH.on("createLayer", () => {
         const id = THOTH.Utils.getFirstUnusedKey(THOTH.Scene.currData.layers);
-        
+
         THOTH.fire("createLayerScene", (id));
         THOTH.firePhoton("createLayerScene", (id));
         THOTH.History.pushAction({
@@ -399,8 +399,8 @@ Events.setupUIEvents = () => {
 
             const applyRename = () => {
                 let newTitle = input.value.trim();
-                if (newTitle.length > 23) {
-                    newTitle = newTitle.substring(0, 23) + ".."; // Trim to 24 characters
+                if (newTitle.length > 20) {
+                    newTitle = newTitle.substring(0, 20) + ".."; // Trim to 24 characters
                 } 
                 if (newTitle !== '') {
                     buttonElement.textContent = newTitle;
@@ -433,7 +433,7 @@ Events.setupSceneEvents = () => {
     THOTH.on("createLayerScene", (id) => {
         THOTH.Scene.createLayer(id);
 
-        const layers = THOTH.Scene.currData.layers; 
+        const layers = THOTH.Scene.currData.layers;
         if (layers[id] !== undefined && layers[id].trash === true) THOTH.UI.ressurectLayer(id);
         else THOTH.UI.createLayer(id);
     });
