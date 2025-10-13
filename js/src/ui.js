@@ -90,6 +90,7 @@ UI.setupToolbars = () => {
     UI._elTopToolbar    = ATON.UI.get("topToolbar");
     UI._elUserToolbar   = ATON.UI.get("userToolbar");
     UI._elMainToolbar   = ATON.UI.get("mainToolbar");
+    UI._elMainToolbar.classList.remove("aton-toolbar-left");
 
     UI._elToolOptionsToolbar = ATON.UI.get("toolOptToolbar");
 };
@@ -238,7 +239,7 @@ UI.createOptionsButton = () => {
 UI.createLayersButton = () => {
     const LayerBtn = ATON.UI.createButton({
         icon    : "layers",
-        onpress : () => UI.showPanelLayers(),
+        onpress : () => {UI.showPanelLayers(); console.log(UI._elMainToolbar);}, 
         tooltop : "Layers"
     });
     LayerBtn.classList.add("thoth-dark-btn");
@@ -1020,13 +1021,19 @@ UI.createMetadataEditor = (data, data_temp) => {
                     const dropdContainer = ATON.UI.createDropdown({
                         title: key,
                         items: attr.value.map(option => ({
-                            el: ATON.UI.createButton({
-                                text: option,
-                                onpress: () => {
-                                    data_temp[key] = option; // Set the selected value
-                                    renderToken(option); // Update the token display
-                                }
-                            })
+                            el: (() => {
+                                const btn = ATON.UI.createButton({
+                                    text: option,
+                                    onpress: () => {
+                                        data_temp[key] = option;
+                                        renderToken(option);
+                                    }
+                                });
+                                btn.style.display = "block";
+                                btn.style.width = "100%";
+                                btn.style.textAlign = "center"; // optional
+                                return btn;
+                            })()
                         }))
                     });
 
@@ -1068,12 +1075,18 @@ UI.createMetadataEditor = (data, data_temp) => {
                     const dropdownContainer = ATON.UI.createDropdown({
                         title: key, 
                         items: attr.value.map(option => ({
-                            el: ATON.UI.createButton({
-                                text: option,
-                                onpress: () => {
-                                    addToken(option); // Add the selected option as a token
-                                }
-                            })
+                            el: (() => {
+                                const btn = ATON.UI.createButton({
+                                    text: option,
+                                    onpress: () => {
+                                        addToken(option); // Add the selected option as a token
+                                    }
+                                });
+                                btn.style.display = "block";
+                                btn.style.width = "100%";
+                                btn.style.textAlign = "center"; // optional
+                                return btn;
+                            })()                           
                         }))
                     });
 
