@@ -102,7 +102,7 @@ Scene.createPropertiesfromSchema = (data) => {
                     A[key] = 0.0;
                     break;
                 case "bool": 
-                    A[key] = false;
+                    A[key] = null;
                     break;
                 case "enum":
                     A[key] = "-";

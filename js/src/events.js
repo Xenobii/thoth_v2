@@ -397,14 +397,15 @@ Events.setupUIEvents = () => {
 
             THOTH._bListenKeyboardEvents = false;
 
+            let fullTitle = layer[attr]; // store the full title separately
             const applyRename = () => {
                 let newTitle = input.value.trim();
-                if (newTitle.length > 20) {
-                    newTitle = newTitle.substring(0, 20) + ".."; // Trim to 24 characters
-                } 
                 if (newTitle !== '') {
-                    buttonElement.textContent = newTitle;
-                    layer[attr] = newTitle;
+                    fullTitle = newTitle;
+                    const displayTitle = newTitle.length > 15 ? newTitle.substring(0, 15) + "..." : newTitle;
+                    
+                    buttonElement.textContent = displayTitle;
+                    layer[attr] = fullTitle;
 
                     // Update the scene with the new name
                     THOTH.fire("editLayerScene", { id: id, attr: "name", value: newTitle });

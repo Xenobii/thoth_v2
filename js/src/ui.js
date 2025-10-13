@@ -49,7 +49,7 @@ UI.changeScale = () => {
 
 UI.createBool = (options) => {
     let container = document.createElement('div');
-    container.classList.add('form-check', 'thoth-bool');
+    container.classList.add('form-switch', 'thoth-switch');
 
     let el = document.createElement('input');
     el.classList.add('form-check-input');
@@ -239,7 +239,7 @@ UI.createOptionsButton = () => {
 UI.createLayersButton = () => {
     const LayerBtn = ATON.UI.createButton({
         icon    : "layers",
-        onpress : () => {UI.showPanelLayers(); console.log(UI._elMainToolbar);}, 
+        onpress : () => {UI.showPanelLayers(); }, 
         tooltop : "Layers"
     });
     LayerBtn.classList.add("thoth-dark-btn");
@@ -583,6 +583,7 @@ UI.createLayerController = (id) => {
     const elVis = ATON.UI.createButton({
         icon    : icon,
         size    : "small",
+        classes   : "thoth-light-btn",
         onpress : () => {
             if (THOTH.toggleLayerVisibility(id)) {
                 const imgElement = elVis.querySelector("img"); // Select the image inside the button
@@ -615,7 +616,8 @@ UI.createLayerController = (id) => {
     //HighlightColor Selection
     const elColor = ATON.UI.createButton({
         icon    : "color-palette",
-        size    : "small"
+        size    : "small",
+        classes   : "thoth-light-btn"
     });
     // Create an input element of type 'color'
     const colorInput = document.createElement("input");
@@ -648,13 +650,14 @@ UI.createLayerController = (id) => {
     const elDel = ATON.UI.createButton({
         icon    : "trash",
         size    : "small",
+        classes   : "thoth-light-btn",
         onpress : () => THOTH.fire("deleteLayer", (id))
     });
     // Metadata
     const elMetadata = ATON.UI.createButton({
-        variant : "dark",
         icon    : "list",
         size    : "small",
+        classes   : "thoth-light-btn",
         tooltip : "Edit metadata",
         onpress : () => UI.modalMetadata(id),
     });
@@ -1114,6 +1117,7 @@ UI.createMetadataEditor = (data, data_temp) => {
             elData.append(elAttr);
         }
     }
+    console.log(elData);
     return elData;
 };
 

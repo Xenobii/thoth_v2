@@ -73,6 +73,23 @@
     background-color: rgba(var(--bs-body-bg-rgb), 0.5);
 }
 
+.thoth-light-btn:hover {
+  --bs-btn-color: #000;
+  --bs-btn-bg: #f8f9fa7d;
+  --bs-btn-border-color: #f8f9fa7d;
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: #d3d4d57d;
+  --bs-btn-hover-border-color: #c6c7c87d;
+  --bs-btn-focus-shadow-rgb: 211, 212, 213;
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: #c6c7c87d;
+  --bs-btn-active-border-color: #babbbc7d;
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: #000;
+  --bs-btn-disabled-bg: #f8f9fa7d;
+  --bs-btn-disabled-border-color: #f8f9fa7d;
+}
+
 .thoth-dark-btn:hover {
     background-color: rgba(var(--bs-body-bg-rgb), 1.0);
 }
@@ -206,13 +223,66 @@
     pointer-events: none;
 }
 
+/* --- Switch Style --- */
+.thoth-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 50px;
+    right: 20px;
+}
+
+.thoth-switch .form-check-input {
+    position: relative;
+    width: 32px;
+    height: 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    border-radius: 50px;
+    background-color: #ccc;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0) inset, 0 0 8px rgba(var(--aton-colors-accent-rgb), 0);
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.thoth-switch .form-check-input::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 0px;
+    width: 14px;
+    height: 14px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.thoth-switch .form-check-input:checked {
+    border-color: rgba(var(--aton-colors-accent-rgb), 0.5);
+    background-color: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0) inset, 0 0 8px rgba(var(--aton-colors-accent-rgb), 0.5);
+
+}
+
+.thoth-switch .form-check-input:checked::before {
+    transform: translateX(20px);
+}
+
+.thoth-switch .form-check-label {
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.95rem;
+}
+
 /* Styling for the right-aligned buttons */
 .left-buttons {
     display: flex;
     justify-content: flex-end; /* Align the other buttons to the right */
     gap: 10px; /* Adjust space between the buttons */
     margin-top: -45px;
-    margin-right: 79px;
+    margin-right: 88px;
 }
 
 .rlight-buttons {
@@ -220,7 +290,7 @@
     justify-content: flex-end; /* Align the other buttons to the right */
     gap: 10px; /* Adjust space between the buttons */
     margin-top: -45px;
-    margin-right: 35px;
+    margin-right: 44px;
 }
 
 .right-buttons {
