@@ -239,7 +239,7 @@ UI.createOptionsButton = () => {
 UI.createLayersButton = () => {
     const LayerBtn = ATON.UI.createButton({
         icon    : "layers",
-        onpress : () => {UI.showPanelLayers(); }, 
+        onpress : () => {UI.showPanelLayers(); console.log(UI._elMainToolbar);}, 
         tooltop : "Layers"
     });
     LayerBtn.classList.add("thoth-dark-btn");

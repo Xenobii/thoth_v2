@@ -38,6 +38,9 @@
 }
 
 .thoth-main-toolbar {
+    margin: var(--thoth-ui-margin);
+    margin-top: -1px;
+    max-height: calc(100% - (var(--thoth-ui-margin)*2));
     top: 100px;
     bottom: 335px;
     position: absolute;
