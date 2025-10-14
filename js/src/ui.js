@@ -18,6 +18,7 @@ UI.setup = () => {
 
     UI.setupPanels();
     UI.setupLayerElements();
+    UI.setupNavElements();
 
     UI.setupToast();
 };
@@ -100,6 +101,7 @@ UI.populateToolbars = () => {
         UI.createOptionsButton(),
         UI.createLayersButton(),
         UI.createExportButton(),
+        UI.createVPButton(),
         UI.createInfoButton(),
     );
     
@@ -144,8 +146,9 @@ UI.populateToolbars = () => {
 // Side Panels
 
 UI.setupPanels = () => {
-    UI._elOptionsPanel      = UI.createPanelOptions();
-    UI._elLayersPanel       = UI.createPanelLayers();
+    UI._elOptionsPanel = UI.createPanelOptions();
+    UI._elLayersPanel  = UI.createPanelLayers();
+    UI._elVPPanel      = UI.createPanelVP();
 };
 
 UI.createPanelOptions = () => {
@@ -215,10 +218,30 @@ UI.createPanelLayers = () => {
     return elLayersBody;
 };
 
+UI.createPanelVP = () => {
+    ATON.UI.setSidePanelRight();
+
+    let elVPBody = ATON.UI.createContainer();
+    UI.elVPList = ATON.UI.createContainer();
+
+    elVPBody.append(
+        UI.createHomeButton(),
+        UI.elVPList,
+    )
+    return elVPBody;
+};
+
 UI.showPanelLayers = () => {
     ATON.UI.showSidePanel({
-        header  : "Layers",
-        body    : UI._elLayersPanel
+        header: "Layers",
+        body  : UI._elLayersPanel
+    });
+};
+
+UI.showPanelVP = () => {
+    ATON.UI.showSidePanel({
+        header: "COLMAP Navigation",
+        body  : UI._elVPPanel
     });
 };
 
@@ -235,25 +258,35 @@ UI.createTextailesButton = () => {
 };
 
 UI.createOptionsButton = () => {
-    const OptionsBtn = ATON.UI.createButton({
-        icon    : "settings",
-        onpress : () => UI.showPanelOptions(),
-        tooltip : "Options"
+    return ATON.UI.createButton({
+        icon   : "settings",
+        onpress: () => UI.showPanelOptions(),
+        tooltip: "Options"
     });
-    OptionsBtn.classList.add("thoth-dark-btn");
-
-    return OptionsBtn;
 };
 
 UI.createLayersButton = () => {
-    const LayerBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : "layers",
         onpress : () => UI.showPanelLayers(),
         tooltop : "Layers"
     });
-    LayerBtn.classList.add("thoth-dark-btn");
+};
 
-    return LayerBtn;    
+UI.createInfoButton = () => {
+    return ATON.UI.createButton({
+        icon   : "info",
+        onpress: () => window.open("https://xenobii.github.io/thoth-documentation/", "_blank"),
+        tooltip: "Open documentation"
+    });
+};
+
+UI.createVPButton = () => {
+    return ATON.UI.createButton({
+        icon   : "geoloc",
+        onpress: () => UI.showPanelVP(),
+        tooltip: "Navigate colmap"
+    })
 };
 
 UI.createUserButton = ()=>{
@@ -272,7 +305,7 @@ UI.createUserButton = ()=>{
 };
 
 UI.createBrushButton = () => {
-    const brushBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "brush.png",
         tooltip : "Brush tool",
         onpress : () => {
@@ -280,12 +313,10 @@ UI.createBrushButton = () => {
             UI.handleToolHighlight('brush');
         }
     });
-
-    return brushBtn;
 };
 
 UI.createEraserButton = () => {
-    const eraserBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "eraser.png",
         tooltip : "Eraser tool",
         onpress : () => {
@@ -293,12 +324,10 @@ UI.createEraserButton = () => {
             UI.handleToolHighlight('eraser');
         }
     });
-
-    return eraserBtn;
 };
 
 UI.createLassoButton = () => {
-    const lassoBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "lasso.png",
         tooltip : "Lasso tool",
         onpress : () => {
@@ -306,48 +335,40 @@ UI.createLassoButton = () => {
             UI.handleToolHighlight('lasso');
         }
     });
-
-    return lassoBtn;
 };
 
 UI.createNoToolButton = () => {
-    const noBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "none.png",
         onpress : () => {
             THOTH.fire("selectNone");
             UI.handleToolHighlight('no_tool')
         }
     });
-
-    return noBtn;
 };
 
 UI.createUndoButton = () => {
-    const undoBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "undo.png",
         tooltip : "Undo",
         onpress : () => {
             THOTH.History.undo();
         }
     });
-
-    return undoBtn;
 };
 
 UI.createRedoButton = () => {
-    const redoBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "redo.png",
         tooltip : "Redo",
         onpress : () => {
             THOTH.History.redo();
         }
     });
-
-    return redoBtn;
 };
 
 UI.createNewLayerButton = () => {
-    const NewLayerBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         text    : "New Layer",
         icon    : "add",
         variant : "success",
@@ -355,40 +376,32 @@ UI.createNewLayerButton = () => {
         onpress : () => THOTH.fire("createLayer")
            
     });
-    return NewLayerBtn;
 };
 
 UI.createExportButton = () => {
-    const ExportBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : "link",
         onpress : () => THOTH.Scene.exportLayers(),
         tooltip : "Export changes",
     });
-    ExportBtn.classList.add("thoth-dark-btn");
-
-    return ExportBtn;
 };
 
 UI.createVRCButton = () => {
-    const VRCBtn = ATON.UI.createButton({
+    return ATON.UI.createButton({
         icon    : "vrc",
         onpress : () => THOTH.setupPhoton(),
         tooltip : "Connect to Photon"
     });
-    VRCBtn.classList.add("thoth-dark-btn");
-
-    return VRCBtn;
 };  
 
-UI.createInfoButton = () => {
-    const InfoBtn = ATON.UI.createButton({
-        icon    : "info",
-        onpress : () => window.open("https://xenobii.github.io/thoth-documentation/", "_blank"),
-        tooltip : "Open documentation"
+UI.createHomeButton = () => {
+    return ATON.UI.createButton({
+        icon   : "home",
+        tooltip: "Go home",
+        onpress: () => {
+            ATON.Nav.requestHome(0.3);
+        }
     });
-    InfoBtn.classList.add("thoth-dark-btn");
-
-    return InfoBtn;
 };
 
 UI.createTestButton = () => {
@@ -629,6 +642,54 @@ UI.handleToolHighlight = (tool_id) => {
             elTool.classList.remove('aton-btn-highlight');
         }
     }
+};
+
+
+// Nav
+UI.setupNavElements = () => {
+    UI.viewpointElements = new Map();
+
+    const viewpoints = THOTH.Scene.currData.viewpoints;
+    if (viewpoints === undefined) return;
+
+    for (let node in viewpoints) {
+        if (node !== "home") {
+            UI.createViewpoint(node);
+        }
+    }
+};
+
+UI.createViewpoint = (node) => {
+    const elViewpoint = UI.createVPController(node);
+
+    // Add to panel
+    UI.elVPList.append(elViewpoint);
+
+    // Add to vp list
+    UI.viewpointElements.set(node, elViewpoint);
+};
+
+UI.createVPController = (node) => {
+    const elVPController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
+    const elNavButton = ATON.UI.createButton({
+        text   : node,
+        icon   : "geoloc",
+        onpress: () => ATON.Nav.requestPOVbyID(node, 0.5)
+    });
+    const test = ATON.UI.createCard({
+        title      : "test",
+        subtitle   : "test sub",
+        useblurtint: true,
+        cover      : "http://localhost:8080/api/v2/scenes/samples/skyphos/cover",
+        url        : "http://localhost:8080/a/thoth_v2/?s=" + THOTH.Scene.id,
+        size       : "large",
+    });
+    elVPController.append(
+        elNavButton,
+        test
+    );
+    
+    return elVPController;
 };
 
 
