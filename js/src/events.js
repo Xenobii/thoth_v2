@@ -400,7 +400,8 @@ Events.setupUIEvents = () => {
             const applyRename = () => {
                 let newTitle = input.value.trim();
                 if (newTitle.length > 20) {
-                    newTitle = newTitle.substring(0, 20) + ".."; // Trim to 24 characters
+                    // Trim to 24 characters
+                    newTitle = newTitle.substring(0, 20) + ".."; 
                 } 
                 if (newTitle !== '') {
                     buttonElement.textContent = newTitle;

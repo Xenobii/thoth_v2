@@ -74,9 +74,12 @@
 }
 
 .thoth-layer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     padding: 4px;
-    display: block;
-
+    position: relative;
+    
     white-space: nowrap;
 
     margin: 2px;
@@ -90,6 +93,8 @@
     -webkit-user-select: none;
     -o-user-select: none;
     user-select: none;
+
+    flex-wrap: nowrap;
 }
 
 .thoth-layer:hover {
@@ -120,37 +125,6 @@
     -webkit-backdrop-filter: blur(var(--aton-blur-radius));
     backdrop-filter: blur(var(--aton-blur-radius));
     pointer-events: none;
-}
-
-.thothToken {
-    display: inline-flex;
-        align-items: center;
-        background-color: #d0d0d099; /* Same as atonToken's light blue background */
-        color: white; /* White text color */
-        padding: 6px 12px; /* Padding inside the token */
-        border-radius: 10px; /* Rounded corners */
-        margin: 5px; /* Space between tokens */
-        font-size: 14px; /* Text size */
-        font-weight: 600; /* Bold text */
-        cursor: pointer; /* Make tokens clickable */
-        transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition for hover effects */
-}
-
-.thothToken .remove-token-btn {
-    margin-left: 12px; /* Adds space between token text and the '×' button */
-    margin-bottom: 3px;
-    background: transparent;
-    color: white;
-    border: none;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 0;
-    transition: color 0.2s ease;
-}
-
-.thothToken .remove-token-btn:hover {
-    color: #fd576de5;
 }
 
 .thoth-bool {
@@ -202,27 +176,41 @@
     pointer-events: none;
 }
 
-/* Styling for the right-aligned buttons */
-.left-buttons {
+.thoth-layer-selected {
+    padding: 4px;
     display: flex;
-    justify-content: flex-end; /* Align the other buttons to the right */
-    gap: 10px; /* Adjust space between the buttons */
-    margin-top: -45px;
-    margin-right: 79px;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: nowrap;
+    margin: 2px;
+    border-radius: var(--bs-border-radius);
+
+    background-color: rgba(var(--aton-colors-accent-rgb), 0.3);
+    border-color: rgba(var(--bs-body-color-rgb), 0.0);
+    color: var(--bs-btn-color);
+
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+
+    padding: 4px;
+    position: relative;
+    
+    flex-wrap: nowrap;
 }
 
-.rlight-buttons {
-    display: flex;
-    justify-content: flex-end; /* Align the other buttons to the right */
-    gap: 10px; /* Adjust space between the buttons */
-    margin-top: -45px;
-    margin-right: 35px;
+.thoth-layer-selected:hover {
+    background-color: rgba(var(--aton-colors-accent-rgb), 0.4);
+    color: var(--bs-btn-color);
 }
 
-.right-buttons {
+.thoth-btn-right {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
-    justify-content: flex-end; /* Align the other buttons to the right */
-    gap: 10px; /* Adjust space between the buttons */
-    margin-top: -45px;
-    margin-left: 1px;
+    gap: 4px;
 }

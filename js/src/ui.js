@@ -87,10 +87,9 @@ UI.createBool = (options) => {
 // Toolbars
 
 UI.setupToolbars = () => {
-    UI._elTopToolbar    = ATON.UI.get("topToolbar");
-    UI._elUserToolbar   = ATON.UI.get("userToolbar");
-    UI._elMainToolbar   = ATON.UI.get("mainToolbar");
-
+    UI._elTopToolbar         = ATON.UI.get("topToolbar");
+    UI._elUserToolbar        = ATON.UI.get("userToolbar");
+    UI._elMainToolbar        = ATON.UI.get("mainToolbar");
     UI._elToolOptionsToolbar = ATON.UI.get("toolOptToolbar");
 };
 
@@ -111,11 +110,22 @@ UI.populateToolbars = () => {
     );
     
     // Main Toolbar
+    UI.toolElements = new Map();
+
+    const elBrush  = UI.createBrushButton();
+    const elEraser = UI.createEraserButton();
+    const elLasso  = UI.createLassoButton();
+    const elNoTool = UI.createNoToolButton();
+   
+    UI.toolElements.set('brush', elBrush);
+    UI.toolElements.set('eraser', elEraser);
+    UI.toolElements.set('lasso', elLasso);
+    UI.toolElements.set('no_tool', elNoTool);
     UI._elMainToolbar.append(
-        UI.createBrushButton(),
-        UI.createEraserButton(),
-        UI.createLassoButton(),
-        UI.createNoToolButton(),
+        elBrush, 
+        elEraser,
+        elLasso,
+        elNoTool,
         UI.createUndoButton(),
         UI.createRedoButton()
     );
@@ -267,18 +277,9 @@ UI.createBrushButton = () => {
         tooltip : "Brush tool",
         onpress : () => {
             THOTH.fire("selectBrush");
-            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
-            allBtns.forEach((el) => {
-                if (el === brushBtn) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
-                }
-            });
+            UI.handleToolHighlight('brush');
         }
     });
-    brushBtn.classList.add("aton-btn");
-    brushBtn.classList.add("thoth-btn");
 
     return brushBtn;
 };
@@ -289,18 +290,9 @@ UI.createEraserButton = () => {
         tooltip : "Eraser tool",
         onpress : () => {
             THOTH.fire("selectEraser");
-            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
-            allBtns.forEach((el) => {
-                if (el === eraserBtn) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
-                }
-            });
+            UI.handleToolHighlight('eraser');
         }
     });
-    eraserBtn.classList.add("aton-btn");
-    eraserBtn.classList.add("thoth-btn");
 
     return eraserBtn;
 };
@@ -311,18 +303,9 @@ UI.createLassoButton = () => {
         tooltip : "Lasso tool",
         onpress : () => {
             THOTH.fire("selectLasso");
-            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
-            allBtns.forEach((el) => {
-                if (el === lassoBtn) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
-                }
-            });
+            UI.handleToolHighlight('lasso');
         }
     });
-    lassoBtn.classList.add("aton-btn");
-    lassoBtn.classList.add("thoth-btn");
 
     return lassoBtn;
 };
@@ -332,18 +315,9 @@ UI.createNoToolButton = () => {
         icon    : THOTH.PATH_RES_ICONS + "none.png",
         onpress : () => {
             THOTH.fire("selectNone");
-            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
-            allBtns.forEach((el) => {
-                if (el === noBtn) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
-                }
-            });
+            UI.handleToolHighlight('no_tool')
         }
     });
-    noBtn.classList.add("aton-btn");
-    noBtn.classList.add("thoth-btn");
 
     return noBtn;
 };
@@ -354,18 +328,8 @@ UI.createUndoButton = () => {
         tooltip : "Undo",
         onpress : () => {
             THOTH.History.undo();
-            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
-            allBtns.forEach((el) => {
-                if (el === undoBtn) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
-                }
-            });
         }
     });
-    undoBtn.classList.add("aton-btn");
-    undoBtn.classList.add("thoth-btn");
 
     return undoBtn;
 };
@@ -376,18 +340,8 @@ UI.createRedoButton = () => {
         tooltip : "Redo",
         onpress : () => {
             THOTH.History.redo();
-            const allBtns = document.querySelectorAll('.thoth-btn'); //NodeList of class aton-layer
-            allBtns.forEach((el) => {
-                if (el === redoBtn) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.0)";
-                }
-            });
         }
     });
-    redoBtn.classList.add("aton-btn");
-    redoBtn.classList.add("thoth-btn");
 
     return redoBtn;
 };
@@ -523,6 +477,8 @@ UI.setupLayerElements = () => {
         const id = layer.id;
         UI.createLayer(id);
     });
+
+    UI.handleLayerHighlight();
 };
 
 UI.createLayer = (id) => {
@@ -539,35 +495,35 @@ UI.deleteLayer = (id) => {
     const elLayer = UI.layerElements.get(id);
 
     // Hide
-    elLayer.classList.remove("aton-layer");
-    elLayer.classList.add("deleted-layer");
+    elLayer.style.display = 'none';
 };
 
 UI.resurrectLayer = (id) => {
     const elLayer = UI.layerElements.get(id);
-
-    // Hide
-    elLayer.classList.remove("deleted-layer");
-    elLayer.classList.add("aton-layer");
+    
+    // Show
+    elLayer.style.display = 'flex';
 };
 
 UI.createObjectController = () => {
-    const elObjectController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
+    const elObjectController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
+    const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
+
     // Name
     const elName = ATON.UI.createButton({
         text    : "Object: " + THOTH.Scene.modelName,
     });
     // Metadata
     const elMetadata = ATON.UI.createButton({
-        text    : "Edit metadata",
-        variant : "dark",
+        text    : "Edit Object Metadata",
         icon    : "list",
         size    : "small",
         onpress : () => UI.modalMetadata(-1),
     });
+    elRButtonContainer.append(elMetadata)
     elObjectController.append(
         elName,
-        elMetadata,
+        elRButtonContainer,
     );
     return elObjectController;
 };
@@ -575,107 +531,104 @@ UI.createObjectController = () => {
 UI.createLayerController = (id) => {
     let layer = THOTH.Scene.currData.layers[id];
 
-    const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="aton-layer"></div>`);
+    const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
+    const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
     // Visibility
     let icon = null;
-    if (layer.visible) icon = "visibility";
+    if (layer.visible) {
+        icon = "visibility";
+    }
+    else {
+        elLayerController.classList.add("aton-layer-hidden")
+        icon = THOTH.PATH_RES_ICONS + "visibility_no.png"
+    }
     const elVis = ATON.UI.createButton({
         icon    : icon,
         size    : "small",
         onpress : () => {
             if (THOTH.toggleLayerVisibility(id)) {
-                const imgElement = elVis.querySelector("img"); // Select the image inside the button
-                imgElement.src = "http://localhost:8080/res/icons/visibility.png"; // Change the src to the visibility icon
+                elLayerController.classList.remove("aton-layer-hidden")
+                const imgElement = elVis.querySelector("img");
+                imgElement.src = ATON.UI.PATH_RES_ICONS + "visibility.png";
             }
             else {
-                const imgElement = elVis.querySelector("img"); // Select the image inside the button
-                imgElement.src = "http://localhost:8080/res/icons/visibility_no.png"; // Change the src to the visibility_no icon
+                elLayerController.classList.add("aton-layer-hidden")
+                const imgElement = elVis.querySelector("img");
+                imgElement.src = THOTH.PATH_RES_ICONS + "visibility_no.png"; 
             }
         }
     });
     // Name
     const elName = ATON.UI.createButton({
-        text    : layer.name,
-        size    : "small",
-        onpress : () => {
+        text   : layer.name,
+        size   : "small",
+        onpress: () => {
             THOTH.Scene.activeLayer = layer;
-
-            const allLayerControllers = document.querySelectorAll('.aton-layer'); //NodeList of class aton-layer
-            allLayerControllers.forEach((el) => {
-                if (el === elLayerController) {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 1.0)";
-                } else {
-                    el.style.backgroundColor = "rgba(var(--bs-body-bg-rgb), 0.5)";
-                }
-            });
+            UI.handleLayerHighlight();
         }
     });
     THOTH.Events.enableRename(elName, id);
-    //HighlightColor Selection
-    const elColor = ATON.UI.createButton({
-        icon    : "color-palette",
-        size    : "small"
-    });
-    // Create an input element of type 'color'
-    const colorInput = document.createElement("input");
-    colorInput.type = "color";  // This creates a color picker in most browsers
-    colorInput.value = layer.highlightColor;  // Set initial value to current highlightColor
-    colorInput.style.width = '30px';
-    colorInput.style.height = '26px';
-    colorInput.style.position = 'absolute';
-    colorInput.style.right = '105px';
-    colorInput.style.opacity= '0';
     
-    // Append the color picker to the Colorbtn
-    elColor.appendChild(colorInput);
-
-    // Listen for color change
-    colorInput.addEventListener("input", (e) => {
-        const selectedColor = e.target.value;  // Get the color selected by the user
-        layer.highlightColor = selectedColor;  // Update the layer's highlight color
-
-        // You can perform additional operations if needed (e.g., apply the color to the layer)
-        console.log("New highlight color:", selectedColor);
-
-        // Optional: Immediately update the button's icon to reflect the new color
-        elColor.style.backgroundColor = selectedColor;  // Optional, just as an example
-    });
-        // Trigger focus on the color input so the color picker appears right away
-        //colorInput.focus();
+    //  USE THIS AFTER IT'S IMPORTED TO ATON.MIN
+    // const elCP = ATON.UI.createColorPicker({
+    //     color   : layer.color,
+    //     onchange: (color) => {
+    //         layer.color = color
+    //     }
+    // })
 
     // Delete
     const elDel = ATON.UI.createButton({
-        icon    : "trash",
-        size    : "small",
-        onpress : () => THOTH.fire("deleteLayer", (id))
+        icon   : "trash",
+        size   : "small",
+        onpress: () => THOTH.fire("deleteLayer", (id))
     });
     // Metadata
     const elMetadata = ATON.UI.createButton({
-        variant : "dark",
-        icon    : "list",
-        size    : "small",
-        tooltip : "Edit metadata",
-        onpress : () => UI.modalMetadata(id),
+        text   : "Edit Metadata",
+        icon   : "list",
+        size   : "small",
+        tooltip: "Edit metadata",
+        onpress: () => UI.modalMetadata(id),
     });
 
-    // Align right buttons
-    const leftButtons = ATON.UI.createElementFromHTMLString('<div class="left-buttons"></div>');
-    leftButtons.append(elColor);
-
-    const rlightButtons = ATON.UI.createElementFromHTMLString('<div class="rlight-buttons"></div>');
-    rlightButtons.append(elMetadata); 
-
-    const rightButtons = ATON.UI.createElementFromHTMLString('<div class="right-buttons"></div>');
-    rightButtons.append(elDel); // Add "Bin" to right
-
-    // Append groups to the controller
-    elLayerController.append(elVis, elName, leftButtons, rlightButtons, rightButtons);
+    elRButtonContainer.append(
+        elMetadata,
+        elDel
+    );
+    elLayerController.append(
+        elVis,
+        elName,
+        elRButtonContainer
+    );
 
     return elLayerController;
-};  
+};
 
-UI.showLayerAttributes = (id) => {
+UI.handleLayerHighlight = () => {
+    const layers = THOTH.Scene.currData.layers;
+    const activeLayer = THOTH.Scene.activeLayer
+    for (const [id, elLayer] of UI.layerElements) {
+        if (layers[id] === activeLayer){
+            elLayer.classList.remove('thoth-layer')
+            elLayer.classList.add('thoth-layer-selected');
+        }
+        else {
+            elLayer.classList.remove('thoth-layer-selected');
+            elLayer.classList.add('thoth-layer')
+        }
+    }
+};
 
+UI.handleToolHighlight = (tool_id) => {
+    for (const [id, elTool] of UI.toolElements) {
+        if (tool_id === id) {
+            elTool.classList.add('aton-btn-highlight');
+        }
+        else {
+            elTool.classList.remove('aton-btn-highlight');
+        }
+    }
 };
 
 
@@ -863,129 +816,31 @@ UI.createMetadataEditor = (data, data_temp) => {
         if (attr["type"]) {
             switch (attr.type.toLowerCase()) {
                 case "string":
-                    elInput = ATON.UI.createContainer();
-                    const renderTokenS = (value) => {
-                        if (value !== undefined && value !== null && value !== "") {
-                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
-                            elDisplay.innerHTML = tokenHTML; // Display the token
-                        } else {
-                            elDisplay.innerHTML = ""; // Clear token if there's no value
-                        }
-                    };
-                    const inputSField = ATON.UI.createInputText({
-                        label: key,
-                        oninput: (v) => {
-                            // Store the string value directly
-                            if (v.trim() !== "") { // Ensure it's not an empty string
-                                data_temp[key] = v; // Store the string value
-                                renderTokenS(v); // Render the token with the string value
-                            } else {
-                                data_temp[key] = null; // Reset if the input is not a valid integer
-                                renderTokenS(null); // Remove the token
-                            }
+                    elInput = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => {
+                            data_temp[key] = v;
+                            elInput.textContent = v;
                         }
                     });
-                    elInput.append(inputSField);
-
-                    // Handle token removal
-                    elDisplay.addEventListener("click", (event) => {
-                        if (event.target.tagName === "BUTTON") {
-                            data_temp[key] = null; // Reset the value
-                            renderTokenS(null); // Clear the token
-                        }
-                    });
-
-                    // Initialize with the existing value (if any)
-                    if (data_temp[key] !== undefined) {
-                        renderTokenS(data_temp[key]);
-                    }
-                    // Display container for token and input
-                    elInput.append(elDisplay);
-                    renderTokenS(null);
                     break;
                 case "integer":
-                    elInput = ATON.UI.createContainer();
-                    const renderTokenINT = (value) => {
-                        if (value !== undefined && value !== null && value !== "") {
-                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
-                            elDisplay.innerHTML = tokenHTML; // Display the token
-                        } else {
-                            elDisplay.innerHTML = ""; // Clear token if there's no value
-                        }
-                    };
-                    const inputField = ATON.UI.createInputText({
-                        label: key,
-                        oninput: (v) => {
-                            // Check if the value is a valid integer
-                            const parsedValue = parseInt(v, 10);
-                            if (!isNaN(parsedValue)) {
-                                data_temp[key] = parsedValue; // Store the integer value
-                                renderTokenINT(parsedValue); // Render the token with the integer
-                            } else {
-                                data_temp[key] = null; // Reset if the input is not a valid integer
-                                renderTokenINT(null); // Remove the token
-                            }
+                    elInput = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => {
+                            data_temp[key] = v;
+                            elDisplay.textContent = v;
                         }
                     });
-                    elInput.append(inputField);
-
-                    // Handle token removal
-                    elDisplay.addEventListener("click", (event) => {
-                        if (event.target.tagName === "BUTTON") {
-                            data_temp[key] = null; // Reset the value
-                            renderTokenINT(null); // Clear the token
-                        }
-                    });
-
-                    // Initialize with the existing value (if any)
-                    if (data_temp[key] !== undefined) {
-                        renderTokenINT(data_temp[key]);
-                    }
-                    // Display container for token and input
-                    elInput.append(elDisplay);
-                    renderTokenINT(null);
                     break;
                 case "float" :
-                    elInput = ATON.UI.createContainer();
-                    const renderTokenF = (value) => {
-                        if (value !== undefined && value !== null && value !== "") {
-                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
-                            elDisplay.innerHTML = tokenHTML; // Display the token
-                        } else {
-                            elDisplay.innerHTML = ""; // Clear token if there's no value
-                        }
-                    };
-                    const inputFField = ATON.UI.createInputText({
-                        label: key,
-                        oninput: (v) => {
-                            // Check if the value is a valid integer
-                            const parsedValue = parseFloat(v);
-                            if (!isNaN(parsedValue)) {
-                                data_temp[key] = parsedValue; // Store the integer value
-                                renderTokenF(parsedValue); // Render the token with the integer
-                            } else {
-                                data_temp[key] = null; // Reset if the input is not a valid integer
-                                renderTokenF(null); // Remove the token
-                            }
+                    elInput = ATON.UI.createInputText({
+                        label   : key,
+                        oninput : (v) => {
+                            data_temp[key] = v;
+                            elDisplay.textContent = v;
                         }
                     });
-                    elInput.append(inputFField);
-
-                    // Handle token removal
-                    elDisplay.addEventListener("click", (event) => {
-                        if (event.target.tagName === "BUTTON") {
-                            data_temp[key] = null; // Reset the value
-                            renderTokenF(null); // Clear the token
-                        }
-                    });
-
-                    // Initialize with the existing value (if any)
-                    if (data_temp[key] !== undefined) {
-                        renderTokenF(data_temp[key]);
-                    }
-                    // Display container for token and input
-                    elInput.append(elDisplay);
-                    renderTokenF(null);
                     break;
                 case "bool":
                     elInput = UI.createBool({
@@ -994,46 +849,18 @@ UI.createMetadataEditor = (data, data_temp) => {
                     });
                     break;
                 case "enum":
-                    elInput = ATON.UI.createContainer();
-                    const renderToken = (value) => {
-                        if (value) {
-                            const tokenHTML = `<span class="thothToken" data-v="${value}">${value}<button type="button" class="remove-token-btn">×</button></span>`;
-                            elDisplay.innerHTML = tokenHTML; // Display the token
-                        } else {
-                            elDisplay.innerHTML = ""; // Clear token if there's no value
-                        }
-                    };
-
-                    elDisplay.addEventListener("click", (event) => {
-                        if (event.target.tagName === "BUTTON") {
-                            data_temp[key] = null; // Reset the selected value
-                            renderToken(null); // Clear the token
-                        }
-                    });
-
-                    // Initialize with the existing selected value (if any)
-                    if (data_temp[key]) {
-                        renderToken(data_temp[key]);
-                    }
-
-                    // Create the dropdown button list for options
-                    const dropdContainer = ATON.UI.createDropdown({
-                        title: key,
-                        items: attr.value.map(option => ({
-                            el: ATON.UI.createButton({
-                                text: option,
-                                onpress: () => {
-                                    data_temp[key] = option; // Set the selected value
-                                    renderToken(option); // Update the token display
+                    elInput = ATON.UI.createDropdown({
+                        title   : key,
+                        items   : attr.value.map(option => ({
+                            el  : ATON.UI.createButton({
+                                text    : option,
+                                onpress : () => {
+                                    data_temp[key] = option;
+                                    elDisplay.textContent = option;
                                 }
                             })
                         }))
                     });
-
-                    // Append the dropdown to the input container
-                    elInput.append(dropdContainer);
-
-                    renderToken(null);
                     
                     break;
                 case "enum-multiple":
