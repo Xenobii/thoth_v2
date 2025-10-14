@@ -84,6 +84,37 @@ UI.createBool = (options) => {
     return container;
 };
 
+UI.createImageCard = (options) => {
+    let cc = "card aton-card";
+    if (options.classes) cc += options.classes;
+
+    let el = ATON.UI.createContainer({classes: cc});
+
+    if (options.size==="small") el.classList.add("aton-card-small");
+    if (options.size==="large") el.classList.add("aton-card-large");
+    
+    let sskwords = "";
+
+    if (options.keywords) {
+        for (let k in options.keywords) sskwords += k+" ";
+        sskwords = sskwords.trim().toLowerCase();
+        el.setAttribute("data-search-term", sskwords);
+    }
+
+    if (options.cover) {
+        let elcov = ATON.UI.createElementFromHTMLString(`<div class='aton-card-cover'></div>`);
+
+        let elImg = document.createElement("img");
+        elImg.classList.add("card-img-top");
+        
+        if (options.stdcover) elImg.onerror = () => elImg.src = options.stdcover;
+        
+        if (options.onactivate) {
+
+        }
+    }
+};
+
 
 // Toolbars
 
@@ -645,7 +676,7 @@ UI.handleToolHighlight = (tool_id) => {
 };
 
 
-// Nav
+// VP
 UI.setupNavElements = () => {
     UI.viewpointElements = new Map();
 
@@ -670,23 +701,29 @@ UI.createViewpoint = (node) => {
 };
 
 UI.createVPController = (node) => {
-    const elVPController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
+    const elVPController = ATON.UI.createElementFromHTMLString(`<div class="thoth-vp"></div>`);
+    const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
+    
     const elNavButton = ATON.UI.createButton({
-        text   : node,
         icon   : "geoloc",
         onpress: () => ATON.Nav.requestPOVbyID(node, 0.5)
     });
-    const test = ATON.UI.createCard({
-        title      : "test",
-        subtitle   : "test sub",
-        useblurtint: true,
-        cover      : "http://localhost:8080/api/v2/scenes/samples/skyphos/cover",
-        url        : "http://localhost:8080/a/thoth_v2/?s=" + THOTH.Scene.id,
-        size       : "large",
-    });
+    const elName = ATON.UI.createButton({
+        text: node
+    })
+    const elImg = document.createElement("img");
+    elImg.src = "https://picsum.photos/200/300";
+    elImg.onclick = () => UI.modalVPImage(node);
+    elImg.onerror = () => {};
+    elImg.classList.add("thoth-vp-image-preview");
+    // elRButtonContainer.classList.add("thoth-card");
+    elRButtonContainer.append(
+        elImg,
+    );
     elVPController.append(
         elNavButton,
-        test
+        elName,
+        elRButtonContainer,
     );
     
     return elVPController;
@@ -855,6 +892,40 @@ UI.modalMetadata = (id) => {
             });
         });
     }
+};
+
+UI.modalVPImage = (node) => {
+    const viewpoint = THOTH.Scene.currData.viewpoints[node];
+    const position  = viewpoint.position;
+    const target    = viewpoint.target;
+    const fov       = viewpoint.fov;
+
+    let elBody   = ATON.UI.createContainer();
+    let elFooter = ATON.UI.createContainer();
+    
+    // Image
+    let elImg = document.createElement("img");
+    elImg.src = "https://picsum.photos/200/300";
+    elImg.onerror = () => {};
+
+    elBody.classList.add("thoth-vp-image");
+    elBody.append(
+        elImg,
+    );
+
+    elFooter.append(ATON.UI.createButton({
+        text   : "Download",
+        icon   : "download",
+        onpress: () => UI.showToast("TBI"),
+        variant: "success",
+        tooltip: "Download image",
+    }));
+
+    ATON.UI.showModal({
+        header: node,
+        body  : elBody,
+        footer: elFooter,
+    });
 };
 
 
