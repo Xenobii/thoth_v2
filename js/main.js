@@ -12,6 +12,7 @@ import Scene from "./src/scene.js";
 import Toolbox from "./src/toolbox.js";
 import History from "./src/history.js";
 import Events from "./src/events.js";
+import SVP from "./src/vp_sem.js";
 
 
 // Realize 
@@ -20,18 +21,19 @@ window.THOTH = THOTH;
 
 
 // Import
-THOTH.UI 		= UI;
-THOTH.Utils 	= Utils;
-THOTH.Scene 	= Scene;
-THOTH.Toolbox 	= Toolbox;
-THOTH.History   = History;
-THOTH.Events	= Events;
+THOTH.UI      = UI;
+THOTH.Utils   = Utils;
+THOTH.Scene   = Scene;
+THOTH.Toolbox = Toolbox;
+THOTH.History = History;
+THOTH.Events  = Events;
+THOTH.SVP     = SVP;
 
 
-THOTH.BASE_URL          = "../thoth_v2";
-THOTH.PATH_RES_ICONS    = `${THOTH.BASE_URL}/js/res/`;
-THOTH.PATH_RES_ICONS    = `${THOTH.BASE_URL}/js/res/icons/`;
-THOTH.PATH_RES_SCHEMA   = `${THOTH.BASE_URL}/js/res/schema/`;
+THOTH.BASE_URL        = "../thoth_v2";
+THOTH.PATH_RES_ICONS  = `${THOTH.BASE_URL}/js/res/`;
+THOTH.PATH_RES_ICONS  = `${THOTH.BASE_URL}/js/res/icons/`;
+THOTH.PATH_RES_SCHEMA = `${THOTH.BASE_URL}/js/res/schema/`;
 
 
 
@@ -65,6 +67,7 @@ THOTH.setup = () => {
         THOTH.Events.setup();
         THOTH.History.setup();
         THOTH.Toolbox.setup();
+        THOTH.SVP.setup();
         THOTH.UI.setup();
         
         THOTH.initRC();

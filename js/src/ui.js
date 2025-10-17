@@ -84,37 +84,6 @@ UI.createBool = (options) => {
     return container;
 };
 
-UI.createImageCard = (options) => {
-    let cc = "card aton-card";
-    if (options.classes) cc += options.classes;
-
-    let el = ATON.UI.createContainer({classes: cc});
-
-    if (options.size==="small") el.classList.add("aton-card-small");
-    if (options.size==="large") el.classList.add("aton-card-large");
-    
-    let sskwords = "";
-
-    if (options.keywords) {
-        for (let k in options.keywords) sskwords += k+" ";
-        sskwords = sskwords.trim().toLowerCase();
-        el.setAttribute("data-search-term", sskwords);
-    }
-
-    if (options.cover) {
-        let elcov = ATON.UI.createElementFromHTMLString(`<div class='aton-card-cover'></div>`);
-
-        let elImg = document.createElement("img");
-        elImg.classList.add("card-img-top");
-        
-        if (options.stdcover) elImg.onerror = () => elImg.src = options.stdcover;
-        
-        if (options.onactivate) {
-
-        }
-    }
-};
-
 
 // Toolbars
 
@@ -173,6 +142,7 @@ UI.populateToolbars = () => {
     UI.hideBrushOptions();
     UI.hideLassoOptions();
 };
+
 
 // Side Panels
 
@@ -252,11 +222,24 @@ UI.createPanelLayers = () => {
 UI.createPanelVP = () => {
     ATON.UI.setSidePanelRight();
 
+    UI.elVPList  = ATON.UI.createContainer();
+    UI.elVPPreview = ATON.UI.createContainer();
+    
     let elVPBody = ATON.UI.createContainer();
-    UI.elVPList = ATON.UI.createContainer();
+    let elHeader = ATON.UI.createContainer();
+
+    elHeader.append(
+        UI.createHomeButton(),
+        UI.createBool({
+            text    : "Show Viewpoints",
+            value   : true,
+            onchange: (input) => THOTH.SVP.VPNodes.toggle(input)
+        }),
+    )
 
     elVPBody.append(
-        UI.createHomeButton(),
+        elHeader,
+        UI.elVPPreview,
         UI.elVPList,
     )
     return elVPBody;
@@ -677,6 +660,7 @@ UI.handleToolHighlight = (tool_id) => {
 
 
 // VP
+
 UI.setupNavElements = () => {
     UI.viewpointElements = new Map();
 
@@ -700,16 +684,29 @@ UI.createViewpoint = (node) => {
     UI.viewpointElements.set(node, elViewpoint);
 };
 
+UI.updateVPPreview = (node) => {
+    if (node === undefined) return;
+    
+    UI.elVPPreview.append(ATON.UI.createCard({
+        cover     : "https://picsum.photos/200/300",
+        onactivate: () => UI.modalVPImage(node),
+    }))
+    return UI.elVPPreview;
+};
+
 UI.createVPController = (node) => {
     const elVPController = ATON.UI.createElementFromHTMLString(`<div class="thoth-vp"></div>`);
     const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
     
     const elNavButton = ATON.UI.createButton({
         icon   : "geoloc",
-        onpress: () => ATON.Nav.requestPOVbyID(node, 0.5)
+        onpress: () => {
+            ATON.Nav.requestPOVbyID(node, 0.5);
+        }
     });
     const elName = ATON.UI.createButton({
-        text: node
+        text: node,
+        onpress: () => UI.updateVPPreview(node)
     })
     const elImg = document.createElement("img");
     elImg.src = "https://picsum.photos/200/300";
