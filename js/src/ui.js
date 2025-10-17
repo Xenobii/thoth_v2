@@ -18,9 +18,9 @@ UI.setup = () => {
 
     UI.setupPanels();
     UI.setupLayerElements();
-    UI.setupNavElements();
 
     UI.setupToast();
+    UI.setupVPPreview();
 };
 
 
@@ -101,7 +101,6 @@ UI.populateToolbars = () => {
         UI.createOptionsButton(),
         UI.createLayersButton(),
         UI.createExportButton(),
-        UI.createVPButton(),
         UI.createInfoButton(),
     );
     
@@ -149,15 +148,15 @@ UI.populateToolbars = () => {
 UI.setupPanels = () => {
     UI._elOptionsPanel = UI.createPanelOptions();
     UI._elLayersPanel  = UI.createPanelLayers();
-    UI._elVPPanel      = UI.createPanelVP();
 };
 
 UI.createPanelOptions = () => {
     ATON.UI.setSidePanelLeft();
 
     let elOptionsBody = ATON.UI.createContainer();
-    let elMode  = ATON.UI.createContainer();
-    let elMaps  = ATON.UI.createContainer();
+    let elMode        = ATON.UI.createContainer();
+    let elMaps        = ATON.UI.createContainer();
+    let elVP          = ATON.UI.createContainer();
 
     // Mode container
     elMode.append(ATON.UI.createButton({
@@ -177,12 +176,26 @@ UI.createPanelOptions = () => {
         onpress : () => console.log("placeholder")
     }));
 
+    // Viewpoint container
+    elVP.append(UI.createBool({
+        text    : "Show viewpoints",
+        value   : true,
+        onchange: (input) => THOTH.SVP.toggleVPNodes(input)
+    }));
+    elVP.append(ATON.UI.createSlider({
+        label  : "Node scale",
+        range  : [0.1, 2.0],
+        step   : 0.1,
+        value  : 1.0,
+        oninput: (input) => THOTH.SVP.resizeVPNodes(input)
+    }))
+
     // Options container
     elOptionsBody.append(ATON.UI.createTreeGroup({
         items: 
         [
             {
-                title   : "Mode",
+                title   : "UI Mode",
                 open    : false,
                 content : elMode
             },
@@ -190,6 +203,11 @@ UI.createPanelOptions = () => {
                 title   : "Mapping",
                 open    : false,
                 content : elMaps
+            },
+            {
+                title   : "Viewpoints",
+                open    : false,
+                content : elVP
             }
         ]
     }));
@@ -219,43 +237,10 @@ UI.createPanelLayers = () => {
     return elLayersBody;
 };
 
-UI.createPanelVP = () => {
-    ATON.UI.setSidePanelRight();
-
-    UI.elVPList  = ATON.UI.createContainer();
-    UI.elVPPreview = ATON.UI.createContainer();
-    
-    let elVPBody = ATON.UI.createContainer();
-    let elHeader = ATON.UI.createContainer();
-
-    elHeader.append(
-        UI.createHomeButton(),
-        UI.createBool({
-            text    : "Show Viewpoints",
-            value   : true,
-            onchange: (input) => THOTH.SVP.VPNodes.toggle(input)
-        }),
-    )
-
-    elVPBody.append(
-        elHeader,
-        UI.elVPPreview,
-        UI.elVPList,
-    )
-    return elVPBody;
-};
-
 UI.showPanelLayers = () => {
     ATON.UI.showSidePanel({
         header: "Layers",
         body  : UI._elLayersPanel
-    });
-};
-
-UI.showPanelVP = () => {
-    ATON.UI.showSidePanel({
-        header: "COLMAP Navigation",
-        body  : UI._elVPPanel
     });
 };
 
@@ -293,14 +278,6 @@ UI.createInfoButton = () => {
         onpress: () => window.open("https://xenobii.github.io/thoth-documentation/", "_blank"),
         tooltip: "Open documentation"
     });
-};
-
-UI.createVPButton = () => {
-    return ATON.UI.createButton({
-        icon   : "geoloc",
-        onpress: () => UI.showPanelVP(),
-        tooltip: "Navigate colmap"
-    })
 };
 
 UI.createUserButton = ()=>{
@@ -661,69 +638,42 @@ UI.handleToolHighlight = (tool_id) => {
 
 // VP
 
-UI.setupNavElements = () => {
-    UI.viewpointElements = new Map();
+UI.showVPPreview = (vp) => {
+    const viewpoint = THOTH.Scene.currData.viewpoints[vp];
+    const subtitle  = 
+        "Position: " + viewpoint.position +
+        "\n Target: " + viewpoint.target +
+        "\n FOV: " + viewpoint.fov;
 
-    const viewpoints = THOTH.Scene.currData.viewpoints;
-    if (viewpoints === undefined) return;
+    const elFooter = ATON.UI.createContainer();
+    elFooter.append(
+        ATON.UI.createButton({
+            text   : "Close",
+            icon   : "cancel",
+            onpress: () => UI.elVPPreviewer.replaceChildren()
+        })
+    )
 
-    for (let node in viewpoints) {
-        if (node !== "home") {
-            UI.createViewpoint(node);
-        }
-    }
+    UI.elVPPreviewer.replaceChildren(
+        ATON.UI.createCard({
+            title     : vp,
+            subtitle  : subtitle,
+            // size      : "large",
+            cover     : "https://picsum.photos/200/300",
+            onactivate: () => UI.modalVPImage(vp),
+            footer    : elFooter
+        }),
+    );
 };
 
-UI.createViewpoint = (node) => {
-    const elViewpoint = UI.createVPController(node);
-
-    // Add to panel
-    UI.elVPList.append(elViewpoint);
-
-    // Add to vp list
-    UI.viewpointElements.set(node, elViewpoint);
-};
-
-UI.updateVPPreview = (node) => {
-    if (node === undefined) return;
-    
-    UI.elVPPreview.append(ATON.UI.createCard({
-        cover     : "https://picsum.photos/200/300",
-        onactivate: () => UI.modalVPImage(node),
-    }))
-    return UI.elVPPreview;
-};
-
-UI.createVPController = (node) => {
-    const elVPController = ATON.UI.createElementFromHTMLString(`<div class="thoth-vp"></div>`);
-    const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
-    
-    const elNavButton = ATON.UI.createButton({
-        icon   : "geoloc",
-        onpress: () => {
-            ATON.Nav.requestPOVbyID(node, 0.5);
-        }
+UI.setupVPPreview = () => {
+    UI.elVPPreviewer = ATON.UI.createContainer({
+        id     : "VPPreviewer",
+        classes: "thoth-vp-preview"
     });
-    const elName = ATON.UI.createButton({
-        text: node,
-        onpress: () => UI.updateVPPreview(node)
-    })
-    const elImg = document.createElement("img");
-    elImg.src = "https://picsum.photos/200/300";
-    elImg.onclick = () => UI.modalVPImage(node);
-    elImg.onerror = () => {};
-    elImg.classList.add("thoth-vp-image-preview");
-    // elRButtonContainer.classList.add("thoth-card");
-    elRButtonContainer.append(
-        elImg,
-    );
-    elVPController.append(
-        elNavButton,
-        elName,
-        elRButtonContainer,
-    );
-    
-    return elVPController;
+    UI.elVPPreviewer.style.display = "block";
+    UI.elVPPreviewer.style.opacity = 1;
+    document.body.appendChild(UI.elVPPreviewer)
 };
 
 

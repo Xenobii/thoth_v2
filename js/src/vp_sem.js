@@ -34,34 +34,65 @@ SVP.createSVPNode = (vp) => {
     const viewpoint = THOTH.Scene.currData.viewpoints[vp];
     const position  = viewpoint.position;
     const target    = viewpoint.target;
-    const rotation  = SVP.getNodeRotation(position, target);
+    // const rotation  = SVP.getNodeRotation(position, target);
+    
     // Temp logic
-    const inPos     = SVP.tempCreateIntermediatePosition(position, target)
+    const inPos = SVP.tempCreateIntermediatePosition(position, target);
 
-    const scale = 8.0
+    // Create nav mesh
+    const radius = 0.2;
+    const matSTD = new THREE.MeshStandardMaterial({
+        color      : new THREE.Color(0xffffff),
+        metalness  : 0.1,
+        transparent: true,
+        roughness  : 0.4
+    });    
+    const geom   = new THREE.SphereGeometry(radius, 16, 12);
+    const mesh   = new THREE.Mesh(geom, matSTD);
 
-    const VPBtn = new ATON.SUI.Button(vp)
-        .setIcon(ATON.UI.PATH_RES_ICONS + "geoloc.png")
-        .setPosition(...inPos)
-        .setRotation(...rotation)
-        .setScale(scale)
-        .setBackgroundOpacity(0.3)
-        .setBaseColor(new THREE.Color().setHex(0xffffff))
-        .setSwitchColor(new THREE.Color().setHex(0x000000))
-        .setOnHover(() => {
-            VPBtn.setScale(scale * 1.2)
-            VPBtn.switch(true)
-        })
-        .setOnLeave(() => {
-            VPBtn.setScale(scale)
-            VPBtn.switch(false)
-        })
-        .setOnSelect(() => {
-            ATON.Nav.requestPOVbyID(vp, 0.5);
-        })
+    mesh.renderOrder        = 1;
+    mesh.material.depthTest = true;
 
-    return VPBtn;
+    const N = new ATON.Node(vp, ATON.NTYPES.UI);
+    N.add(mesh);
+    N.setPickable(true);
+    N.setOpacity(0.7);
+    N.setPosition(...inPos);
+    N.orientToCamera();
+    N.dirtyBound();
+    N.setOnHover(() => {
+        N.setOpacity(0.8);
+        N.setScale(1.6);
+    });
+    N.setOnLeave(() => {
+        N.setOpacity(0.7);
+        N.setScale(1.0);
+    });
+    N.setOnSelect(() => {
+        ATON.Nav.requestPOVbyID(vp, 0.5);
+        THOTH.UI.showVPPreview(vp);
+    });
+    
+    return N;
 };
+
+
+// Visualization
+
+SVP.toggleVPNodes = (bool) => {
+    SVP.VPNodes.toggle(bool);
+};
+
+SVP.resizeVPNodes = (scale) => {
+    if (SVP.VPNodes && SVP.VPNodes.children) {
+        for (const VPNode of SVP.VPNodes.children) {
+            VPNode.setScale(scale);
+        }
+    }
+};
+
+
+// Utils
 
 SVP.getNodeRotation = (position, target) => {
     const posVec = new THREE.Vector3(...position)
@@ -80,7 +111,7 @@ SVP.getNodeRotation = (position, target) => {
 SVP.tempCreateIntermediatePosition = (position, target) => {
     const posVec   = new THREE.Vector3(...position);
     const tarVec   = new THREE.Vector3(...target);
-    const midpoint = posVec.clone().lerp(tarVec, 0.75);
+    const midpoint = posVec.clone().lerp(tarVec, 0.8);
     return midpoint;
 };
 

@@ -266,3 +266,22 @@
 
     flex-wrap: nowrap;
 }
+
+.thoth-vp-preview {
+    position: fixed;
+    margin: var(--thoth-ui-margin);
+    top: 60px;
+    right: 20px;
+    /* padding: 12px 20px; */
+    background: rgba(var(--bs-body-bg-rgb), 0.85);
+    color: var(--bs-body-color);
+    border-radius: var(--bs-border-radius);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    font-size: 1em;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    -webkit-backdrop-filter: blur(var(--aton-blur-radius));
+    backdrop-filter: blur(var(--aton-blur-radius));
+    pointer-events: auto;
+}
