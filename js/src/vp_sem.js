@@ -20,6 +20,8 @@ SVP.setup = () => {
 
 SVP.setupSVPNodes = () => {
     const viewpoints = THOTH.Scene.currData.viewpoints;
+    if (viewpoints === undefined) return;
+
     SVP.VPNodes = new ATON.Node("SVPNodes", ATON.NTYPES.UI);
     for (const vp of Object.keys(viewpoints)) {
         if (vp !== "home") {
@@ -34,7 +36,6 @@ SVP.createSVPNode = (vp) => {
     const viewpoint = THOTH.Scene.currData.viewpoints[vp];
     const position  = viewpoint.position;
     const target    = viewpoint.target;
-    // const rotation  = SVP.getNodeRotation(position, target);
     
     // Temp logic
     const inPos = SVP.tempCreateIntermediatePosition(position, target);

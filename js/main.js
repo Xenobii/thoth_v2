@@ -280,6 +280,19 @@ THOTH.updateNormalMap = (path, mesh, intensity = 10) => {
     });
 };
 
+THOTH.removeNormalMap = (mesh) => {
+    if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
+    const mat = mesh.material;
+
+    if (mat.normalMap) {
+        mat.normalMap.dispose();
+        mat.normalMap = null;
+        mat.needsUpdate = true;
+        THOTH.updateVisibility(mesh);
+    }
+};
+
+
 THOTH.updateTextureMap = (path, mesh) => {
     if (!path) return false;
 	if (mesh === undefined) mesh = THOTH.Scene.mainMesh; 

@@ -171,9 +171,27 @@ UI.createPanelOptions = () => {
     }));
 
     // Mapping container
-    elMaps.append(ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "light-mode.png",
-        onpress : () => console.log("placeholder")
+    elMaps.append(ATON.UI.createDropdown({
+        title   : "Normal Map",
+        items   : [
+            {
+                el: ATON.UI.createButton({
+                    text   : "none",
+                    icon   : "clone",
+                    onpress: () => THOTH.removeNormalMap()
+                })
+            },
+            {
+                el: ATON.UI.createButton({
+                    text   : "MSII",
+                    icon   : "clone",
+                    onpress: () => {
+                        THOTH.updateNormalMap(THOTH.Scene.normalMapPath);
+                        UI.showToast("TBI fully");
+                    }
+                })
+            }
+        ]
     }));
 
     // Viewpoint container
@@ -217,7 +235,7 @@ UI.createPanelOptions = () => {
 
 UI.showPanelOptions = () => {
     ATON.UI.showSidePanel({
-        header  : "Layers",
+        header  : "Settings",
         body    : UI._elOptionsPanel
     });
 };  
@@ -435,11 +453,11 @@ UI.createLassoOptions = () => {
         }),
         // Normal Threshold
         ATON.UI.createSlider({
-            label   : "Normal threshold",
-            range   : [-1, 1],
-            step    : 0.1,
-            value   : THOTH.Toolbox.normalThreshold,
-            oninput : (v) => THOTH.Toolbox.normalThreshold = v,
+            label  : "Normal threshold",
+            range  : [-1, 1],
+            step   : 0.1,
+            value  : THOTH.Toolbox.normalThreshold,
+            oninput: (v) => THOTH.Toolbox.normalThreshold = v,
         }),
         // Select Obstructed Faces
         UI.createBool({

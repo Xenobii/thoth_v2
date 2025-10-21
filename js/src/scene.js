@@ -18,6 +18,10 @@ Scene.setup = (sid) => {
     Scene.modelUrl  = Scene.currData.scenegraph.nodes.main.urls[0];
     Scene.modelName = Scene.modelUrl.split("/").filter(Boolean).pop();
     
+    Scene.modelFolder   = Scene.modelUrl.substring(0, Scene.modelUrl.lastIndexOf("/"));
+    Scene.normalMapPath = Scene.modelFolder + "/normal_map.png";
+    Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.normalMapPath);
+
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
 
