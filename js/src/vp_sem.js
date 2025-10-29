@@ -34,11 +34,14 @@ SVP.setupSVPNodes = () => {
 
 SVP.createSVPNode = (vp) => {
     const viewpoint = THOTH.Scene.currData.viewpoints[vp];
+    if (viewpoint === undefined) return;
+    
     const position  = viewpoint.position;
     const target    = viewpoint.target;
     
     // Temp logic
-    const inPos = SVP.tempCreateIntermediatePosition(position, target);
+    // const inPos = SVP.tempCreateIntermediatePosition(position, target);
+    const inPos = position
 
     // Create nav mesh
     const radius = 0.2;
@@ -114,6 +117,86 @@ SVP.tempCreateIntermediatePosition = (position, target) => {
     const tarVec   = new THREE.Vector3(...target);
     const midpoint = posVec.clone().lerp(tarVec, 0.8);
     return midpoint;
+};
+
+SVP.getCameraPosition = (camera) => {
+    // DONT KNOW IF THIS WORKS
+    const q_colmap = new THREE.Quaternion(camera.qx, camera.qy, camera.qz, camera.qw);
+    
+    // Rotation
+    const R = new THREE.Matrix3().setFromQuaternion(q_colmap);
+
+    // Translation
+    const t = new TRHEE.Vector3(camera.tx, camera.ty, camera.tz);
+
+    // Camera center
+    const Rt = R.clone().transpose();
+    const C  = t.clone().applyMatrix3(Rt).negate();
+
+    // Convert to threejs
+    const q_three = q_colmap.clone().invert();
+
+    return {
+        position: C,
+        quartenion: q_three
+    }
+};
+
+SVP.convertToThreeCoords = (qw, qx, qy, qz, tx, ty, tz) => {
+    // World to camera
+    const q_wc = new THREE.Quaternion(-qx, qz, qy, qw).invert();
+    const c_wc = new THREE.Vector3(tx, tz, ty).negate().applyQuaternion(q_wc);
+    // Rotate to match COLMAP
+    const flip = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(1, 0, 0), Math.PI
+    );
+    const q_three = flip.clone().multiply(q_wc).multiply(flip);
+    const c_three = new THREE.Vector3(c_wc.x, -c_wc.y, -c_wc.z);
+
+    // return [-qw, -qx, qz, qy, -tx, -tz, -ty]
+    
+    return [
+        q_three.w,
+        q_three.x,
+        -q_three.y,
+        q_three.z,
+        c_three.x,
+        c_three.y,
+        c_three.z
+    ];
+};
+
+SVP.createVPTarget = (qw, qx, qy, qz, tx, ty, tz, mesh) => {
+    if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
+
+    const camPos  = new THREE.Vector3(tx, ty, tz);
+    const camQuat = new THREE.Quaternion(qx, qy, qz, qw);
+
+    const getCameraWorldQuartenion = (camQuat, worldQuat) => {
+        if (!worldQuat) return camQuat.clone();
+        return worldQuat.clone().multiply(camQuat);
+    };
+
+    const camWorldQuat = getCameraWorldQuartenion(camQuat);
+    const dir = new THREE.Vector3(0, -1, 1).applyQuaternion(camWorldQuat).normalize();
+
+    // Raycaster
+    const raycaster = new THREE.Raycaster();
+    raycaster.ray.origin.copy(camPos);
+    raycaster.ray.direction.copy(dir);
+    raycaster.near = 0.001;
+    raycaster.far  = 1000;
+
+    // Intersections
+    const intersects = [];
+    mesh.raycast(raycaster, intersects);
+
+    // visualization
+    const rayLength = 10;
+    const endPos = new THREE.Vector3().copy(raycaster.ray.origin)
+        .add(new THREE.Vector3().copy(raycaster.ray.direction).multiplyScalar(rayLength));
+
+    return endPos;
 };
 
 

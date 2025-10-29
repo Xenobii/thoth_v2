@@ -120,6 +120,7 @@ Toolbox.resizeLassoCanvas = () => {
 
 
 // Update functions
+
 Toolbox.getPixelPointerCoords = (e) => {
     const rect = THOTH._renderer.domElement.getBoundingClientRect();
     Toolbox.pixelPointerCoords = {
@@ -211,6 +212,7 @@ Toolbox.delFacesFromSelection = (newFaces, selection) => {
 
     return newSelection;
 };
+
 
 // Brush
 
@@ -418,41 +420,98 @@ Toolbox.processLassoSelection = (mesh) => {
     return selectedFaces;
 };
 
+
+// Measure
+
+Toolbox.addMeasurementPoint = () => {
+    const point = ATON.getSceneQueriedPoint();
+    ATON.SUI.addMeasurementPoint(point);
+};
+
+Toolbox.clearMeasure = () => {
+    if (ATON.SUI._prevMPoint === undefined) return;
+
+    ATON.SUI._prevMPoint = undefined;
+};
+
+
 // Activation
 
 Toolbox.activate = () => Toolbox.enabled = true;
 
 Toolbox.deactivate = () => {
-    Toolbox.enabled         = false;
-    Toolbox.brushEnabled    = false;
-    Toolbox.eraserEnabled   = false;
-    Toolbox.lassoEnabled    = false;
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.enabled        = false;
+    Toolbox.brushEnabled   = false;
+    Toolbox.eraserEnabled  = false;
+    Toolbox.lassoEnabled   = false;
+    Toolbox.measureEnabled = false;
 };
 
 Toolbox.activateBrush = () => {
-    Toolbox.enabled         = true;
-    Toolbox.brushEnabled    = true;
-    Toolbox.eraserEnabled   = false;
-    Toolbox.lassoEnabled    = false;
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.enabled        = true;
+    Toolbox.brushEnabled   = true;
+    Toolbox.eraserEnabled  = false;
+    Toolbox.lassoEnabled   = false;
+    Toolbox.measureEnabled = false;
 };
 
 Toolbox.activateEraser = () => {
-    Toolbox.enabled         = true;
-    Toolbox.brushEnabled    = false;
-    Toolbox.eraserEnabled   = true
-    Toolbox.lassoEnabled    = false;
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.enabled        = true;
+    Toolbox.brushEnabled   = false;
+    Toolbox.eraserEnabled  = true
+    Toolbox.lassoEnabled   = false;
+    Toolbox.measureEnabled = false;
 };
 
 Toolbox.activateLasso = () => {
-    Toolbox.enabled         = true;
-    Toolbox.brushEnabled    = false;
-    Toolbox.eraserEnabled   = false;
-    Toolbox.lassoEnabled    = true;
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.enabled        = true;
+    Toolbox.brushEnabled   = false;
+    Toolbox.eraserEnabled  = false;
+    Toolbox.lassoEnabled   = true;
+    Toolbox.measureEnabled = false;
 };
 
-Toolbox.deactivateBrush = () => Toolbox.brushEnabled = false;
-Toolbox.deactivateEraser = () => Toolbox.eraserEnabled = false;
-Toolbox.deactivateLasso = () => Toolbox.lassoEnabled = false;
+Toolbox.activateMeasure = () => {
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.enabled        = true;
+    Toolbox.brushEnabled   = false;
+    Toolbox.eraserEnabled  = false;
+    Toolbox.lassoEnabled   = false;
+    Toolbox.measureEnabled = true;
+};
+
+Toolbox.deactivateBrush   = () => {
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.brushEnabled   = false;
+};
+
+Toolbox.deactivateEraser  = () => {
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.eraserEnabled  = false;
+};
+
+Toolbox.deactivateLasso   = () => {
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.lassoEnabled   = false;
+};
+
+Toolbox.deactivateMeasure = () => {
+    Toolbox.cleanupLasso();
+    Toolbox.clearMeasure();
+    Toolbox.measureEnabled = false;
+};
 
 Toolbox.pause   = () => Toolbox.paused = true;
 Toolbox.resume  = () => Toolbox.paused = false;

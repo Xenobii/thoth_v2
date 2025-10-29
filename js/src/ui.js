@@ -113,22 +113,26 @@ UI.populateToolbars = () => {
     // Main Toolbar
     UI.toolElements = new Map();
 
-    const elBrush  = UI.createBrushButton();
-    const elEraser = UI.createEraserButton();
-    const elLasso  = UI.createLassoButton();
-    const elNoTool = UI.createNoToolButton();
+    const elBrush   = UI.createBrushButton();
+    const elEraser  = UI.createEraserButton();
+    const elLasso   = UI.createLassoButton();
+    const elMeasure = UI.createMeasureButton();
+    const elNoTool  = UI.createNoToolButton();
    
     UI.toolElements.set('brush', elBrush);
     UI.toolElements.set('eraser', elEraser);
     UI.toolElements.set('lasso', elLasso);
     UI.toolElements.set('no_tool', elNoTool);
+    UI.toolElements.set('measure', elMeasure);
     UI._elMainToolbar.append(
+        UI.createHomeButton(),
         elBrush, 
         elEraser,
         elLasso,
         elNoTool,
+        elMeasure,
         UI.createUndoButton(),
-        UI.createRedoButton()
+        UI.createRedoButton(),
     );
     
     // Tool options
@@ -157,6 +161,7 @@ UI.createPanelOptions = () => {
     let elMode        = ATON.UI.createContainer();
     let elMaps        = ATON.UI.createContainer();
     let elVP          = ATON.UI.createContainer();
+    let elMeasures    = ATON.UI.createContainer();
 
     // Mode container
     elMode.append(ATON.UI.createButton({
@@ -208,6 +213,15 @@ UI.createPanelOptions = () => {
         oninput: (input) => THOTH.SVP.resizeVPNodes(input)
     }))
 
+    // Measurements container
+    elMeasures.append(ATON.UI.createButton({
+                        icon   : "cancel",
+                        text   : "Clear Measurements",
+                        tooltip: "Clear all measurements",
+                        onpress: () => ATON.SUI.clearMeasurements()
+                    })
+    );
+
     // Options container
     elOptionsBody.append(ATON.UI.createTreeGroup({
         items: 
@@ -226,6 +240,11 @@ UI.createPanelOptions = () => {
                 title   : "Viewpoints",
                 open    : false,
                 content : elVP
+            },
+            {
+                title  : "Measurements",
+                open   : false,
+                content: elMeasures
             }
         ]
     }));
@@ -293,7 +312,7 @@ UI.createLayersButton = () => {
 UI.createInfoButton = () => {
     return ATON.UI.createButton({
         icon   : "info",
-        onpress: () => window.open("https://xenobii.github.io/thoth-documentation/", "_blank"),
+        onpress: () => window.open("https://textailes.github.io/thoth-documentation/", "_blank"),
         tooltip: "Open documentation"
     });
 };
@@ -315,64 +334,49 @@ UI.createUserButton = ()=>{
 
 UI.createBrushButton = () => {
     return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "brush.png",
-        tooltip : "Brush tool",
-        onpress : () => {
-            THOTH.fire("selectBrush");
-            UI.handleToolHighlight('brush');
-        }
+        icon   : THOTH.PATH_RES_ICONS + "brush.png",
+        tooltip: "Brush tool (B)",
+        onpress: () => THOTH.fire("selectBrush")
     });
 };
 
 UI.createEraserButton = () => {
     return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "eraser.png",
-        tooltip : "Eraser tool",
-        onpress : () => {
-            THOTH.fire("selectEraser");
-            UI.handleToolHighlight('eraser');
-        }
+        icon   : THOTH.PATH_RES_ICONS + "eraser.png",
+        tooltip: "Eraser tool (E)",
+        onpress: () => THOTH.fire("selectEraser")
     });
 };
 
 UI.createLassoButton = () => {
     return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "lasso.png",
-        tooltip : "Lasso tool",
-        onpress : () => {
-            THOTH.fire("selectLasso");
-            UI.handleToolHighlight('lasso');
-        }
+        icon   : THOTH.PATH_RES_ICONS + "lasso.png",
+        tooltip: "Lasso tool (L)",
+        onpress: () => THOTH.fire("selectLasso")
     });
 };
 
 UI.createNoToolButton = () => {
     return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "none.png",
-        onpress : () => {
-            THOTH.fire("selectNone");
-            UI.handleToolHighlight('no_tool')
-        }
+        icon   : THOTH.PATH_RES_ICONS + "none.png",
+        tooltip: "No Tool (N)",
+        onpress: () => THOTH.fire("selectNone")
     });
 };
 
 UI.createUndoButton = () => {
     return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "undo.png",
-        tooltip : "Undo",
-        onpress : () => {
-            THOTH.History.undo();
-        }
+        tooltip : "Undo (Ctrl + Z)",
+        onpress : () => THOTH.History.undo()
     });
 };
 
 UI.createRedoButton = () => {
     return ATON.UI.createButton({
         icon    : THOTH.PATH_RES_ICONS + "redo.png",
-        tooltip : "Redo",
-        onpress : () => {
-            THOTH.History.redo();
-        }
+        tooltip : "Redo (Ctrl + Y)",
+        onpress : () => THOTH.History.redo()
     });
 };
 
@@ -410,6 +414,14 @@ UI.createHomeButton = () => {
         onpress: () => {
             ATON.Nav.requestHome(0.3);
         }
+    });
+};
+
+UI.createMeasureButton = () => {
+    return ATON.UI.createButton({
+        icon   : "measure",
+        tooltip: "Measure distance (M)",
+        onpress: () => THOTH.fire("selectMeasure")
     });
 };
 
@@ -591,13 +603,15 @@ UI.createLayerController = (id) => {
     });
     THOTH.Events.enableRename(elName, id);
     
-    //  USE THIS AFTER IT'S IMPORTED TO ATON.MIN
-    // const elCP = ATON.UI.createColorPicker({
-    //     color   : layer.color,
-    //     onchange: (color) => {
-    //         layer.color = color
-    //     }
-    // })
+    const elCP = ATON.UI.createColorPicker({
+        color   : layer.highlightColor,
+        oninput: (color) => {
+            layer.highlightColor = color
+            THOTH.updateVisibility();
+        },
+    });
+    elCP.style.width = "60px";
+    elCP.style.marginTop = "2px"
 
     // Delete
     const elDel = ATON.UI.createButton({
@@ -616,6 +630,7 @@ UI.createLayerController = (id) => {
 
     elRButtonContainer.append(
         elMetadata,
+        elCP,
         elDel
     );
     elLayerController.append(
@@ -1032,8 +1047,10 @@ UI.createMetadataEditor = (data, data_temp) => {
 // Testing
 
 UI.Test = () => {
-    let test = THOTH.Scene.modelName;
+    let test = THOTH.Scene.currData;
     console.log(test)
+    THOTH.SVP.setup()
+    THOTH.SVP.setupSVPNodes()
 };
 
 

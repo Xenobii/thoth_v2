@@ -39,7 +39,7 @@
 
 .thoth-main-toolbar {
     margin: var(--thoth-ui-margin);
-    margin-top: 100px;
+    margin-top: 45px;
 
     max-height: calc(100% - (var(--thoth-ui-margin)*2));
 

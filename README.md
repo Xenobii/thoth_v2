@@ -71,4 +71,4 @@ You can create a scene from the ATON front end (Shu) or through a post request t
 
 Additional documentation can be found here: 
 
-[https://xenobii.github.io/thoth-documentation](https://xenobii.github.io/thoth-documentation/)
+[https://textailes.github.io/thoth-documentation/](https://textailes.github.io/thoth-documentation/)

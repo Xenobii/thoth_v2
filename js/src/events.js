@@ -90,6 +90,10 @@ Events.setupActiveEL = () => {
             }
             THOTH.fire("startLasso");
         }
+        // Measure
+        if (THOTH.Toolbox.measureEnabled) {
+            THOTH.fire("addMeasurement");
+        }
     });
     THOTH.on("MouseLeftUp", () => {
         if (!Events.activeLayerExists()) return;
@@ -198,13 +202,19 @@ Events.setupActiveEL = () => {
     THOTH.on("KeyDown", (k) => {
         // Tools
         if (k === "KeyB") {
-            THOTH.fire("selectBrush")
+            THOTH.fire("selectBrush");
         }
         if (k === "KeyE") {
-            THOTH.fire("selectEraser")
+            THOTH.fire("selectEraser");
         }
         if (k === "KeyL") {
-            THOTH.fire("selectLasso")
+            THOTH.fire("selectLasso");
+        }
+        if (k === "keyN") {
+            THOTH.fire("selectNone");
+        }
+        if (k === "KeyM") {
+            THOTH.fire("selectMeasure");
         }
 
         // Tool size
@@ -239,6 +249,7 @@ Events.setupActiveEL = () => {
                 THOTH.setUserControl(true);
                 THOTH.Toolbox.pause();
                 THOTH.Toolbox.cleanupLasso();
+                THOTH.Toolbox.clearMeasure();
             }
         }
     });
@@ -263,7 +274,7 @@ Events.setupActiveEL = () => {
 };
 
 Events.setupWindowEL = () => {
-    let w   = window;
+    let w = window;
 
     // Resizes
     w.addEventListener('resize', () => {
@@ -350,6 +361,9 @@ Events.setupUIEvents = () => {
         THOTH.setUserControl(false);
         THOTH.UI.showBrushOptions();
         THOTH.UI.hideLassoOptions();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.UI.handleToolHighlight('brush');
     });
 
     // Eraser
@@ -358,6 +372,9 @@ Events.setupUIEvents = () => {
         THOTH.setUserControl(false);
         THOTH.UI.showBrushOptions();
         THOTH.UI.hideLassoOptions();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.UI.handleToolHighlight('eraser');
     });
 
     // Lasso add
@@ -366,6 +383,9 @@ Events.setupUIEvents = () => {
         THOTH.setUserControl(false);
         THOTH.UI.showLassoOptions();
         THOTH.UI.hideBrushOptions();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.UI.handleToolHighlight('lasso');
     });
 
     // Select no tool
@@ -375,7 +395,21 @@ Events.setupUIEvents = () => {
         THOTH.UI.hideBrushOptions();
         THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.UI.handleToolHighlight('no_tool');
     });
+    
+
+    // Select measure
+    THOTH.on("selectMeasure", () => {
+        THOTH.Toolbox.activateMeasure();
+        THOTH.setUserControl(false);
+        THOTH.UI.hideBrushOptions();
+        THOTH.UI.hideLassoOptions();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.UI.handleToolHighlight('measure');
+    })
 
     // Dlclick rename
     THOTH.Events.enableRename = (buttonElement, id) => {
@@ -644,6 +678,9 @@ Events.setupToolboxEvents = () => {
         THOTH.updateVisibility();
 
         THOTH.Toolbox.tempSelection = null;
+    });
+    THOTH.on("addMeasurement", (l) => {
+        THOTH.Toolbox.addMeasurementPoint();
     });
 };
 

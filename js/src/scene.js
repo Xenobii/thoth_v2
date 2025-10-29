@@ -19,8 +19,9 @@ Scene.setup = (sid) => {
     Scene.modelName = Scene.modelUrl.split("/").filter(Boolean).pop();
     
     Scene.modelFolder   = Scene.modelUrl.substring(0, Scene.modelUrl.lastIndexOf("/"));
-    Scene.normalMapPath = Scene.modelFolder + "/normal_map.png";
-    Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.normalMapPath);
+    
+    Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
+    Scene.colmapCamPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/images.txt")
 
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
@@ -37,6 +38,7 @@ Scene.setup = (sid) => {
     Scene.mainMesh = getMainMesh();
 
     Scene.getSchemaJSON();
+    Scene.readColmap();
     
     Scene.activeLayer = undefined;
 };
@@ -274,6 +276,60 @@ Scene.editObject = (value) => {
     Scene.currData.objectMetadata = value;
 };
 
+
+// SVP
+
+Scene.readColmap = () => {
+    fetch(Scene.colmapCamPath + '?' + new Date().getTime())
+        .then(res => {
+            if (!res.ok) return false;
+            return res.text()
+        })
+        .then(text => {
+            const colmapCameras = text.split('\n').filter(line => line.includes('jpg'));
+            Scene.buildCameras(colmapCameras);
+        })
+        .catch(err => {
+            console.error("Failed to load " + Scene.colmapCamPath + ": " + err)
+        });
+};
+
+Scene.buildCameras = (colmapCameras) => {
+    THOTH.Scene.currData.viewpoints = {};
+    
+    for (const cameraAttr of colmapCameras) {
+        let [id, qw, qx, qy, qz, tx, ty, tz, label, image] = cameraAttr.split(" ");
+        
+        // Convert to floatsZ
+        [qw, qx, qy, qz, tx, ty, tz] = [qw, qx, qy, qz, tx, ty, tz]
+            .map(v => parseFloat(v));
+
+        // Convert to three js coords
+        [qw, qx, qy, qz, tx, ty, tz] = THOTH.SVP.convertToThreeCoords(qw, qx, qy, qz, tx, ty, tz);
+        
+        // Convert to .4f
+        [qw, qx, qy, qz, tx, ty, tz] = [qw, qx, qy, qz, tx, ty, tz].map(v => Math.round(v * 1000) / 1000);
+
+        if (Scene.currData.viewpoints[id] === undefined) {
+            // naive dummy sampling 
+            if (id % 30 !== 0) continue;
+
+            let target = THOTH.SVP.createVPTarget(qw, qx, qy, qz, tx, ty, tz);
+            [target.x, target.y, target.z] = [target.x, target.y + 5, target.z].map(v => Math.round(v * 1000) / 1000);
+            
+            Scene.currData.viewpoints[id] = {
+                "position": [tx, ty+5, tz],
+                "target"  : [-target.x, target.y, target.z],
+                "fov"     : 70
+            }
+            new ATON.POV(id)
+                .setPosition(tx, ty+5, tz)
+                .setTarget(-target.x, target.y, -target.z)
+                .setFOV(70);
+        }
+    }
+    THOTH.SVP.setup();
+};
 
 // Photon
 
