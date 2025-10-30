@@ -675,8 +675,8 @@ UI.showVPPreview = (vp) => {
     const viewpoint = THOTH.Scene.currData.viewpoints[vp];
     const subtitle  = 
         "Position: " + viewpoint.position +
-        "\n Target: " + viewpoint.target +
-        "\n FOV: " + viewpoint.fov;
+        ",\n Target: " + viewpoint.target +
+        ",\n FOV: " + viewpoint.fov;
 
     const elFooter = ATON.UI.createContainer();
     elFooter.append(
@@ -686,13 +686,13 @@ UI.showVPPreview = (vp) => {
             onpress: () => UI.elVPPreviewer.replaceChildren()
         })
     )
-
+    console.log(viewpoint.image)
     UI.elVPPreviewer.replaceChildren(
         ATON.UI.createCard({
             title     : vp,
             subtitle  : subtitle,
-            // size      : "large",
-            cover     : "https://picsum.photos/200/300",
+            size      : "large",
+            cover     : viewpoint["image"],
             onactivate: () => UI.modalVPImage(vp),
             footer    : elFooter
         }),
@@ -876,16 +876,13 @@ UI.modalMetadata = (id) => {
 
 UI.modalVPImage = (node) => {
     const viewpoint = THOTH.Scene.currData.viewpoints[node];
-    const position  = viewpoint.position;
-    const target    = viewpoint.target;
-    const fov       = viewpoint.fov;
 
     let elBody   = ATON.UI.createContainer();
     let elFooter = ATON.UI.createContainer();
     
     // Image
     let elImg = document.createElement("img");
-    elImg.src = "https://picsum.photos/200/300";
+    elImg.src = viewpoint["image"];
     elImg.onerror = () => {};
 
     elBody.classList.add("thoth-vp-image");
@@ -896,7 +893,7 @@ UI.modalVPImage = (node) => {
     elFooter.append(ATON.UI.createButton({
         text   : "Download",
         icon   : "download",
-        onpress: () => UI.showToast("TBI"),
+        onpress: () => THOTH.Utils.downloadImage(viewpoint["image"]),
         variant: "success",
         tooltip: "Download image",
     }));

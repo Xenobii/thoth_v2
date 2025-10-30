@@ -21,7 +21,7 @@ Scene.setup = (sid) => {
     Scene.modelFolder   = Scene.modelUrl.substring(0, Scene.modelUrl.lastIndexOf("/"));
     
     Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
-    Scene.colmapCamPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/images.txt")
+    Scene.colmapCamPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/colmap/images.txt")
 
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
@@ -291,6 +291,7 @@ Scene.readColmap = () => {
         })
         .catch(err => {
             console.error("Failed to load " + Scene.colmapCamPath + ": " + err)
+            THOTH.UI.showToast("No COLMAP txt detected")
         });
 };
 
@@ -312,19 +313,20 @@ Scene.buildCameras = (colmapCameras) => {
 
         if (Scene.currData.viewpoints[id] === undefined) {
             // naive dummy sampling 
-            if (id % 30 !== 0) continue;
+            if (id % 25 !== 0) continue;
 
             let target = THOTH.SVP.createVPTarget(qw, qx, qy, qz, tx, ty, tz);
-            [target.x, target.y, target.z] = [target.x, target.y + 5, target.z].map(v => Math.round(v * 1000) / 1000);
+            [target.x, target.y, target.z] = [target.x, target.y, target.z].map(v => Math.round(v * 1000) / 1000);
             
             Scene.currData.viewpoints[id] = {
-                "position": [tx, ty+5, tz],
-                "target"  : [-target.x, target.y, target.z],
-                "fov"     : 70
+                "position": [tx, ty, tz],
+                "target"  : [target.x, target.y, target.z],
+                "fov"     : 70,
+                "image"   : ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/images/" + image),
             }
             new ATON.POV(id)
-                .setPosition(tx, ty+5, tz)
-                .setTarget(-target.x, target.y, -target.z)
+                .setPosition(tx, ty, tz)
+                .setTarget(target.x, target.y, target.z)
                 .setFOV(70);
         }
     }

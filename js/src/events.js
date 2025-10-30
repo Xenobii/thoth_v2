@@ -398,7 +398,6 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.clearMeasure();
         THOTH.UI.handleToolHighlight('no_tool');
     });
-    
 
     // Select measure
     THOTH.on("selectMeasure", () => {

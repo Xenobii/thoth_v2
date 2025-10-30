@@ -87,5 +87,46 @@ Utils.isPointInPolygon = (point, polygon) => {
     return inside;
 };
 
+Utils.downloadImage = async (url, filenameFallback = "image.png") => {
+    if (!url) return;
+
+    const filenameFromUrl = (u, fallback) => {
+        try {
+            const name = u.split('/').pop().split('?')[0];
+            return name || fallback;
+        } catch (e) {
+            return fallback;
+        }
+    };
+
+    const filename = filenameFromUrl(url, filenameFallback);
+
+    if (url.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+    }
+
+    try {
+        const resp = await fetch(url, { mode: "cors" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+    } catch (err) {
+        window.open(url, "_blank");
+    }
+};
+
 
 export default Utils;

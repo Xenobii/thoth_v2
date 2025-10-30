@@ -153,12 +153,10 @@ SVP.convertToThreeCoords = (qw, qx, qy, qz, tx, ty, tz) => {
     const q_three = flip.clone().multiply(q_wc).multiply(flip);
     const c_three = new THREE.Vector3(c_wc.x, -c_wc.y, -c_wc.z);
 
-    // return [-qw, -qx, qz, qy, -tx, -tz, -ty]
-    
     return [
         q_three.w,
         q_three.x,
-        -q_three.y,
+        q_three.y,
         q_three.z,
         c_three.x,
         c_three.y,
@@ -172,27 +170,17 @@ SVP.createVPTarget = (qw, qx, qy, qz, tx, ty, tz, mesh) => {
     const camPos  = new THREE.Vector3(tx, ty, tz);
     const camQuat = new THREE.Quaternion(qx, qy, qz, qw);
 
-    const getCameraWorldQuartenion = (camQuat, worldQuat) => {
-        if (!worldQuat) return camQuat.clone();
-        return worldQuat.clone().multiply(camQuat);
-    };
-
-    const camWorldQuat = getCameraWorldQuartenion(camQuat);
-    const dir = new THREE.Vector3(0, -1, 1).applyQuaternion(camWorldQuat).normalize();
+    const forward = new THREE.Vector3(0, -1, 0).applyQuaternion(camQuat).normalize();
 
     // Raycaster
     const raycaster = new THREE.Raycaster();
     raycaster.ray.origin.copy(camPos);
-    raycaster.ray.direction.copy(dir);
+    raycaster.ray.direction.copy(forward);
     raycaster.near = 0.001;
     raycaster.far  = 1000;
 
-    // Intersections
-    const intersects = [];
-    mesh.raycast(raycaster, intersects);
-
     // visualization
-    const rayLength = 10;
+    const rayLength = 2;
     const endPos = new THREE.Vector3().copy(raycaster.ray.origin)
         .add(new THREE.Vector3().copy(raycaster.ray.direction).multiplyScalar(rayLength));
 
