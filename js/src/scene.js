@@ -26,21 +26,23 @@ Scene.setup = (sid) => {
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
 
-    const getMainMesh = () => {
-        let mesh = null;
-        Scene.root.traverse(obj => {
-            if (obj.isMesh && !mesh) {
-                mesh = obj;
-            }
-        });
-        return mesh;
-    };
-    Scene.mainMesh = getMainMesh();
+    Scene.meshMap = Scene.getSceneMeshes();
 
     Scene.getSchemaJSON();
     Scene.readColmap();
     
     Scene.activeLayer = undefined;
+};
+
+Scene.getSceneMeshes = () => {
+    let sceneMeshes = new Map()
+    Scene.root.traverse(obj => {
+        if (obj.isMesh) {
+            sceneMeshes.set(obj.name, obj)
+        }
+    });
+    console.log("Found", sceneMeshes.size, "meshes.")
+    return sceneMeshes;
 };
 
 
@@ -49,7 +51,7 @@ Scene.setup = (sid) => {
 Scene.getSchemaJSON = () => {
     $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
         let check = Scene.validateSchema(data);
-        if (!check) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
+        if (!check && THOTH.UI._elToast !== undefined) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
         
         Scene.currData.objectMetadata = Scene.createPropertiesfromSchema(data);
     });
@@ -148,10 +150,11 @@ Scene.exportLayers = () => {
     
     // Patch changes
     Scene.patch(A, Scene.MODE_ADD, () => {
-        THOTH.UI.showToast("Changes exported successfully");
+        if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Changes exported successfully");
         console.log("Changes exported successfully");
     }, (error) => {
-        THOTH.UI.showToast("Export failed: " + error);
+        if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Export failed: " + error);
+        console.log("Export failed:", error)
     });
 };
 
@@ -212,15 +215,17 @@ Scene.createLayer = (id) => {
         id              : id,
         name            : "New Layer",
         metadata        : null,
-        selection       : [],
+        selection       : {},
         visible         : true,
         highlightColor  : THOTH.Utils.getHighlightColor(id),
         trash           : false
     };
     $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
         let check = Scene.validateSchema(data);
-        if (!check) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
-        
+        if (!check) {
+            if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
+            else console.log("Metadata creation failed, invalid schema")
+        }
         layer.metadata = Scene.createPropertiesfromSchema(data);
     });
     
@@ -290,8 +295,8 @@ Scene.readColmap = () => {
             Scene.buildCameras(colmapCameras);
         })
         .catch(err => {
-            console.error("Failed to load " + Scene.colmapCamPath + ": " + err)
-            THOTH.UI.showToast("No COLMAP txt detected")
+            console.error("Failed to load " + Scene.colmapCamPath + ": " + err);
+            if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No COLMAP txt detected")
         });
 };
 

@@ -8,6 +8,16 @@
 ===========================================================================*/
 let History = {};
 
+/*
+HISTORY API:
+{
+    type,
+    id,
+    value,
+    prevValue
+}
+*/
+
 
 // Action list
 History.ACTIONS = {};
@@ -44,12 +54,12 @@ History.pushAction = (action) => {
 History.undo = () => {
     if (History.undoStack.length === 0) return;
 
-    const action    = History.undoStack.pop();
+    const action = History.undoStack.pop();
     
     const type      = action.type;
     const id        = action.id;
-    let value       = action.value;
-    let prevValue   = action.prevValue;
+    let   value     = action.value;
+    let   prevValue = action.prevValue;
 
     let inverseType = null;
 
@@ -114,12 +124,12 @@ History.undo = () => {
         case History.ACTIONS.SELEC_ADD:
             inverseType = History.ACTIONS.SELEC_DEL;
             THOTH.fire("delFromSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.firePhoton("delFromSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.updateVisibility();
             break;
@@ -127,24 +137,24 @@ History.undo = () => {
         case History.ACTIONS.SELEC_DEL:
             inverseType = History.ACTIONS.SELEC_ADD;
             THOTH.fire("addToSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.firePhoton("addToSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.updateVisibility();
             break;
 
         default:
-            THOTH.UI.showToast("Invalid action type: " + type);
+            if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Invalid action type: " + type);
             console.warn("Invalid action: " + type);
             return;
     }
 
     // Store inverse action in redo stack
-    const inverseAction   = {
+    const inverseAction = {
         type        : inverseType,
         id          : id,
         value       : value,
@@ -158,12 +168,12 @@ History.undo = () => {
 History.redo = () => {
     if (History.redoStack.length === 0) return;
 
-    const action    = History.redoStack.pop();
+    const action = History.redoStack.pop();
 
     const type      = action.type;
     const id        = action.id;
-    let value       = action.value;
-    let prevValue   = action.prevValue;
+    let   value     = action.value;
+    let   prevValue = action.prevValue;
 
     let inverseType = undefined;
 
@@ -186,14 +196,14 @@ History.redo = () => {
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
-                id      : id,
-                attr    : "name",
-                value   : value
+                id   : id,
+                attr : "name",
+                value: value
             }); 
             THOTH.firePhoton("editLayerScene", {
-                id      : id,
-                attr    : "name",
-                value   : value
+                id   : id,
+                attr : "name",
+                value: value
             });
             break;
 
@@ -202,14 +212,14 @@ History.redo = () => {
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
-                id      : id,
-                attr    : "metadata",
-                value   : value
+                id   : id,
+                attr : "metadata",
+                value: value
             });
             THOTH.firePhoton("editLayerScene", {
-                id      : id,
-                attr    : "metadata",
-                value   : value
+                id   : id,
+                attr : "metadata",
+                value: value
             });
             break;
 
@@ -228,12 +238,12 @@ History.redo = () => {
         case History.ACTIONS.SELEC_ADD:
             inverseType = History.ACTIONS.SELEC_DEL;
             THOTH.fire("delFromSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.firePhoton("delFromSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.updateVisibility();
             break;
@@ -241,28 +251,28 @@ History.redo = () => {
         case History.ACTIONS.SELEC_DEL:
             inverseType = History.ACTIONS.SELEC_ADD;
             THOTH.fire("addToSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.firePhoton("addToSelectionScene", {
-                id      : id,
-                faces   : value
+                id       : id,
+                selection: value
             });
             THOTH.updateVisibility();
             break;
 
         default:
-            THOTH.UI.showToast("Invalid action type: " + type);
+            if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Invalid action type: " + type);
             console.warn("Invalid action: " + type);
             return;
     }
 
     // Store inverse action in undo stack
     const inverseAction   = {
-        type        : inverseType,
-        id          : id,
-        value       : value,
-        prevValue   : prevValue
+        type     : inverseType,
+        id       : id,
+        value    : value,
+        prevValue: prevValue
     };
 
     History.undoStack.push(inverseAction);
