@@ -257,6 +257,7 @@ THOTH.toggleLayerVisibility = (id) => {
 
 
 // Texture Maps
+
 // TODO: update this for multi-mesh
 THOTH.updateNormalMap = (path, mesh, intensity = 10) => {
     if (!path) return false;
@@ -293,7 +294,6 @@ THOTH.removeNormalMap = (mesh) => {
         THOTH.updateVisibility(mesh);
     }
 };
-
 
 THOTH.updateTextureMap = (path, mesh) => {
     if (!path) return false;

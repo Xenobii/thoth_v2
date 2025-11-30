@@ -9,14 +9,12 @@
 let UI = {}
 
 
-
 // Setup
 
 UI.setup = () => {
     UI.setupToolbars();
-    UI.populateToolbars();
-
     UI.setupPanels();
+
     UI.setupLayerElements();
 
     UI.setupToast();
@@ -92,32 +90,98 @@ UI.setupToolbars = () => {
     UI._elUserToolbar        = ATON.UI.get("userToolbar");
     UI._elMainToolbar        = ATON.UI.get("mainToolbar");
     UI._elToolOptionsToolbar = ATON.UI.get("toolOptToolbar");
-};
-
-UI.populateToolbars = () => {
+    
     // Bottom Toolbar
     UI._elTopToolbar.append(
-        UI.createTextailesButton(),
-        UI.createOptionsButton(),
-        UI.createLayersButton(),
-        UI.createExportButton(),
-        UI.createInfoButton(),
+        ATON.UI.createButton({
+            icon    : THOTH.PATH_RES_ICONS + "textailes.png",
+            text    : "TEXTaiLES",
+            onpress : () => window.open("https://www.echoes-eccch.eu/textailes/", "_blank"),
+            tooltip : "Go to the TEXTaiLES website"
+        }),
+        ATON.UI.createButton({
+            icon   : "settings",
+            onpress: () => ATON.UI.showSidePanel({
+                header  : "Settings",
+                body    : UI._elOptionsPanel
+            }),
+            tooltip: "Options"
+        }),
+        ATON.UI.createButton({
+            icon    : "layers",
+            onpress : () => ATON.UI.showSidePanel({
+                header: "Layers",
+                body  : UI._elLayersPanel
+            }),
+            tooltop : "Layers"
+        }),
+        ATON.UI.createButton({
+            icon    : "link",
+            onpress : () => THOTH.Scene.exportLayers(),
+            tooltip : "Export changes",
+        }),
+        ATON.UI.createButton({
+            icon   : "info",
+            onpress: () => window.open("https://textailes.github.io/thoth-documentation/", "_blank"),
+            tooltip: "Open documentation"
+        }),
     );
     
     // User Toolbar
     UI._elUserToolbar.append(
         UI.createUserButton(),
-        UI.createVRCButton()
+        ATON.UI.createButton({
+            icon    : "vrc",
+            onpress : () => THOTH.setupPhoton(),
+            tooltip : "Connect to Photon"
+        })
     );
     
     // Main Toolbar
     UI.toolElements = new Map();
 
-    const elBrush   = UI.createBrushButton();
-    const elEraser  = UI.createEraserButton();
-    const elLasso   = UI.createLassoButton();
-    const elMeasure = UI.createMeasureButton();
-    const elNoTool  = UI.createNoToolButton();
+    const elBrush   = ATON.UI.createButton({
+        icon   : THOTH.PATH_RES_ICONS + "brush.png",
+        tooltip: "Brush tool (B)",
+        onpress: () => THOTH.fire("selectBrush")
+    });
+    const elEraser  = ATON.UI.createButton({
+        icon   : THOTH.PATH_RES_ICONS + "eraser.png",
+        tooltip: "Eraser tool (E)",
+        onpress: () => THOTH.fire("selectEraser")
+    });
+    const elLasso   = ATON.UI.createButton({
+        icon   : THOTH.PATH_RES_ICONS + "lasso.png",
+        tooltip: "Lasso tool (L)",
+        onpress: () => THOTH.fire("selectLasso")
+    });
+    const elMeasure = ATON.UI.createButton({
+        icon   : "measure",
+        tooltip: "Measure distance (M)",
+        onpress: () => THOTH.fire("selectMeasure")
+    });
+    const elNoTool  = ATON.UI.createButton({
+        icon   : THOTH.PATH_RES_ICONS + "none.png",
+        tooltip: "No Tool (N)",
+        onpress: () => THOTH.fire("selectNone")
+    });
+    const elUndo = ATON.UI.createButton({
+        icon    : THOTH.PATH_RES_ICONS + "undo.png",
+        tooltip : "Undo (Ctrl + Z)",
+        onpress : () => THOTH.History.undo()
+    });
+    const elRedo = ATON.UI.createButton({
+        icon    : THOTH.PATH_RES_ICONS + "redo.png",
+        tooltip : "Redo (Ctrl + Y)",
+        onpress : () => THOTH.History.redo()
+    });
+    const elHome = ATON.UI.createButton({
+        icon   : "home",
+        tooltip: "Go home",
+        onpress: () => {
+            ATON.Nav.requestHome(0.3);
+        }
+    });
    
     UI.toolElements.set('brush', elBrush);
     UI.toolElements.set('eraser', elEraser);
@@ -125,20 +189,68 @@ UI.populateToolbars = () => {
     UI.toolElements.set('no_tool', elNoTool);
     UI.toolElements.set('measure', elMeasure);
     UI._elMainToolbar.append(
-        UI.createHomeButton(),
+        elHome,
         elBrush, 
         elEraser,
         elLasso,
         elNoTool,
         elMeasure,
-        UI.createUndoButton(),
-        UI.createRedoButton(),
+        elUndo,
+        elRedo,
     );
     
     // Tool options
+    const createBrushOptions = () => {
+        const elOptionsBrush = ATON.UI.createContainer();
+    
+        // Size
+        UI._elBrushSlider = ATON.UI.createSlider({
+            label   : "Size",
+            range   : [0, 10],
+            value   : THOTH.Toolbox.selectorSize,
+            oninput : (v) => THOTH.Toolbox.setSelectorSize(v),
+        });
+        elOptionsBrush.append(UI._elBrushSlider);
+    
+        return elOptionsBrush;
+    };
+
+    const createLassoOptions = () => {
+        const elOptionsLasso = ATON.UI.createContainer();
+        
+        elOptionsLasso.append(
+            // Lasso Precision
+            ATON.UI.createSlider({
+                label   : "Precision",
+                range   : [0.1, 1],
+                value   : THOTH.Toolbox.lassoPrecision,
+                step    : 0.1,
+                oninput : (v) => THOTH.Toolbox.lassoPrecision = v,
+            }),
+            // Normal Threshold
+            ATON.UI.createSlider({
+                label  : "Normal threshold",
+                range  : [-1, 1],
+                step   : 0.1,
+                value  : THOTH.Toolbox.normalThreshold,
+                oninput: (v) => THOTH.Toolbox.normalThreshold = v,
+            }),
+            // Select Obstructed Faces
+            UI.createBool({
+                text    : "Select occluded faces",
+                onpress : (input) => THOTH.Toolbox.selectObstructedFaces = input,
+                tooltip : "Select occluded faces",
+            }),
+        )
+    
+        return elOptionsLasso;
+    };
+    UI._elOptionsBrush = createBrushOptions(),
+    UI._elOptionsLasso = createLassoOptions(),
+
     UI._elToolOptionsToolbar.append(
-        UI.createBrushOptions(),
-        UI.createLassoOptions(),
+        UI._elOptionsBrush,
+        UI._elOptionsLasso
     );
 
     // Manage visibility
@@ -150,172 +262,151 @@ UI.populateToolbars = () => {
 // Side Panels
 
 UI.setupPanels = () => {
-    UI._elOptionsPanel = UI.createPanelOptions();
-    UI._elLayersPanel  = UI.createPanelLayers();
-};
-
-UI.createPanelOptions = () => {
-    ATON.UI.setSidePanelLeft();
-
-    let elOptionsBody = ATON.UI.createContainer();
-    let elMode        = ATON.UI.createContainer();
-    let elMaps        = ATON.UI.createContainer();
-    let elVP          = ATON.UI.createContainer();
-    let elMeasures    = ATON.UI.createContainer();
-
-    // Mode container
-    elMode.append(ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "dark-mode.png",
-        onpress : () => UI.setTheme("dark"),
-        tooltip : "Set to dark mode"
-    }));
-    elMode.append(ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "light-mode.png",
-        onpress : () => UI.setTheme("light"),
-        tooltip : "Set to light mode"
-    }));
-
-    // Mapping container
-    elMaps.append(ATON.UI.createDropdown({
-        title   : "Normal Map",
-        items   : [
-            {
-                el: ATON.UI.createButton({
-                    text   : "none",
-                    icon   : "clone",
-                    onpress: () => THOTH.removeNormalMap()
-                })
-            },
-            {
-                el: ATON.UI.createButton({
-                    text   : "MSII",
-                    icon   : "clone",
-                    onpress: () => {
-                        THOTH.updateNormalMap(THOTH.Scene.normalMapPath);
-                        UI.showToast("TBI fully");
-                    }
-                })
-            }
-        ]
-    }));
-
-    // Viewpoint container
-    elVP.append(UI.createBool({
-        text    : "Show viewpoints",
-        value   : true,
-        onchange: (input) => THOTH.SVP.toggleVPNodes(input)
-    }));
-    elVP.append(ATON.UI.createSlider({
-        label  : "Node scale",
-        range  : [0.1, 2.0],
-        step   : 0.1,
-        value  : 1.0,
-        oninput: (input) => THOTH.SVP.resizeVPNodes(input)
-    }))
-
-    // Measurements container
-    elMeasures.append(ATON.UI.createButton({
-                        icon   : "cancel",
-                        text   : "Clear Measurements",
-                        tooltip: "Clear all measurements",
-                        onpress: () => ATON.SUI.clearMeasurements()
-                    })
-    );
-
-    // Options container
-    elOptionsBody.append(ATON.UI.createTreeGroup({
-        items: 
-        [
-            {
-                title   : "UI Mode",
-                open    : false,
-                content : elMode
-            },
-            {
-                title   : "Mapping",
-                open    : false,
-                content : elMaps
-            },
-            {
-                title   : "Viewpoints",
-                open    : false,
-                content : elVP
-            },
-            {
-                title  : "Measurements",
-                open   : false,
-                content: elMeasures
-            }
-        ]
-    }));
+    const setupSettingsPanel = () => {
+        let elOptionsBody = ATON.UI.createContainer();
+        let elMode        = ATON.UI.createContainer();
+        let elMaps        = ATON.UI.createContainer();
+        let elVP          = ATON.UI.createContainer();
+        let elMeasures    = ATON.UI.createContainer();
+        
+        // Mode container
+        elMode.append(ATON.UI.createButton({
+            icon    : THOTH.PATH_RES_ICONS + "dark-mode.png",
+            onpress : () => UI.setTheme("dark"),
+            tooltip : "Set to dark mode"
+        }));
+        elMode.append(ATON.UI.createButton({
+            icon    : THOTH.PATH_RES_ICONS + "light-mode.png",
+            onpress : () => UI.setTheme("light"),
+            tooltip : "Set to light mode"
+        }));
     
-    return elOptionsBody;
-};
+        // Mapping container
+        elMaps.append(ATON.UI.createDropdown({
+            title   : "Normal Map",
+            items   : [
+                {
+                    el: ATON.UI.createButton({
+                        text   : "none",
+                        icon   : "clone",
+                        onpress: () => THOTH.removeNormalMap()
+                    })
+                },
+                {
+                    el: ATON.UI.createButton({
+                        text   : "MSII",
+                        icon   : "clone",
+                        onpress: () => {
+                            THOTH.updateNormalMap(THOTH.Scene.normalMapPath);
+                            UI.showToast("TBI fully");
+                        }
+                    })
+                }
+            ]
+        }));
+    
+        // Viewpoint container
+        elVP.append(UI.createBool({
+            text    : "Show viewpoints",
+            value   : true,
+            onchange: (input) => THOTH.SVP.toggleVPNodes(input)
+        }));
+        elVP.append(ATON.UI.createSlider({
+            label  : "Node scale",
+            range  : [0.1, 2.0],
+            step   : 0.1,
+            value  : 1.0,
+            oninput: (input) => THOTH.SVP.resizeVPNodes(input)
+        }))
+    
+        // Measurements container
+        elMeasures.append(ATON.UI.createButton({
+                            icon   : "cancel",
+                            text   : "Clear Measurements",
+                            tooltip: "Clear all measurements",
+                            onpress: () => ATON.SUI.clearMeasurements()
+                        })
+        );
+    
+        // Options container
+        elOptionsBody.append(ATON.UI.createTreeGroup({
+            items: 
+            [
+                {
+                    title   : "UI Mode",
+                    open    : false,
+                    content : elMode
+                },
+                {
+                    title   : "Mapping",
+                    open    : false,
+                    content : elMaps
+                },
+                {
+                    title   : "Viewpoints",
+                    open    : false,
+                    content : elVP
+                },
+                {
+                    title  : "Measurements",
+                    open   : false,
+                    content: elMeasures
+                }
+            ]
+        }));
 
-UI.showPanelOptions = () => {
-    ATON.UI.showSidePanel({
-        header  : "Settings",
-        body    : UI._elOptionsPanel
-    });
-};  
+        return elOptionsBody;
+    }
 
-UI.createPanelLayers = () => {
-    ATON.UI.setSidePanelRight();
+    const createObjectController = () => {
+        const elObjectController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
+        const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
 
-    let elLayersBody = ATON.UI.createContainer();
-    UI.elLayerList = ATON.UI.createContainer();
+        // Name
+        const elName = ATON.UI.createButton({
+            text    : "Object: " + THOTH.Scene.modelName,
+        });
+        // Metadata
+        const elMetadata = ATON.UI.createButton({
+            text    : "Edit Object Metadata",
+            icon    : "list",
+            size    : "small",
+            onpress : () => UI.modalMetadata(-1),
+        });
+        elRButtonContainer.append(elMetadata)
+        elObjectController.append(
+            elName,
+            elRButtonContainer,
+        );
+        return elObjectController;
+    };
 
-    elLayersBody.append(
-        UI.createObjectController(),
-        UI.createNewLayerButton(),
-        UI.elLayerList,
-    );
-
-    return elLayersBody;
-};
-
-UI.showPanelLayers = () => {
-    ATON.UI.showSidePanel({
-        header: "Layers",
-        body  : UI._elLayersPanel
-    });
+    const setupLayersPanel = () => {
+        const elLayersPanel = ATON.UI.createContainer();
+        UI.elLayerList = ATON.UI.createContainer();
+        
+        elLayersPanel.append(
+            createObjectController(),
+            ATON.UI.createButton({
+                text    : "New Layer",
+                icon    : "add",
+                variant : "success",
+                tooltip : "Create new layer",
+                onpress : () => THOTH.fire("createLayer")
+                
+            }),
+            UI.elLayerList,
+        );
+        
+        return elLayersPanel;
+    }
+    
+    UI._elOptionsPanel = setupSettingsPanel();
+    UI._elLayersPanel  = setupLayersPanel();
 };
 
 
 // Buttons
-
-UI.createTextailesButton = () => {
-    return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "textailes.png",
-        text    : "TEXTaiLES",
-        onpress : () => window.open("https://www.echoes-eccch.eu/textailes/", "_blank"),
-        tooltip : "Go to the TEXTaiLES website"
-    });
-};
-
-UI.createOptionsButton = () => {
-    return ATON.UI.createButton({
-        icon   : "settings",
-        onpress: () => UI.showPanelOptions(),
-        tooltip: "Options"
-    });
-};
-
-UI.createLayersButton = () => {
-    return ATON.UI.createButton({
-        icon    : "layers",
-        onpress : () => UI.showPanelLayers(),
-        tooltop : "Layers"
-    });
-};
-
-UI.createInfoButton = () => {
-    return ATON.UI.createButton({
-        icon   : "info",
-        onpress: () => window.open("https://textailes.github.io/thoth-documentation/", "_blank"),
-        tooltip: "Open documentation"
-    });
-};
 
 UI.createUserButton = ()=>{
     UI._elUserBTN = ATON.UI.createButton({
@@ -332,99 +423,6 @@ UI.createUserButton = ()=>{
     return UI._elUserBTN;
 };
 
-UI.createBrushButton = () => {
-    return ATON.UI.createButton({
-        icon   : THOTH.PATH_RES_ICONS + "brush.png",
-        tooltip: "Brush tool (B)",
-        onpress: () => THOTH.fire("selectBrush")
-    });
-};
-
-UI.createEraserButton = () => {
-    return ATON.UI.createButton({
-        icon   : THOTH.PATH_RES_ICONS + "eraser.png",
-        tooltip: "Eraser tool (E)",
-        onpress: () => THOTH.fire("selectEraser")
-    });
-};
-
-UI.createLassoButton = () => {
-    return ATON.UI.createButton({
-        icon   : THOTH.PATH_RES_ICONS + "lasso.png",
-        tooltip: "Lasso tool (L)",
-        onpress: () => THOTH.fire("selectLasso")
-    });
-};
-
-UI.createNoToolButton = () => {
-    return ATON.UI.createButton({
-        icon   : THOTH.PATH_RES_ICONS + "none.png",
-        tooltip: "No Tool (N)",
-        onpress: () => THOTH.fire("selectNone")
-    });
-};
-
-UI.createUndoButton = () => {
-    return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "undo.png",
-        tooltip : "Undo (Ctrl + Z)",
-        onpress : () => THOTH.History.undo()
-    });
-};
-
-UI.createRedoButton = () => {
-    return ATON.UI.createButton({
-        icon    : THOTH.PATH_RES_ICONS + "redo.png",
-        tooltip : "Redo (Ctrl + Y)",
-        onpress : () => THOTH.History.redo()
-    });
-};
-
-UI.createNewLayerButton = () => {
-    return ATON.UI.createButton({
-        text    : "New Layer",
-        icon    : "add",
-        variant : "success",
-        tooltip : "Create new layer",
-        onpress : () => THOTH.fire("createLayer")
-           
-    });
-};
-
-UI.createExportButton = () => {
-    return ATON.UI.createButton({
-        icon    : "link",
-        onpress : () => THOTH.Scene.exportLayers(),
-        tooltip : "Export changes",
-    });
-};
-
-UI.createVRCButton = () => {
-    return ATON.UI.createButton({
-        icon    : "vrc",
-        onpress : () => THOTH.setupPhoton(),
-        tooltip : "Connect to Photon"
-    });
-};  
-
-UI.createHomeButton = () => {
-    return ATON.UI.createButton({
-        icon   : "home",
-        tooltip: "Go home",
-        onpress: () => {
-            ATON.Nav.requestHome(0.3);
-        }
-    });
-};
-
-UI.createMeasureButton = () => {
-    return ATON.UI.createButton({
-        icon   : "measure",
-        tooltip: "Measure distance (M)",
-        onpress: () => THOTH.fire("selectMeasure")
-    });
-};
-
 UI.createTestButton = () => {
     return ATON.UI.createButton({
         text    : "Test",
@@ -435,52 +433,6 @@ UI.createTestButton = () => {
 
 
 // Tool options
-
-UI.createBrushOptions = () => {
-    UI._elOptionsBrush = ATON.UI.createContainer();
-
-    // Size
-    UI._elBrushSlider = ATON.UI.createSlider({
-        label   : "Size",
-        range   : [0, 10],
-        value   : THOTH.Toolbox.selectorSize,
-        oninput : (v) => THOTH.Toolbox.setSelectorSize(v),
-    });
-    UI._elOptionsBrush.append(UI._elBrushSlider);
-
-    return UI._elOptionsBrush;
-};
-
-UI.createLassoOptions = () => {
-    UI._elOptionsLasso = ATON.UI.createContainer();
-    
-    UI._elOptionsLasso.append(
-        // Lasso Precision
-        ATON.UI.createSlider({
-            label   : "Precision",
-            range   : [0.1, 1],
-            value   : THOTH.Toolbox.lassoPrecision,
-            step    : 0.1,
-            oninput : (v) => THOTH.Toolbox.lassoPrecision = v,
-        }),
-        // Normal Threshold
-        ATON.UI.createSlider({
-            label  : "Normal threshold",
-            range  : [-1, 1],
-            step   : 0.1,
-            value  : THOTH.Toolbox.normalThreshold,
-            oninput: (v) => THOTH.Toolbox.normalThreshold = v,
-        }),
-        // Select Obstructed Faces
-        UI.createBool({
-            text    : "Select occluded faces",
-            onpress : (input) => THOTH.Toolbox.selectObstructedFaces = input,
-            tooltip : "Select occluded faces",
-        }),
-    )
-
-    return UI._elOptionsLasso;
-};
 
 UI.showBrushOptions = () => {
     ATON.UI.showElement(UI._elOptionsBrush);
@@ -516,7 +468,87 @@ UI.setupLayerElements = () => {
 };
 
 UI.createLayer = (id) => {
-    const elLayer = UI.createLayerController(id);
+    const createLayerController = (id) => {
+        let layer = THOTH.Scene.currData.layers[id];
+
+        const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
+        const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
+        // Visibility
+        let icon = null;
+        if (layer.visible) {
+            icon = "visibility";
+        }
+        else {
+            elLayerController.classList.add("aton-layer-hidden")
+            icon = THOTH.PATH_RES_ICONS + "visibility_no.png"
+        }
+        const elVis = ATON.UI.createButton({
+            icon    : icon,
+            size    : "small",
+            onpress : () => {
+                if (THOTH.toggleLayerVisibility(id)) {
+                    elLayerController.classList.remove("aton-layer-hidden")
+                    const imgElement = elVis.querySelector("img");
+                    imgElement.src = ATON.UI.PATH_RES_ICONS + "visibility.png";
+                }
+                else {
+                    elLayerController.classList.add("aton-layer-hidden")
+                    const imgElement = elVis.querySelector("img");
+                    imgElement.src = THOTH.PATH_RES_ICONS + "visibility_no.png"; 
+                }
+            }
+        });
+        // Name
+        const elName = ATON.UI.createButton({
+            text   : layer.name,
+            size   : "small",
+            onpress: () => {
+                THOTH.Scene.activeLayer = layer;
+                UI.handleLayerHighlight();
+            }
+        });
+        THOTH.Events.enableRename(elName, id);
+        
+        const elCP = ATON.UI.createColorPicker({
+            color   : layer.highlightColor,
+            oninput: (color) => {
+                layer.highlightColor = color
+                THOTH.updateVisibility();
+            },
+        });
+        elCP.style.width = "60px";
+        elCP.style.marginTop = "2px"
+
+        // Delete
+        const elDel = ATON.UI.createButton({
+            icon   : "trash",
+            size   : "small",
+            onpress: () => THOTH.fire("deleteLayer", (id))
+        });
+        // Metadata
+        const elMetadata = ATON.UI.createButton({
+            text   : "Edit Metadata",
+            icon   : "list",
+            size   : "small",
+            tooltip: "Edit metadata",
+            onpress: () => UI.modalMetadata(id),
+        });
+
+        elRButtonContainer.append(
+            elMetadata,
+            elCP,
+            elDel
+        );
+        elLayerController.append(
+            elVis,
+            elName,
+            elRButtonContainer
+        );
+
+        return elLayerController;
+    };
+
+    const elLayer = createLayerController(id);
 
     // Add to panel
     UI.elLayerList.append(elLayer);
@@ -537,109 +569,6 @@ UI.resurrectLayer = (id) => {
     
     // Show
     elLayer.style.display = 'flex';
-};
-
-UI.createObjectController = () => {
-    const elObjectController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
-    const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
-
-    // Name
-    const elName = ATON.UI.createButton({
-        text    : "Object: " + THOTH.Scene.modelName,
-    });
-    // Metadata
-    const elMetadata = ATON.UI.createButton({
-        text    : "Edit Object Metadata",
-        icon    : "list",
-        size    : "small",
-        onpress : () => UI.modalMetadata(-1),
-    });
-    elRButtonContainer.append(elMetadata)
-    elObjectController.append(
-        elName,
-        elRButtonContainer,
-    );
-    return elObjectController;
-};
-
-UI.createLayerController = (id) => {
-    let layer = THOTH.Scene.currData.layers[id];
-
-    const elLayerController = ATON.UI.createElementFromHTMLString(`<div class="thoth-layer"></div>`);
-    const elRButtonContainer = ATON.UI.createElementFromHTMLString(`<div class="thoth-btn-right"></div>`)
-    // Visibility
-    let icon = null;
-    if (layer.visible) {
-        icon = "visibility";
-    }
-    else {
-        elLayerController.classList.add("aton-layer-hidden")
-        icon = THOTH.PATH_RES_ICONS + "visibility_no.png"
-    }
-    const elVis = ATON.UI.createButton({
-        icon    : icon,
-        size    : "small",
-        onpress : () => {
-            if (THOTH.toggleLayerVisibility(id)) {
-                elLayerController.classList.remove("aton-layer-hidden")
-                const imgElement = elVis.querySelector("img");
-                imgElement.src = ATON.UI.PATH_RES_ICONS + "visibility.png";
-            }
-            else {
-                elLayerController.classList.add("aton-layer-hidden")
-                const imgElement = elVis.querySelector("img");
-                imgElement.src = THOTH.PATH_RES_ICONS + "visibility_no.png"; 
-            }
-        }
-    });
-    // Name
-    const elName = ATON.UI.createButton({
-        text   : layer.name,
-        size   : "small",
-        onpress: () => {
-            THOTH.Scene.activeLayer = layer;
-            UI.handleLayerHighlight();
-        }
-    });
-    THOTH.Events.enableRename(elName, id);
-    
-    const elCP = ATON.UI.createColorPicker({
-        color   : layer.highlightColor,
-        oninput: (color) => {
-            layer.highlightColor = color
-            THOTH.updateVisibility();
-        },
-    });
-    elCP.style.width = "60px";
-    elCP.style.marginTop = "2px"
-
-    // Delete
-    const elDel = ATON.UI.createButton({
-        icon   : "trash",
-        size   : "small",
-        onpress: () => THOTH.fire("deleteLayer", (id))
-    });
-    // Metadata
-    const elMetadata = ATON.UI.createButton({
-        text   : "Edit Metadata",
-        icon   : "list",
-        size   : "small",
-        tooltip: "Edit metadata",
-        onpress: () => UI.modalMetadata(id),
-    });
-
-    elRButtonContainer.append(
-        elMetadata,
-        elCP,
-        elDel
-    );
-    elLayerController.append(
-        elVis,
-        elName,
-        elRButtonContainer
-    );
-
-    return elLayerController;
 };
 
 UI.handleLayerHighlight = () => {
@@ -713,21 +642,20 @@ UI.setupVPPreview = () => {
 // Toast
 
 UI.setupToast = () => {
-    UI._elToast = UI.createToast();
-    ATON.UI.hideElement(UI._elToast);
-};
-
-UI.createToast = () => {
-    const elToastBody = ATON.UI.createContainer({
-        id      : "toast",
-        classes : "thoth-toast", 
-    });
-
-    elToastBody.message = document.createElement("span");
-    elToastBody.appendChild(elToastBody.message);
-    document.body.appendChild(elToastBody);
+    const createToast = () => {
+        const elToastBody = ATON.UI.createContainer({
+            id      : "toast",
+            classes : "thoth-toast", 
+        });
     
-    return elToastBody;
+        elToastBody.message = document.createElement("span");
+        elToastBody.appendChild(elToastBody.message);
+        document.body.appendChild(elToastBody);
+        
+        return elToastBody;
+    };
+    UI._elToast = createToast();
+    ATON.UI.hideElement(UI._elToast);
 };
 
 UI.showToast = (message, timeout = 2500) => {
