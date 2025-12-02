@@ -243,16 +243,50 @@ THOTH.updateVisibility = () => {
 };
 
 THOTH.toggleLayerVisibility = (id) => {
-    const layer = THOTH.Scene.currData.layers[id];
+    if (id === undefined) return;
+
+    const layer      = THOTH.Scene.currData.layers[id];
+    const controller = THOTH.UI.layerElements.get(id);
 
     if (layer === undefined) return;
 
-    if (layer.visible === false) layer.visible = true;
-    else if (layer.visible === true) layer.visible = false;
+    if (layer.visible) {
+        layer.visible = false;
+        if (controller) {
+            controller.classList.add("opacity-50", "text-muted");
+        }
+    }
+    else {
+        layer.visible = true;
+        if (controller) {
+            controller.classList.remove("opacity-50", "text-muted");
+        }
+    } 
 
     THOTH.updateVisibility();
+};
 
-    return layer.visible;
+THOTH.toggleModelVisibility = (id) => {
+    if (id === undefined) return;
+    
+    const model      = THOTH.Scene.meshMap.get(id);
+    const controller = THOTH.UI?.modelMap.get(id);
+
+    if (model === undefined) return;
+
+    if (model.visible) {
+        model.visible = false;
+        if (controller) {
+            controller.classList.add("opacity-50", "text-muted");
+        }
+    }
+    else {
+        model.visible = true;
+        if (controller)
+            controller.classList.remove("opacity-50", "text-muted")
+    }
+
+    THOTH.updateVisibility();
 };
 
 

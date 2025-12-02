@@ -428,14 +428,13 @@ UI.setupPanels = () => {
         UI.elLayerList = ATON.UI.createContainer();
         
         elLayersPanel.append(
-            createObjectController({classes: "row g-0 align-items-center w-100 rounded-2 px-2 py-1 mb-1"}),
+            createObjectController({classes: "row g-1 align-items-center w-100 rounded-2 px-2 py-1 mb-1"}),
             ATON.UI.createButton({
                 text    : "New Layer",
                 icon    : "add",
                 variant : "success",
                 tooltip : "Create new layer",
                 onpress : () => THOTH.fire("createLayer")
-                
             }),
             UI.elLayerList,
         );
@@ -489,7 +488,8 @@ UI.setupPanels = () => {
  };
 
  UI.createModelController = (id) => {
-    // slightly darker background, rounded and padded using Bootstrap utilities
+    const mesh = THOTH.Scene.meshMap.get(id);
+
     const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1" });
     const elLeft  = ATON.UI.createContainer({ classes: "col-8 d-flex align-items-center" });
     const elRight = ATON.UI.createContainer({ classes: "col-4 d-flex justify-content-end align-items-center" });
@@ -498,7 +498,9 @@ UI.setupPanels = () => {
     const elVis = ATON.UI.createButton({
         icon   : "visibility",
         size   : "small",
-        onpress: () => {}
+        onpress: () => {
+            THOTH.toggleModelVisibility(id);
+        }
     }); 
 
     // Name 
@@ -596,27 +598,10 @@ UI.createLayer = (id) => {
     const elRight = ATON.UI.createContainer({ classes: "col-6 d-flex justify-content-end align-items-center" });
         
         // Visibility
-        let icon = null;
-        if (layer.visible) {
-            icon = "visibility";
-        }
-        else {
-            icon = THOTH.PATH_RES_ICONS + "visibility_no.png"
-        }
         const elVis = ATON.UI.createButton({
-            icon    : icon,
+            icon    : "visibility",
             size    : "small",
-            onpress : () => {
-                const visible = THOTH.toggleLayerVisibility(id);
-                const imgElement = elVis.querySelector("img");
-                if (visible) {
-                    elRow.classList.remove("opacity-50", "text-muted");
-                    if (imgElement) imgElement.src = ATON.UI.PATH_RES_ICONS + "visibility.png";
-                } else {
-                    elRow.classList.add("opacity-50", "text-muted");
-                    if (imgElement) imgElement.src = THOTH.PATH_RES_ICONS + "visibility_no.png";
-                }
-            }
+            onpress : () => THOTH.toggleLayerVisibility(id)
         });
         // Name
         const elName = ATON.UI.createButton({
@@ -656,8 +641,6 @@ UI.createLayer = (id) => {
         elLeft.append(elVis, elName);
         elRight.append(elMetadata, elCP, elDel);
         elRow.append(elLeft, elRight);
-
-        if (!layer.visible) elRow.classList.add("opacity-50", "text-muted");
 
         return elRow;
     };
@@ -980,8 +963,8 @@ UI.createMetadataEditor = (data, data_temp) => {
     for (const key in data) {
         if (key === "required") continue;
         
-        let elAttr      = ATON.UI.createContainer();
-        let elDisplay   = ATON.UI.createContainer();
+        let elAttr      = ATON.UI.createContainer({classes: "d-flex flex-column gap-1"});
+        let elDisplay   = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 px-2 p-0 m-0 bg-dark-subtle bg-opacity-25"});
         let elInput     = null;
 
         const attr      = data[key];
@@ -1038,9 +1021,8 @@ UI.createMetadataEditor = (data, data_temp) => {
                     
                     break;
                 case "enum-multiple":
-                    // Token Box for multiple selections
                     elInput = ATON.UI.createContainer();
-                    const selectedTokens = new Set(data_temp[key] || []); // Initialize with existing values
+                    const selectedTokens = new Set(data_temp[key] || []);
                     const renderTokens = () => {
                         const tokens = Array.from(selectedTokens).map(v => 
                             `<span class="thothToken" data-v="${v}">${v}<button type="button" class="remove-token-btn">×</button></span>`
@@ -1048,13 +1030,11 @@ UI.createMetadataEditor = (data, data_temp) => {
                         elDisplay.innerHTML = tokens;
                     };
                     
-                    // Function to add tokens
                     const addToken = (value) => {
                         selectedTokens.add(value);
                         renderTokens();
                     };
 
-                    // Function to remove tokens
                     elDisplay.addEventListener("click", (event) => {
                         if (event.target.tagName === "BUTTON") {
                             const tokenValue = event.target.parentElement.getAttribute("data-v");
@@ -1063,22 +1043,19 @@ UI.createMetadataEditor = (data, data_temp) => {
                         }
                     });
 
-                    // Render the existing tokens
                     renderTokens();
-                    // Create the dropdown button list for options
                     const dropdownContainer = ATON.UI.createDropdown({
                         title: key, 
                         items: attr.value.map(option => ({
                             el: ATON.UI.createButton({
                                 text: option,
                                 onpress: () => {
-                                    addToken(option); // Add the selected option as a token
+                                    addToken(option); 
                                 }
                             })
                         }))
                     });
 
-                    // Append the dropdown to the input container
                     elInput.append(dropdownContainer);
                     break;
                 default:
