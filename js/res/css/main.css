@@ -54,8 +54,6 @@
 
 .thoth-tool-options-toolbar {
     margin: var(--thoth-ui-margin);
-    margin-top: 400px;
-
     max-height: calc(100% - (var(--thoth-ui-margin)*2));
 
     background-color: rgba(var(--bs-body-bg-rgb), 0.4) !important;
@@ -63,6 +61,20 @@
 
     -webkit-backdrop-filter: blur(var(--aton-blur-radius));
     backdrop-filter: blur(var(--aton-blur-radius));
+
+    overflow-y: auto;
+
+    width: auto;
+    max-width: none;
+    white-space: nowrap;
+    display: inline-block;
+
+    z-index: 1050;
+
+    left: var(--thoth-ui-margin);
+    bottom: var(--thoth-ui-margin);
+    right: auto;
+    top: auto;
 }
 
 .thoth-btn:hover {
@@ -73,58 +85,8 @@
     background-color: rgba(var(--bs-body-bg-rgb), 1.0);
 }
 
-.thoth-layer {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 4px;
-    position: relative;
-    
-    white-space: nowrap;
-
-    margin: 2px;
-
-    background-color: rgba(var(--bs-body-bg-rgb), 0.5);
-
-    border-radius: var(--bs-border-radius);
-
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-
-    flex-wrap: nowrap;
-}
-
-.thoth-layer:hover {
-    background-color: rgba(var(--bs-body-bg-rgb), 1.0);
-}
-
-.thoth-layer-hidden {
-    opacity: 0.5;
-}
-
 .deleted-layer {
     display: none;
-}
-
-.thoth-toast {
-    position: fixed;
-    margin: var(--thoth-ui-margin);
-    bottom: 20px;
-    padding: 12px 20px;
-    background: rgba(var(--bs-body-bg-rgb), 0.85);
-    color: var(--bs-body-color);
-    border-radius: var(--bs-border-radius);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-    font-size: 1em;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s;
-    -webkit-backdrop-filter: blur(var(--aton-blur-radius));
-    backdrop-filter: blur(var(--aton-blur-radius));
-    pointer-events: none;
 }
 
 .thoth-bool {
@@ -176,63 +138,6 @@
     pointer-events: none;
 }
 
-.thoth-layer-selected {
-    padding: 4px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    white-space: nowrap;
-    margin: 2px;
-    border-radius: var(--bs-border-radius);
-
-    background-color: rgba(var(--aton-colors-accent-rgb), 0.3);
-    border-color: rgba(var(--bs-body-color-rgb), 0.0);
-    color: var(--bs-btn-color);
-
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-
-    padding: 4px;
-    position: relative;
-    
-    flex-wrap: nowrap;
-}
-
-.thoth-layer-selected:hover {
-    background-color: rgba(var(--aton-colors-accent-rgb), 0.4);
-    color: var(--bs-btn-color);
-}
-
-.thoth-btn-right {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    gap: 4px;
-}
-
-.thoth-vp-image-preview {
-    height: 100%;
-    flex: 0 0 auto;
-    width: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-    height: 40px;
-    width: 30px;
-}
-
-.thoth-vp-image-preview:hover {
-    cursor: pointer;
-}
-
 .thoth-vp-image {
     display: flex;
     height: 100%;
@@ -242,37 +147,11 @@
     align-items: center;
 }
 
-.thoth-vp {
-    overflow: hidden;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 4px;
-    position: relative;
-    
-    white-space: nowrap;
-
-    margin: 2px;
-
-    background-color: rgba(var(--bs-body-bg-rgb), 0.5);
-
-    border-radius: var(--bs-border-radius);
-
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-
-    flex-wrap: nowrap;
-}
-
 .thoth-vp-preview {
     position: fixed;
     margin: var(--thoth-ui-margin);
     top: 60px;
     right: 20px;
-    /* padding: 12px 20px; */
     background: rgba(var(--bs-body-bg-rgb), 0.85);
     color: var(--bs-body-color);
     border-radius: var(--bs-border-radius);
