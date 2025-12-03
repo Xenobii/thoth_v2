@@ -85,41 +85,48 @@ THOTH.update = () => {
     
     THOTH._queryData = ATON._queryDataScene;
     
-    THOTH.hoveredMeshName = THOTH._queryData?.o?.name;
+    THOTH.hoveredModel = THOTH._queryData?.o?.parent?.parent?.name;
+    THOTH.hoveredMesh  = THOTH._queryData?.o?.name;
 };
 
-THOTH.initRC = () => {
-    for (const [, mesh] of THOTH.Scene.meshMap) {
-        // Raycaster
-        THOTH._raycaster = new THREE.Raycaster();
-        THOTH._raycaster.layers.set(THOTH.RCLayer);
-        THOTH._raycaster.firstHitOnly = true;
+THOTH.initRC = (models) => {
+    // TODO: Make this support new meshes
+    if (models === undefined) models = THOTH.Scene.modelMap;
     
-        if (!mesh.geometry.boundsTree) {
-            console.log("No bounds tree, computing bounds tree");
-            mesh.geometry.computeBoundsTree();
-        }
-    
-        // Color propertied for face selection
-        mesh.material.vertexColors = true;
-        mesh.material.needsUpdate  = true;
-    
-        // Initialize vertex colors if they don't exist
-        if (!mesh.geometry.attributes.color) {
-            let colorArray, colorAttr;
-            
-            const defaultColor = new THREE.Color(0xffffff);
-    
-            colorArray = new Float32Array(mesh.geometry.attributes.position.count * 3);
-            for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
-                colorArray[i * 3 + 0] = defaultColor.r;
-                colorArray[i * 3 + 1] = defaultColor.g;
-                colorArray[i * 3 + 2] = defaultColor.b;
+    for (const [, model] of models) {
+        // Init raycasting for all meshes in a gltf model
+        for (const [, mesh] of model.meshes) {
+            // Raycaster
+            THOTH._raycaster = new THREE.Raycaster();
+            THOTH._raycaster.layers.set(THOTH.RCLayer);
+            THOTH._raycaster.firstHitOnly = true;
+        
+            if (!mesh.geometry.boundsTree) {
+                console.log("No bounds tree, computing bounds tree");
+                mesh.geometry.computeBoundsTree();
             }
-    
-            colorAttr = new THREE.BufferAttribute(colorArray, 3);
-            
-            mesh.geometry.setAttribute('color', colorAttr);
+        
+            // Color propertied for face selection
+            mesh.material.vertexColors = true;
+            mesh.material.needsUpdate  = true;
+        
+            // Initialize vertex colors if they don't exist
+            if (!mesh.geometry.attributes.color) {
+                let colorArray, colorAttr;
+                
+                const defaultColor = new THREE.Color(0xffffff);
+        
+                colorArray = new Float32Array(mesh.geometry.attributes.position.count * 3);
+                for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
+                    colorArray[i * 3 + 0] = defaultColor.r;
+                    colorArray[i * 3 + 1] = defaultColor.g;
+                    colorArray[i * 3 + 2] = defaultColor.b;
+                }
+        
+                colorAttr = new THREE.BufferAttribute(colorArray, 3);
+                
+                mesh.geometry.setAttribute('color', colorAttr);
+            }
         }
     }
 };
@@ -149,11 +156,13 @@ THOTH.parseAtonElements = () => {
 
 // Visualization
 
-THOTH.highlightSelection = (selection, highlightColor, meshName) => {
-    if (selection === undefined || highlightColor === undefined|| meshName === undefined) return;
+THOTH.highlightSelection = (selection, highlightColor, modelName, meshName) => {
+    if (selection === undefined || highlightColor === undefined||
+        modelName === undefined || meshName === undefined) return;
 
-    const mesh = THOTH.Scene.meshMap.get(meshName);
-    
+    const model = THOTH.Scene.modelMap.get(modelName);
+    const mesh  = model.meshes.get(meshName);
+
     const colorAttr = mesh.geometry.attributes.color;
     const indexAttr = mesh.geometry.index;
     const colors    = colorAttr.array;
@@ -204,7 +213,8 @@ THOTH.highlightSelection = (selection, highlightColor, meshName) => {
     }
     
     colorAttr.needsUpdate = true;
-};
+
+}
 
 THOTH.highlightAllLayers = () => {
     // All layers
@@ -217,24 +227,29 @@ THOTH.highlightAllLayers = () => {
         
         const selection      = layer.selection;
         const highlightColor = THOTH.Utils.hex2rgb(layer.highlightColor);
-        
-        for (const meshName of Object.keys(selection)) {
-            THOTH.highlightSelection(selection[meshName], highlightColor, meshName);
+        for (const modelName of Object.keys(selection)) {
+            for (const meshName of Object.keys(selection[modelName])) {
+                THOTH.highlightSelection(
+                    selection[modelName][meshName], highlightColor, modelName, meshName
+                );
+            }
         }
     });
 };
 
 THOTH.clearHighlights = () => {
-    if (!THOTH.Scene?.meshMap) return;
-    for (const [, mesh] of THOTH.Scene.meshMap) {
-        const colorAttr  = mesh.geometry.attributes.color;
-        const colorArray = colorAttr.array;
-        for (let i=0; i < colorArray.length; i++) {
-            colorArray[i] = 1;
+    if (!THOTH.Scene?.modelMap) return;
+
+    for (const [, model] of THOTH.Scene.modelMap) {
+        for (const [, mesh] of model.meshes) {
+            const colorAttr  = mesh.geometry.attributes.color;
+            const colorArray = colorAttr.array;
+            for (let i=0; i < colorArray.length; i++) {
+                colorArray[i] = 1;
+            }
+            colorAttr.needsUpdate = true;
         }
-        colorAttr.needsUpdate = true;
     }
-    
 };
 
 THOTH.updateVisibility = () => {
@@ -266,22 +281,28 @@ THOTH.toggleLayerVisibility = (id) => {
     THOTH.updateVisibility();
 };
 
-THOTH.toggleModelVisibility = (id) => {
-    if (id === undefined) return;
-    
-    const model      = THOTH.Scene.meshMap.get(id);
-    const controller = THOTH.UI?.modelMap.get(id);
+THOTH.toggleModelVisibility = (modelName) => {
+    if (modelName === undefined) return;
+
+    const model      = THOTH.Scene.modelMap.get(modelName);
+    const controller = THOTH.UI?.modelMap.get(modelName);
 
     if (model === undefined) return;
 
     if (model.visible) {
         model.visible = false;
+        for (const [, mesh] of model.meshes) {
+            mesh.visible = false;
+        }
         if (controller) {
             controller.classList.add("opacity-50", "text-muted");
         }
     }
     else {
         model.visible = true;
+        for (const [, mesh] of model.meshes) {
+            mesh.visible = true;
+        }
         if (controller)
             controller.classList.remove("opacity-50", "text-muted")
     }

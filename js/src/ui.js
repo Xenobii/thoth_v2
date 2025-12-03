@@ -94,7 +94,7 @@ UI.setupToolbars = () => {
     // Bottom Toolbar
     UI._elTopToolbar.append(
         UI.createTestButton(() => {
-            console.log(THOTH.Scene.root)
+            console.log(THOTH.Scene.modelMap)
         }),
         ATON.UI.createButton({
             icon    : THOTH.PATH_RES_ICONS + "textailes.png",
@@ -471,11 +471,11 @@ UI.setupPanels = () => {
         // Model management
         const elModelList = ATON.UI.createContainer();
         UI.modelMap = new Map();
-        if (THOTH.Scene?.meshMap) {
-            THOTH.Scene.meshMap.forEach((mesh, id) => {
-                const controller = UI.createModelController(id);
+        if (THOTH.Scene?.modelMap) {
+            THOTH.Scene.modelMap.forEach((model, modelName) => {
+                const controller = UI.createModelController(modelName);
                 elModelList.append(controller);
-                UI.modelMap.set(id, controller);
+                UI.modelMap.set(modelName, controller);
             });
         }
 
@@ -494,8 +494,8 @@ UI.setupPanels = () => {
     UI._elScenePanel   = setupScenePanel();
 };
 
-UI.createModelController = (id) => {
-    const mesh = THOTH.Scene.meshMap.get(id);
+UI.createModelController = (modelName) => {
+    const model = THOTH.Scene.modelMap.get(modelName);
 
     const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1" });
     const elLeft  = ATON.UI.createContainer({ classes: "col-8 d-flex align-items-center" });
@@ -506,13 +506,13 @@ UI.createModelController = (id) => {
         icon   : "visibility",
         size   : "small",
         onpress: () => {
-            THOTH.toggleModelVisibility(id);
+            THOTH.toggleModelVisibility(modelName);
         }
     }); 
 
     // Name 
     const elName = ATON.UI.createButton({
-        text   : id,
+        text   : modelName,
         size   : "small",
         onpress: () => {}
     });

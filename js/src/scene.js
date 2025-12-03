@@ -12,49 +12,54 @@ let Scene = {};
 // Setup
 
 Scene.setup = (sid) => {
-    Scene.id        = sid;
-    Scene.root      = ATON._rootVisible;
-    Scene.currData  = ATON.SceneHub.currData;
-    Scene.modelUrl  = Scene.currData.scenegraph.nodes.main.urls[0];
-    Scene.modelName = Scene.modelUrl.split("/").filter(Boolean).pop();
+    Scene.id       = sid;
+    Scene.root     = ATON._rootVisible;
+    Scene.currData = ATON.SceneHub.currData;
     
-    Scene.modelFolder   = Scene.modelUrl.substring(0, Scene.modelUrl.lastIndexOf("/"));
+    // Models
+    Scene.modelMap = Scene.getSceneModels(Scene.root.children);
     
-    Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
-    Scene.colmapCamPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/colmap/images.txt")
+    // Maps
+    // Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
+
+    // Colmap
+    // Scene.colmapCamPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/colmap/images.txt")
 
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
 
-    Scene.meshMap = Scene.getSceneMeshes();
-
     Scene.getSchemaJSON();
-    Scene.readColmap();
+    // Scene.readColmap();
     
     Scene.activeLayer = undefined;
 };
 
-Scene.getSceneMeshes = () => {
-    let sceneMeshes = new Map()
-    Scene.root.traverse(obj => {
-        if (obj.isMesh) {
-            sceneMeshes.set(obj.name, obj)
-        }
-    });
-    console.log("Found", sceneMeshes.size, "meshes.")
-    return sceneMeshes;
-};
 
-// Scene.getSceneModels = (children) => {
-//     let sceneModels = new Map();
-//     for (const model in children) {
-//         if (model.name !== "") {
-//             sceneModels.set(model.name, model);
-//         }
-//     }
-//     console.log("Found", sceneModels.size, "meshes.");
-//     return sceneModels;
-// };
+Scene.getSceneModels = (children) => {
+    const getAllMeshes = (model) => {
+        let meshes = new Map();
+        model.traverse(obj => {
+            if (obj.isMesh) {
+                meshes.set(obj.name, obj);
+            }
+        })
+        return meshes;
+    }
+
+    let sceneModels = new Map();
+    for (const model of children) {
+        if (model.name !== "") {
+            const model_data = {
+                "url"    : model._reqURLs,
+                "meshes" : getAllMeshes(model),
+                "visible": model.visible
+            }
+            sceneModels.set(model.name, model_data);
+        }
+    }
+    console.log("Found", sceneModels.size, "models.");
+    return sceneModels;
+};
 
 
 // Data schema

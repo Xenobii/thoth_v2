@@ -498,9 +498,14 @@ Events.setupSceneEvents = () => {
         const selection = l.selection;
         const layer     = THOTH.Scene.currData.layers[id];
         
-        const tempSelection = layer.selection;
-        for (const meshName of Object.keys(selection)) {
-            tempSelection[meshName] = [...THOTH.Toolbox.addFacesToSelection(selection[meshName], layer.selection[meshName])];
+        const tempSelection = layer.selection || {};
+        for (const modelName of Object.keys(selection)) {
+            tempSelection[modelName] = tempSelection[modelName] || {};
+            
+            for (const meshName of Object.keys(selection[modelName])) {
+                tempSelection[modelName][meshName] = 
+                [...THOTH.Toolbox.addFacesToSelection(selection[modelName][meshName], tempSelection[modelName][meshName])];
+            }
         }
         THOTH.Scene.editLayer(id, "selection", tempSelection);
         THOTH.updateVisibility();
@@ -511,9 +516,14 @@ Events.setupSceneEvents = () => {
         const selection = l.selection;
         const layer     = THOTH.Scene.currData.layers[id];
         
-        const tempSelection = layer.selection;
-        for (const meshName of Object.keys(selection)) {
-            tempSelection[meshName] = [...THOTH.Toolbox.delFacesFromSelection(selection[meshName], layer.selection[meshName])];
+        const tempSelection = layer.selection || {};
+        for (const modelName of Object.keys(selection)) {
+            tempSelection[modelName] = tempSelection[modelName] || {};
+            
+            for (const meshName of Object.keys(selection[modelName])) {
+                tempSelection[modelName][meshName] =
+                [...THOTH.Toolbox.delFacesFromSelection(selection[modelName][meshName], tempSelection[modelName][meshName])];
+            }
         }
 
         THOTH.Scene.editLayer(id, "selection", tempSelection);
@@ -547,8 +557,12 @@ Events.setupSceneEvents = () => {
         const layer     = THOTH.Scene.currData.layers[id];
         
         const tempSelection = {}
-        for (const meshName of Object.keys(selection)) {
-            tempSelection[meshName] = [...THOTH.Toolbox.addFacesToSelection(selection[meshName], layer.selection[meshName])];
+        for (const modelName of Object.keys(selection)) {
+            tempSelection[modelName] = {};
+            for (const meshName of Object.keys(selection[modelName])) {
+                tempSelection[modelName][meshName] =
+                [...THOTH.Toolbox.addFacesToSelection(selection[modelName][meshName], layer.selection[modelName][meshName])];
+            }
         }
 
         THOTH.Scene.editLayer(id, "selection", tempSelection);
@@ -561,8 +575,12 @@ Events.setupSceneEvents = () => {
         const layer     = THOTH.Scene.currData.layers[id];
         
         const tempSelection = {}
-        for (const meshName of Object.keys(selection)) {
-            tempSelection[meshName] = [...THOTH.Toolbox.delFacesFromSelection(selection[meshName], layer.selection[meshName])];
+        for (const modelName of Object.keys(selection)) {
+            tempSelection[modelName] = {};
+            for (const meshName of Object.keys(selection[modelName])) {
+                tempSelection[modelName][meshName] = 
+                [...THOTH.Toolbox.delFacesFromSelection(selection[modelName][meshName], layer.selection[modelName][meshName])];
+            } 
         }
 
         THOTH.Scene.editLayer(id, "selection", tempSelection);
@@ -606,8 +624,6 @@ Events.setupToolboxEvents = () => {
             selection: selection
         });
 
-        THOTH.updateVisibility();
-
         THOTH.Toolbox.tempSelection = null;
     });
     
@@ -646,8 +662,6 @@ Events.setupToolboxEvents = () => {
             selection: selection
         });
 
-        THOTH.updateVisibility();
-
         THOTH.Toolbox.tempSelection = null;
     });
 
@@ -681,8 +695,6 @@ Events.setupToolboxEvents = () => {
             selection: selection
         });
 
-        THOTH.updateVisibility();
-
         THOTH.Toolbox.tempSelection = null;
     });
     THOTH.on("endLassoDel", (l) => {
@@ -706,8 +718,6 @@ Events.setupToolboxEvents = () => {
             id       : id,
             selection: selection
         });
-
-        THOTH.updateVisibility();
 
         THOTH.Toolbox.tempSelection = null;
     });
