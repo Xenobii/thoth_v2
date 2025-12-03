@@ -45,6 +45,17 @@ Scene.getSceneMeshes = () => {
     return sceneMeshes;
 };
 
+// Scene.getSceneModels = (children) => {
+//     let sceneModels = new Map();
+//     for (const model in children) {
+//         if (model.name !== "") {
+//             sceneModels.set(model.name, model);
+//         }
+//     }
+//     console.log("Found", sceneModels.size, "meshes.");
+//     return sceneModels;
+// };
+
 
 // Data schema
 
