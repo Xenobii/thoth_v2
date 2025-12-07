@@ -33,11 +33,6 @@ UI.setBackground = () => {
     // TBI
 };
 
-UI.hideToolbars = () => {
-    UI._elTopToolbar.classList.add("d-none");
-    UI._elMainToolbar.classList.add("d-none");
-};
-
 UI.showToolbars = () => {
     UI._elBottomToolbar.classList.remove("d-none");
 };
@@ -683,68 +678,80 @@ UI.setupLayerElements = () => {
 };
 
 UI.createLayer = (id) => {
-    const createLayerController = (id) => {
-    let layer = THOTH.Scene.currData.layers[id];
+    const layers = THOTH.Scene.currData.layers;
+    
+    // Resurrect layer if it exists
+    if (layers[id] !== undefined && layers[id].trash === true) {
+        const elLayer = UI.layerElements.get(id);
+    
+        // Show
+        elLayer.style.display = 'flex';
+    }
+    else {
+        const createLayerController = (id) => {
+        let layer = layers[id];
+    
+        const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 border rounded-2 px-2 py-1 mb-1" });
+        const elLeft  = ATON.UI.createContainer({ classes: "col-6 d-flex align-items-center" });
+        const elRight = ATON.UI.createContainer({ classes: "col-6 d-flex justify-content-end align-items-center" });
+            
+            // Visibility
+            const elVis = ATON.UI.createButton({
+                icon    : "visibility",
+                size    : "small",
+                onpress : () => THOTH.toggleLayerVisibility(id)
+            });
+            // Name
+            const elName = ATON.UI.createButton({
+                text   : layer.name,
+                size   : "small",
+                onpress: () => {
+                    THOTH.Scene.activeLayer = layer;
+                    UI.handleLayerHighlight();
+                }
+            });
+            THOTH.Events.enableRename(elName, id);
+            
+            const elCP = ATON.UI.createColorPicker({
+                color   : layer.highlightColor,
+                oninput: (color) => {
+                    layer.highlightColor = color
+                    THOTH.updateVisibility();
+                },
+            });
+            elCP.style.width = "60px";
+    
+            // Delete
+            const elDel = ATON.UI.createButton({
+                icon   : "trash",
+                size   : "small",
+                onpress: () => THOTH.fire("deleteLayer", (id))
+            });
+            
+            // Metadata
+            const elMetadata = ATON.UI.createButton({
+                icon   : "list",
+                size   : "small",
+                tooltip: "Edit metadata",
+                onpress: () => UI.modalMetadata(id),
+            });
+    
+            elLeft.append(elVis, elName);
+            elRight.append(elMetadata, elCP, elDel);
+            elRow.append(elLeft, elRight);
+    
+            return elRow;
+        };
+     
+        const elLayer = createLayerController(id);
+    
+        // Add to panel
+        UI.elLayerList.append(elLayer);
+    
+        // Add to layer list
+        UI.layerElements.set(id, elLayer);
+    }
 
-    const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 border rounded-2 px-2 py-1 mb-1" });
-    const elLeft  = ATON.UI.createContainer({ classes: "col-6 d-flex align-items-center" });
-    const elRight = ATON.UI.createContainer({ classes: "col-6 d-flex justify-content-end align-items-center" });
-        
-        // Visibility
-        const elVis = ATON.UI.createButton({
-            icon    : "visibility",
-            size    : "small",
-            onpress : () => THOTH.toggleLayerVisibility(id)
-        });
-        // Name
-        const elName = ATON.UI.createButton({
-            text   : layer.name,
-            size   : "small",
-            onpress: () => {
-                THOTH.Scene.activeLayer = layer;
-                UI.handleLayerHighlight();
-            }
-        });
-        THOTH.Events.enableRename(elName, id);
-        
-        const elCP = ATON.UI.createColorPicker({
-            color   : layer.highlightColor,
-            oninput: (color) => {
-                layer.highlightColor = color
-                THOTH.updateVisibility();
-            },
-        });
-        elCP.style.width = "60px";
-
-        // Delete
-        const elDel = ATON.UI.createButton({
-            icon   : "trash",
-            size   : "small",
-            onpress: () => THOTH.fire("deleteLayer", (id))
-        });
-        
-        // Metadata
-        const elMetadata = ATON.UI.createButton({
-            icon   : "list",
-            size   : "small",
-            tooltip: "Edit metadata",
-            onpress: () => UI.modalMetadata(id),
-        });
-
-        elLeft.append(elVis, elName);
-        elRight.append(elMetadata, elCP, elDel);
-        elRow.append(elLeft, elRight);
-
-        return elRow;
-    };
- 
-    const elLayer = createLayerController(id);
-
-    // Add to panel
-    UI.elLayerList.append(elLayer);
-
-    // Add to layer list
-    UI.layerElements.set(id, elLayer);
 };
 
 UI.deleteLayer = (id) => {
@@ -752,13 +759,6 @@ UI.deleteLayer = (id) => {
 
     // Hide
     elLayer.style.display = 'none';
-};
-
-UI.resurrectLayer = (id) => {
-    const elLayer = UI.layerElements.get(id);
-    
-    // Show
-    elLayer.style.display = 'flex';
 };
 
 UI.handleLayerHighlight = () => {

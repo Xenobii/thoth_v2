@@ -305,8 +305,8 @@ Events.setupUIEvents = () => {
         THOTH.fire("createLayerScene", (id));
         THOTH.firePhoton("createLayerScene", (id));
         THOTH.History.pushAction({
-            type    : THOTH.History.ACTIONS.CREATE_LAYER,
-            id      : id
+            type: THOTH.History.ACTIONS.CREATE_LAYER,
+            id  : id
         });
     });
 
@@ -471,10 +471,7 @@ Events.setupSceneEvents = () => {
     // Local
     THOTH.on("createLayerScene", (id) => {
         THOTH.Scene.createLayer(id);
-
-        const layers = THOTH.Scene.currData.layers;
-        if (layers[id] !== undefined && layers[id].trash === true) THOTH.UI.ressurectLayer(id);
-        else THOTH.UI.createLayer(id);
+        THOTH.UI.createLayer(id);
     });
 
     THOTH.on("deleteLayerScene", (id) => {
@@ -727,8 +724,8 @@ Events.setupToolboxEvents = () => {
         THOTH.Toolbox.addMeasurementPoint();
     });
     THOTH.on("endAllToolOps", () => {
-        THOTH.fire("endLasso")
-    })
+        THOTH.fire("endLasso");
+    });
 };
 
 Events.setupPhotonEvents = () => {
@@ -736,7 +733,6 @@ Events.setupPhotonEvents = () => {
     THOTH.on("VRC_UserEnter", () => {
         const currData = THOTH.Scene.currData;
         THOTH.firePhoton("syncScene", currData);
-        console.log(currData);
     });
     
     // Sync scene
