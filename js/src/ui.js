@@ -94,7 +94,7 @@ UI.setupToolbars = () => {
     // Bottom Toolbar
     UI._elTopToolbar.append(
         UI.createTestButton(() => {
-            console.log(THOTH.Scene.modelMap)
+            console.log(THOTH.Scene.currData.objectMetadata)
         }),
         ATON.UI.createButton({
             icon    : THOTH.PATH_RES_ICONS + "textailes.png",
@@ -235,9 +235,9 @@ UI.setupToolbars = () => {
 
         // Size (use existing createSlider)
         UI._elBrushSlider = ATON.UI.createSlider({
-            range   : [0, 10],
-            value   : THOTH.Toolbox.selectorSize,
-            oninput : (v) => THOTH.Toolbox.setSelectorSize(v),
+            range  : [0, 10],
+            value  : THOTH.Toolbox.selectorSize,
+            oninput: (v) => THOTH.Toolbox.setSelectorSize(v),
         });
         elOptionsBrush.append(createOptionRow("Size", UI._elBrushSlider));
 
@@ -305,6 +305,7 @@ UI.setupToolbars = () => {
 // Side Panels
 
 UI.setupPanels = () => {
+    // Settings
     const setupSettingsPanel = () => {
         let elOptionsBody = ATON.UI.createContainer();
         let elMode        = ATON.UI.createContainer();
@@ -401,52 +402,7 @@ UI.setupPanels = () => {
         return elOptionsBody;
     };
 
-    const createSceneLayer = () => {
-        const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 bg-body-tertiary rounded-2 px-2 py-1 mb-1" });
-        const elLeft  = ATON.UI.createContainer({ classes: "col-6 d-flex align-items-center" });
-        const elRight = ATON.UI.createContainer({ classes: "col-6 d-flex justify-content-end align-items-center" });
-
-        // Name
-        const elName = ATON.UI.createButton({
-            text: "Scene Layer",
-            icon: "scene",
-            size: "small"
-        });
-        // Metadata
-        const elMetadata = ATON.UI.createButton({
-            text   : "Scene Metadata",
-            icon   : "list",
-            size   : "small",
-            onpress: () => UI.modalMetadata(-1),
-        });
-
-        elLeft.append(elName);
-        elRight.append(elMetadata);
-        elRow.append(elLeft, elRight);
-        return elRow;
-    };
-
-    const setupLayersPanel = () => {
-        const elLayersPanel = ATON.UI.createContainer({
-            classes: "row g-0 align-items-center w-100 rounded-2 px-2 py-1 mb-1"
-        });
-        UI.elLayerList = ATON.UI.createContainer();
-        
-        elLayersPanel.append(
-            createSceneLayer(),
-            ATON.UI.createButton({
-                text   : "New Layer",
-                icon   : "add",
-                variant: "info",
-                tooltip: "Create new layer",
-                onpress: () => THOTH.fire("createLayer")
-            }),
-            UI.elLayerList,
-        );
-        
-        return elLayersPanel;
-    };
-
+    // Scene
     const setupScenePanel = () => {
         // Scene buttons
         const elSceneButtons = ATON.UI.createContainer({
@@ -473,7 +429,7 @@ UI.setupPanels = () => {
         UI.modelMap = new Map();
         if (THOTH.Scene?.modelMap) {
             THOTH.Scene.modelMap.forEach((model, modelName) => {
-                const controller = UI.createModelController(modelName);
+                const controller = createModelController(modelName);
                 elModelList.append(controller);
                 UI.modelMap.set(modelName, controller);
             });
@@ -488,50 +444,178 @@ UI.setupPanels = () => {
         
         return elBody;
     };
+
+    const createModelController = (modelName) => {
+        const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1" });
+        const elLeft  = ATON.UI.createContainer({ classes: "col-8 d-flex align-items-center" });
+        const elRight = ATON.UI.createContainer({ classes: "col-4 d-flex justify-content-end align-items-center" });
+
+        // Visibility
+        const elVis = ATON.UI.createButton({
+            icon   : "visibility",
+            size   : "small",
+            onpress: () => {
+                THOTH.toggleModelVisibility(modelName);
+            }
+        }); 
+
+        // Name 
+        const elName = ATON.UI.createButton({
+            text   : modelName,
+            size   : "small",
+            onpress: () => {}
+        });
+        // Delete
+        const elDel = ATON.UI.createButton({
+            icon   : "trash",
+            onpress: () => {}
+        });
+        // Edit
+        const elEdit = ATON.UI.createButton({
+            icon   : "edit",
+            onpress: () => ATON.UI.showSidePanel({
+                header: modelName,
+                body  : editModelPanel(modelName)
+            })
+        })
+
+        elLeft.append(elVis, elName);
+        elRight.append(elEdit, elDel);
+        elRow.append(elLeft, elRight);
+
+        return elRow;
+    };
+
+    const editModelPanel = (modelName) => {
+        let N = ATON.getSceneNode(modelName);
+        if (!N) return;
+        
+        const elBody = ATON.UI.createContainer();
+
+        // Header
+        const elModelHead = ATON.UI.createContainer({
+            classes: "row g-0 align-items-center w-100 rounded-2 px-2 py-1 mb-1"
+        });
+        const elModelHeadLeft  = ATON.UI.createContainer({ 
+            classes: "col-4 d-flex align-items-center" 
+        });
+        const elModelHeadRight  = ATON.UI.createContainer({ 
+            classes: "col-8 d-flex justify-content-end align-items-center" 
+        });
+        const elFocus = ATON.UI.createButton({
+            text   : "Focus",
+            classes: "btn-default",
+            onpress: ()=>{
+                ATON.Nav.requestPOVbyNode(N, 0.2);
+            }
+        });
+        const elBack = ATON.UI.createButton({
+            icon   : "back",
+            onpress: () => ATON.UI.showSidePanel({
+                header: "Scene",
+                body  : UI._elScenePanel
+            })
+        });
+        const elBuildVP = ATON.UI.createButton({
+            text   : "Build Viewpoints",
+            classes: "btn-default",
+            icon   : "pov",
+            onpress: () => UI.modalBuildVP(modelName)
+        });
+        elModelHeadLeft.append(elBack);
+        elModelHeadRight.append(elFocus, elBuildVP)
+        elModelHead.append(elModelHeadLeft, elModelHeadRight)
+
+        // Transforms
+        const createMeshList = (modelName) => {
+            const elContainer = ATON.UI.createContainer();
+            for (const [meshName, ] of THOTH.Scene.modelMap.get(modelName).meshes) {
+                elContainer.append(ATON.UI.createButton({
+                    text: meshName,
+                    icon: "collection-item"
+                }))
+            };
+            return elContainer;
+        };
+        const elOptions = ATON.UI.createTreeGroup({
+            items: [
+                {
+                    title  : "Meshes",
+                    open   : true,
+                    content: createMeshList(modelName)
+                },
+                {
+                    title  : "Transform",
+                    open   : true,
+                    content: ATON.UI.createNodeTrasformControl({
+                        node    : modelName,
+                        position: true,
+                        scale   : false,
+                        rotation: true,
+                    })
+                }
+            ]
+        });
+
+        // Body
+        elBody.append(
+            elModelHead,
+            elOptions
+        );
+
+        return elBody
+    };
+
+    // Layers
+    const setupLayersPanel = () => {
+        const elLayersPanel = ATON.UI.createContainer({
+            classes: "row g-0 align-items-center w-100 rounded-2 px-2 py-1 mb-1"
+        });
+        UI.elLayerList = ATON.UI.createContainer();
+        
+        elLayersPanel.append(
+            createSceneLayer(),
+            ATON.UI.createButton({
+                text   : "New Layer",
+                icon   : "add",
+                variant: "info",
+                tooltip: "Create new layer",
+                onpress: () => THOTH.fire("createLayer")
+            }),
+            UI.elLayerList,
+        );
+        
+        return elLayersPanel;
+    };
+
+    const createSceneLayer = () => {
+        const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 bg-body-tertiary rounded-2 px-2 py-1 mb-1" });
+        const elLeft  = ATON.UI.createContainer({ classes: "col-6 d-flex align-items-center" });
+        const elRight = ATON.UI.createContainer({ classes: "col-6 d-flex justify-content-end align-items-center" });
+
+        // Name
+        const elName = ATON.UI.createButton({
+            text: "Scene Layer",
+            icon: "scene",
+            size: "small"
+        });
+        // Metadata
+        const elMetadata = ATON.UI.createButton({
+            text   : "Scene Metadata",
+            icon   : "list",
+            size   : "small",
+            onpress: () => UI.modalMetadata(-1),
+        });
+
+        elLeft.append(elName);
+        elRight.append(elMetadata);
+        elRow.append(elLeft, elRight);
+        return elRow;
+    };
     
     UI._elOptionsPanel = setupSettingsPanel();
     UI._elLayersPanel  = setupLayersPanel();
     UI._elScenePanel   = setupScenePanel();
-};
-
-UI.createModelController = (modelName) => {
-    const model = THOTH.Scene.modelMap.get(modelName);
-
-    const elRow   = ATON.UI.createContainer({ classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1" });
-    const elLeft  = ATON.UI.createContainer({ classes: "col-8 d-flex align-items-center" });
-    const elRight = ATON.UI.createContainer({ classes: "col-4 d-flex justify-content-end align-items-center" });
-
-    // Visibility
-    const elVis = ATON.UI.createButton({
-        icon   : "visibility",
-        size   : "small",
-        onpress: () => {
-            THOTH.toggleModelVisibility(modelName);
-        }
-    }); 
-
-    // Name 
-    const elName = ATON.UI.createButton({
-        text   : modelName,
-        size   : "small",
-        onpress: () => {}
-    });
-    // Delete
-    const elDel = ATON.UI.createButton({
-        icon   : "trash",
-        onpress: () => {}
-    });
-    // Edit
-    const elEdit = ATON.UI.createButton({
-        icon   : "edit",
-        onpress: () => {}
-    })
-
-    elLeft.append(elVis, elName);
-    elRight.append(elEdit, elDel);
-    elRow.append(elLeft, elRight);
-
-    return elRow;
 };
  
 
@@ -864,20 +948,20 @@ UI.modalMetadata = (id) => {
                 prevData: THOTH.Scene.currData.objectMetadata
             };
             elMetadataFooter.append(ATON.UI.createButton({
-                text    : "Save changes",
-                size    : "large",
-                variant : "success",
-                onpress : () => {
+                text   : "Save changes",
+                size   : "large",
+                variant: "success",
+                onpress: () => {
                     THOTH.fire("editMetadata", l);
                     ATON.UI.hideModal();
                 }
             }));
             // Cancel
             elMetadataFooter.append(ATON.UI.createButton({
-                text    : "Cancel",
-                size    : "large",
-                variant : "secondary",
-                onpress : () => ATON.UI.hideModal(),
+                text   : "Cancel",
+                size   : "large",
+                variant: "secondary",
+                onpress: () => ATON.UI.hideModal(),
             }));
             ATON.UI.showModal({
                 header: `Edit scene metadata`,
@@ -896,10 +980,10 @@ UI.modalMetadata = (id) => {
             let elMetadataFooter = ATON.UI.createContainer();
             // Inherit attributes
             elMetadataFooter.append(ATON.UI.createButton({
-                text    : "Inherit from object",
-                size    : "large",
-                variant : "primary",
-                onpress : () => UI.showToast("TBI")
+                text   : "Inherit from object",
+                size   : "large",
+                variant: "primary",
+                onpress: () => UI.showToast("TBI")
             }));
             // OK Button
             let l = {
@@ -908,33 +992,84 @@ UI.modalMetadata = (id) => {
                 prevData: THOTH.Scene.currData.layers[id].metadata
             };
             elMetadataFooter.append(ATON.UI.createButton({
-                text    : "Save changes",
-                size    : "large",
-                variant : "success",
-                onpress : () => {
+                text   : "Save changes",
+                size   : "large",
+                variant: "success",
+                onpress: () => {
                     THOTH.fire("editMetadata", l);
                     ATON.UI.hideModal();
                 }
             }));
             // Cancel
             elMetadataFooter.append(ATON.UI.createButton({
-                text    : "Cancel",
-                size    : "large",
-                variant : "secondary",
-                onpress : () => ATON.UI.hideModal(),
+                text   : "Cancel",
+                size   : "large",
+                variant: "secondary",
+                onpress: () => ATON.UI.hideModal(),
             }));
             ATON.UI.showModal({
-                header  : "Edit metadata for layer " + id,
-                body    : elMetadataBody,
-                footer  : elMetadataFooter
+                header: "Edit metadata for layer " + id,
+                body  : elMetadataBody,
+                footer: elMetadataFooter
             });
         });
     }
 };
 
+UI.modalBuildVP = (modelName) => {
+    THOTH.Scene.readColmap(modelName).then((colmapCameras) => {
+        if (!colmapCameras) {
+            UI.showToast("No COLMAP text detected");
+            return;
+        }
+        // colmapCameras = colmapCameras ||  [1, 2, 3, 4]
+        let vpNumber = colmapCameras.length;
+    
+        const elBody   = ATON.UI.createContainer();
+        const elFooter = ATON.UI.createContainer();
+    
+        // Body
+        const elInfo = ATON.UI.createContainer();
+        elInfo.textContent = `Found ${colmapCameras.length} cameras`;
+        const elOptions = ATON.UI.createContainer();
+        elInfo.append(
+            ATON.UI.createSlider({
+                range  : [0, colmapCameras.length],
+                value  : vpNumber,
+                oninput: (v) => {vpNumber = v}
+            })
+        );
+        elBody.append(elInfo, elOptions);
+    
+        // Footer 
+        const elBuildBtn = ATON.UI.createButton({
+            text   : "Build",
+            size   : "large",
+            variant: "primary",
+            onpress: () => {
+                THOTH.Scene.buildCameras(colmapCameras);
+                ATON.UI.hideModal();
+            }
+        });
+        const elCancelBtn = ATON.UI.createButton({
+            text   : "Cancel",
+            size   : "large",
+            variant: "secondary",
+            onpress: () => ATON.UI.hideModal()
+        });
+        elFooter.append(elBuildBtn, elCancelBtn);
+        
+        ATON.UI.showModal({
+            header: "Build viewpoints for " + modelName,
+            body  : elBody,
+            footer: elFooter,
+        });
+    });
+};
+
 UI.modalVPImage = (node) => {
     const viewpoint = THOTH.Scene.currData.viewpoints[node];
-
+    
     let elBody   = ATON.UI.createContainer();
     let elFooter = ATON.UI.createContainer();
     
@@ -986,6 +1121,7 @@ UI.createMetadataEditor = (data, data_temp) => {
                 case "string":
                     elInput = ATON.UI.createInputText({
                         label      : key,
+                        value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         placeholder: "string",
                         oninput    : (v) => {
                             data_temp[key] = v;
@@ -995,6 +1131,7 @@ UI.createMetadataEditor = (data, data_temp) => {
                 case "integer":
                     elInput = ATON.UI.createInputText({
                         placeholder: "integer",
+                        value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         label      : key,
                         oninput    : (v) => {
                             data_temp[key] = v;
@@ -1005,7 +1142,7 @@ UI.createMetadataEditor = (data, data_temp) => {
                     elInput = ATON.UI.createInputText({
                         placeholder: "float",
                         label      : key,
-                        value      : data_temp[key],
+                        value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         oninput    : (v) => {
                             data_temp[key] = v;
                         }
@@ -1014,6 +1151,7 @@ UI.createMetadataEditor = (data, data_temp) => {
                 case "bool":
                     elInput = UI.createBool({
                         text    : key,
+                        value   : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         onchange: (input) => data_temp[key] = input
                     });
                     break;

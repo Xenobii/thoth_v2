@@ -556,9 +556,10 @@ Events.setupSceneEvents = () => {
         const selection = l.selection;
         const layer     = THOTH.Scene.currData.layers[id];
         
-        const tempSelection = {}
+        const tempSelection = layer.selection || {};
         for (const modelName of Object.keys(selection)) {
-            tempSelection[modelName] = {};
+            tempSelection[modelName] = tempSelection[modelName] || {};
+
             for (const meshName of Object.keys(selection[modelName])) {
                 tempSelection[modelName][meshName] =
                 [...THOTH.Toolbox.addFacesToSelection(selection[modelName][meshName], layer.selection[modelName][meshName])];
@@ -574,9 +575,10 @@ Events.setupSceneEvents = () => {
         const selection = l.selection;
         const layer     = THOTH.Scene.currData.layers[id];
         
-        const tempSelection = {}
+        const tempSelection = layer.selection || {};
         for (const modelName of Object.keys(selection)) {
-            tempSelection[modelName] = {};
+            tempSelection[modelName] = tempSelection[modelName] || {};
+
             for (const meshName of Object.keys(selection[modelName])) {
                 tempSelection[modelName][meshName] = 
                 [...THOTH.Toolbox.delFacesFromSelection(selection[modelName][meshName], layer.selection[modelName][meshName])];
@@ -732,19 +734,14 @@ Events.setupToolboxEvents = () => {
 Events.setupPhotonEvents = () => {
     // On new user join
     THOTH.on("VRC_UserEnter", () => {
-        const layers = THOTH.Scene.currData.layers;
-        if (layers !== undefined) {
-            Object.values(layers).forEach((layer) => {
-                layer.selection = Array.from(layer.selection);
-            });
-        }
-
-        THOTH.firePhoton("syncScene", layers);
+        const currData = THOTH.Scene.currData;
+        THOTH.firePhoton("syncScene", currData);
+        console.log(currData);
     });
     
     // Sync scene
-    THOTH.onPhoton("syncScene", (layers) => {
-        THOTH.Scene.syncScene(layers);
+    THOTH.onPhoton("syncScene", (currData) => {
+        THOTH.Scene.syncScene(currData);
     });
 };
 

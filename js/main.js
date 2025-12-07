@@ -67,7 +67,6 @@ THOTH.setup = () => {
         THOTH.Events.setup();
         THOTH.History.setup();
         THOTH.Toolbox.setup();
-        THOTH.SVP.setup();
         THOTH.UI.setup();
         
         THOTH.initRC();

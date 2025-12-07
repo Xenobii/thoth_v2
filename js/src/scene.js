@@ -22,18 +22,13 @@ Scene.setup = (sid) => {
     // Maps
     // Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
 
-    // Colmap
-    // Scene.colmapCamPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/colmap/images.txt")
-
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
 
     Scene.getSchemaJSON();
-    // Scene.readColmap();
     
     Scene.activeLayer = undefined;
 };
-
 
 Scene.getSceneModels = (children) => {
     const getAllMeshes = (model) => {
@@ -50,9 +45,10 @@ Scene.getSceneModels = (children) => {
     for (const model of children) {
         if (model.name !== "") {
             const model_data = {
-                "url"    : model._reqURLs,
-                "meshes" : getAllMeshes(model),
-                "visible": model.visible
+                "modelData": model,
+                "url"      : model._reqURLs,
+                "meshes"   : getAllMeshes(model),
+                "visible"  : model.visible
             }
             sceneModels.set(model.name, model_data);
         }
@@ -290,6 +286,13 @@ Scene.editLayer = (id, attr, value) => {
 };
 
 
+// Model Management
+
+Scene.addModel = () => {
+
+};
+
+
 // Object management
 
 Scene.editObject = (value) => {
@@ -300,19 +303,25 @@ Scene.editObject = (value) => {
 
 // SVP
 
-Scene.readColmap = () => {
-    fetch(Scene.colmapCamPath + '?' + new Date().getTime())
+Scene.readColmap = (modelName) => {
+    const modelURL = Scene.modelMap.get(modelName).url; 
+    if (!modelURL) return Promise.resolve(null);
+
+    const colmapPath = ATON.Utils.resolveCollectionURL(modelURL + "/colmap/images.txt");
+    
+    return fetch(colmapPath + '?' + new Date().getTime())
         .then(res => {
-            if (!res.ok) return false;
+            if (!res.ok) throw new Error("Colmap retrieval failed: " + res.status);
             return res.text()
         })
         .then(text => {
             const colmapCameras = text.split('\n').filter(line => line.includes('jpg'));
-            Scene.buildCameras(colmapCameras);
+            return colmapCameras;
         })
         .catch(err => {
-            console.error("Failed to load " + Scene.colmapCamPath + ": " + err);
+            console.error("Failed to load " + colmapPath + ": " + err);
             if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No COLMAP txt detected")
+            return null;
         });
 };
 
@@ -351,19 +360,14 @@ Scene.buildCameras = (colmapCameras) => {
                 .setFOV(70);
         }
     }
-    THOTH.SVP.setup();
 };
+
 
 // Photon
 
-Scene.syncScene = (layers) => {
-    Scene.currData.layers = layers;
-    if (layers === undefined) return;
-    
-    Object.values(layers).forEach(layer => {
-        THOTH.UI.createLayer(layer.id);
-    });
-
+Scene.syncScene = (currData) => {
+    THOTH.Scene.currData = currData;
+    console.log(currData)
     THOTH.updateVisibility();
 };
 

@@ -12,13 +12,9 @@ let SVP = {};
 
 
 
-// Setup
+// Build
 
-SVP.setup = () => {
-    SVP.setupSVPNodes();
-};
-
-SVP.setupSVPNodes = () => {
+SVP.buildSVPNodes = (modelURL) => {
     const viewpoints = THOTH.Scene.currData.viewpoints;
     if (viewpoints === undefined) return;
 
