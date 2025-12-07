@@ -77,6 +77,55 @@ UI.createBool = (options) => {
     return container;
 };
 
+UI.modelTransformControl = (options) => {
+    // Same as ATON's but with onupdate()
+    let baseid = ATON.Utils.generateID("ftrans");
+    
+    let el = document.createElement('div');
+    el.id = baseid;
+
+    let N = undefined;
+    if (options.node) N = ATON.getSceneNode(options.node);
+
+    // Position
+    if (options.position){
+        let elPos = ATON.UI.createVectorControl({
+            vector  : N.position,
+            step    : options.position.step,
+            reset   : [0,0,0],
+            onupdate: () => {UI.showToast("TBI")},
+        });
+        el.append(ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elPos.id+"'>Position</label>") );
+        el.append(elPos);
+    }
+
+    // Scale
+    if (options.scale){
+        let elScale = ATON.UI.createVectorControl({
+            vector  : N.scale,
+            step    : options.scale.step,
+            reset   : [1,1,1],
+            onupdate: () => {UI.showToast("TBI")},
+        });
+        el.append( ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elScale.id+"'>Scale</label>") );
+        el.append( elScale );
+    }
+
+    // Rotation
+    if (options.rotation){
+        let elRot = ATON.UI.createVectorControl({
+            vector  : N.rotation,
+            step    : options.rotation.step,
+            reset   : [0,0,0],
+            onupdate: () => {UI.showToast("TBI")},
+        });
+        el.append( ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elRot.id+"'>Rotation</label>") );
+        el.append( elRot );
+    }
+
+    return el;
+};
+
 
 // Toolbars
 
@@ -86,25 +135,16 @@ UI.setupToolbars = () => {
     UI._elMainToolbar        = ATON.UI.get("mainToolbar");
     UI._elToolOptionsToolbar = ATON.UI.get("toolOptToolbar");
     
-    // Bottom Toolbar
+    // Top Toolbar
     UI._elTopToolbar.append(
         UI.createTestButton(() => {
-            console.log(THOTH.Scene.currData.objectMetadata)
+            console.log(THOTH.Scene.currData.sceneMetadata)
         }),
         ATON.UI.createButton({
             icon    : THOTH.PATH_RES_ICONS + "textailes.png",
             text    : "TEXTaiLES",
             onpress : () => window.open("https://www.echoes-eccch.eu/textailes/", "_blank"),
             tooltip : "Go to the TEXTaiLES website"
-        }),
-        ATON.UI.createButton({
-            icon   : 'scene',
-            text   : "Scene",
-            onpress: () => ATON.UI.showSidePanel({
-                header: "Scene",
-                body  : UI._elScenePanel
-            }),
-            tooltip: "Scene options"
         }),
         ATON.UI.createButton({
             icon   : "settings",
@@ -114,6 +154,15 @@ UI.setupToolbars = () => {
                 body    : UI._elOptionsPanel
             }),
             tooltip: "Options"
+        }),
+        ATON.UI.createButton({
+            icon   : 'scene',
+            text   : "Scene",
+            onpress: () => ATON.UI.showSidePanel({
+                header: "Scene",
+                body  : UI._elScenePanel
+            }),
+            tooltip: "Scene options"
         }),
         ATON.UI.createButton({
             icon   : "layers",
@@ -127,7 +176,7 @@ UI.setupToolbars = () => {
         ATON.UI.createButton({
             icon   : "link",
             text   : "Export",
-            onpress: () => THOTH.Scene.exportLayers(),
+            onpress: () => UI.modalExport(),
             tooltip: "Export changes",
         }),
         ATON.UI.createButton({
@@ -409,7 +458,7 @@ UI.setupPanels = () => {
                 text   : "Export changes",
                 variant: "success",
                 tooltip: "Export changes",
-                onpress: () => THOTH.Scene.exportLayers(),
+                onpress: () => UI.modalExport()
             }),
             ATON.UI.createButton({
                 icon   : "add",
@@ -526,8 +575,8 @@ UI.setupPanels = () => {
             const elContainer = ATON.UI.createContainer();
             for (const [meshName, ] of THOTH.Scene.modelMap.get(modelName).meshes) {
                 elContainer.append(ATON.UI.createButton({
-                    text: meshName,
-                    icon: "collection-item"
+                    text   : meshName,
+                    icon   : "collection-item"
                 }))
             };
             return elContainer;
@@ -542,7 +591,7 @@ UI.setupPanels = () => {
                 {
                     title  : "Transform",
                     open   : true,
-                    content: ATON.UI.createNodeTrasformControl({
+                    content: UI.modelTransformControl({
                         node    : modelName,
                         position: true,
                         scale   : false,
@@ -679,7 +728,7 @@ UI.setupLayerElements = () => {
 
 UI.createLayer = (id) => {
     const layers = THOTH.Scene.currData.layers;
-    
+
     // Resurrect layer if it exists
     if (layers[id] !== undefined && layers[id].trash === true) {
         const elLayer = UI.layerElements.get(id);
@@ -931,11 +980,52 @@ UI.modalUser = () => {
     );
 };
 
+UI.modalExport = () => {
+    let elFooter = ATON.UI.createContainer();
+    let elBody = ATON.UI.createContainer();
+    
+    // Body
+    const elInfo = ATON.UI.createContainer();
+    if (THOTH.collabCollabExists()) {
+        elInfo.textContent = `AN EXISTING VERSION OF THIS SCENE EXISTS. OVERWRITE IT?`;
+    }
+    else {
+        elInfo.textContent = `OVERWRITE CURRENT SCENE DATA?`;
+    }
+    elBody.append(elInfo);
+
+    // Footer
+    elFooter.append(
+        ATON.UI.createButton({
+            text   : "Export",
+            icon   : "link",
+            size   : "large",
+            variant: "success",
+            onpress: () => {
+                THOTH.Scene.exportLayers();
+                ATON.UI.hideModal();
+            }
+        }),
+        ATON.UI.createButton({
+            text   : "Cancel",
+            size   : "large",
+            variant: "secondary",
+            onpress: () => ATON.UI.hideModal(),
+        }),
+    );
+
+    ATON.UI.showModal({
+        header: "Export changes?",
+        body  : elBody,
+        footer: elFooter
+    });
+};
+
 UI.modalMetadata = (id) => {
     let data_temp = null;
     // id = -1 -> entire scene
     if (id === -1) {
-        data_temp = structuredClone(THOTH.Scene.currData.objectMetadata);
+        data_temp = structuredClone(THOTH.Scene.currData.sceneMetadata);
         $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
             // Main body
             let elMetadataBody = UI.createMetadataEditor(data, data_temp);
@@ -945,7 +1035,7 @@ UI.modalMetadata = (id) => {
             let l = {
                 id      : id,
                 data    : data_temp,
-                prevData: THOTH.Scene.currData.objectMetadata
+                prevData: THOTH.Scene.currData.sceneMetadata
             };
             elMetadataFooter.append(ATON.UI.createButton({
                 text   : "Save changes",
@@ -980,10 +1070,13 @@ UI.modalMetadata = (id) => {
             let elMetadataFooter = ATON.UI.createContainer();
             // Inherit attributes
             elMetadataFooter.append(ATON.UI.createButton({
-                text   : "Inherit from object",
+                text   : "Inherit from scene",
                 size   : "large",
                 variant: "primary",
-                onpress: () => UI.showToast("TBI")
+                onpress: () => {
+                    THOTH.Scene.inheritFromScene(id);
+                    ATON.UI.hideModal();
+                }
             }));
             // OK Button
             let l = {

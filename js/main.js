@@ -213,7 +213,7 @@ THOTH.highlightSelection = (selection, highlightColor, modelName, meshName) => {
     
     colorAttr.needsUpdate = true;
 
-}
+};
 
 THOTH.highlightAllLayers = () => {
     // All layers
@@ -376,4 +376,9 @@ THOTH.updateTextureMap = (path, mesh) => {
 THOTH.setupPhoton = () => {
     ATON.Photon.connect();
     THOTH.connected = true;
+};
+
+THOTH.collabCollabExists = () => {
+    // placeholder logic
+    return false;
 };

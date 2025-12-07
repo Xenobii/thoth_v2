@@ -65,7 +65,7 @@ Scene.getSchemaJSON = () => {
         let check = Scene.validateSchema(data);
         if (!check && THOTH.UI._elToast !== undefined) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
         
-        Scene.currData.objectMetadata = Scene.createPropertiesfromSchema(data);
+        Scene.currData.sceneMetadata = Scene.currData.sceneMetadata || Scene.createPropertiesfromSchema(data);
     });
 };
 
@@ -155,7 +155,7 @@ Scene.exportLayers = () => {
         if (A.layers[id].trash === true) delete A.layers[id];
     }
 
-    A.objectMetadata = structuredClone(Scene.currData.objectMetadata);
+    A.sceneMetadata = structuredClone(Scene.currData.sceneMetadata);
 
     // Remove all annotation objects and ADD them again with changes
     Scene.patch(A, Scene.MODE_DEL, () => {});
@@ -224,13 +224,13 @@ Scene.createLayer = (id) => {
     };
 
     let layer = {
-        id              : id,
-        name            : "New Layer",
-        metadata        : null,
-        selection       : {},
-        visible         : true,
-        highlightColor  : THOTH.Utils.getHighlightColor(id),
-        trash           : false
+        id            : id,
+        name          : "New Layer",
+        metadata      : null,
+        selection     : {},
+        visible       : true,
+        highlightColor: THOTH.Utils.getHighlightColor(id),
+        trash         : false
     };
     $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
         let check = Scene.validateSchema(data);
@@ -285,6 +285,19 @@ Scene.editLayer = (id, attr, value) => {
     layer[attr] = value;
 };
 
+Scene.inheritFromScene = (id) => {
+    const sceneMetadata = THOTH.Scene.currData.sceneMetadata;
+    const layerMetadata = THOTH.Scene.currData.layers[id].metadata;
+    
+    let l = {
+        id      : id,
+        data    : sceneMetadata,
+        prevData: layerMetadata
+    };
+
+    THOTH.fire("editMetadata", l);
+};
+
 
 // Model Management
 
@@ -297,7 +310,7 @@ Scene.addModel = () => {
 
 Scene.editObject = (value) => {
     if (value === undefined) return;
-    Scene.currData.objectMetadata = value;
+    Scene.currData.sceneMetadata = value;
 };
 
 
