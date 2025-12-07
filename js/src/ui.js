@@ -78,7 +78,7 @@ UI.createBool = (options) => {
 };
 
 UI.modelTransformControl = (options) => {
-    // Same as ATON's but with onupdate()
+    // Same as ATON's but with parsable modelName 
     let baseid = ATON.Utils.generateID("ftrans");
     
     let el = document.createElement('div');
@@ -86,42 +86,182 @@ UI.modelTransformControl = (options) => {
 
     let N = undefined;
     if (options.node) N = ATON.getSceneNode(options.node);
-
+    
     // Position
     if (options.position){
-        let elPos = ATON.UI.createVectorControl({
-            vector  : N.position,
-            step    : options.position.step,
-            reset   : [0,0,0],
-            onupdate: () => {UI.showToast("TBI")},
-        });
+        let elPos = THOTH.UI.createVectorControl({
+            vector   : N.position,
+            step     : options.position.step,
+            reset    : [0,0,0],
+            modelName: N.name,
+        }, "position");
         el.append(ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elPos.id+"'>Position</label>") );
         el.append(elPos);
     }
 
     // Scale
     if (options.scale){
-        let elScale = ATON.UI.createVectorControl({
-            vector  : N.scale,
-            step    : options.scale.step,
-            reset   : [1,1,1],
-            onupdate: () => {UI.showToast("TBI")},
-        });
-        el.append( ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elScale.id+"'>Scale</label>") );
-        el.append( elScale );
+        let elScale = THOTH.UI.createVectorControl({
+            vector   : N.scale,
+            step     : options.scale.step,
+            reset    : [1,1,1],
+            modelName: N.name,
+        }, "scale");
+        el.append(ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elScale.id+"'>Scale</label>") );
+        el.append(elScale);
     }
 
     // Rotation
     if (options.rotation){
-        let elRot = ATON.UI.createVectorControl({
-            vector  : N.rotation,
-            step    : options.rotation.step,
-            reset   : [0,0,0],
-            onupdate: () => {UI.showToast("TBI")},
-        });
+        let elRot = THOTH.UI.createVectorControl({
+            vector   : N.rotation,
+            step     : options.rotation.step,
+            reset    : [0,0,0],
+            modelName: N.name,
+        }, "rotation");
         el.append( ATON.UI.elem("<label class='form-label hathor-text-block' for='"+elRot.id+"'>Rotation</label>") );
         el.append( elRot );
     }
+
+    return el;
+};
+
+UI.createVectorControl = (options, transform)=>{
+    // Same as ATON's with additional control for collaborative updates and history
+    let baseid = ATON.Utils.generateID("vec3");
+
+    let V = undefined;
+    if (options.vector) V = options.vector;
+
+    let step = 0.01;
+    if (options.step) step = options.step;
+
+    let posx = V? V.x : 0.0;
+    let posy = V? V.y : 0.0;
+    let posz = V? V.z : 0.0;
+
+    let el = ATON.UI.elem(`
+        <div class="input-group mb-3 aton-inline">
+            <input type="number" class="form-control aton-input-x" placeholder="x" aria-label="x" step="${step}" value="${posx}">
+            <input type="number" class="form-control aton-input-y" placeholder="y" aria-label="y" step="${step}" value="${posy}">
+            <input type="number" class="form-control aton-input-z" placeholder="z" aria-label="z" step="${step}" value="${posz}">
+        </div>
+    `);
+
+    if (options.label){
+        el.prepend( ATON.UI.elem("<span class='input-group-text aton-inline'>"+options.label+"</span>"));
+    }
+
+    if (options.reset){
+        let R = options.reset;
+        el.append(ATON.UI.createButton({
+            icon   : "cancel",
+            classes: "btn-default",
+            onpress: ()=>{
+                elInputX.value = R[0];
+                elInputY.value = R[1];
+                elInputZ.value = R[2];
+
+                const l = {
+                    modelName: options.modelName,
+                    value    : {
+                        x: R[0],
+                        y: R[1],
+                        z: R[2],
+                    },
+                }
+                if (transform === "position") {
+                    THOTH.fire("modelTransformPosInput", (l));
+                }
+                else if (transform === "rotation") {
+                    THOTH.fire("modelTransformRotInput", (l)); 
+                }
+                if (options.onupdate) options.onupdate();
+            }
+        }))
+    }
+
+    el.id = baseid;
+
+    let elInputX = el.children[0];
+    let elInputY = el.children[1];
+    let elInputZ = el.children[2];
+
+    elInputX.oninput = () => {
+        const l = {
+            modelName: options.modelName,
+            value    : {
+                x: elInputX.value,
+                y: elInputY.value,
+                z: elInputZ.value,
+            },
+        }
+        if (transform === "position") {
+            THOTH.fire("modelTransformPosInput", (l));
+        }
+        else if (transform === "rotation") {
+            THOTH.fire("modelTransformRotInput", (l));
+        }
+        if (options.onupdate) options.onupdate();
+    };
+
+    elInputY.oninput = () => {
+        const l = {
+            modelName: options.modelName,
+            value    : {
+                x: elInputX.value,
+                y: elInputY.value,
+                z: elInputZ.value,
+            },
+        }
+        if (transform === "position") {
+            THOTH.fire("modelTransformPosInput", (l));
+        }
+        else if (transform === "rotation") {
+            THOTH.fire("modelTransformRotInput", (l));
+        }
+        if (options.onupdate) options.onupdate();
+    };
+
+    elInputZ.oninput = ()=>{
+        const l = {
+            modelName: options.modelName,
+            value    : {
+                x: elInputX.value,
+                y: elInputY.value,
+                z: elInputZ.value,
+            },
+        }
+        if (transform === "position") {
+            THOTH.fire("modelTransformPosInput", (l));
+        }
+        else if (transform === "rotation") {
+            THOTH.fire("modelTransformRotInput", (l));
+        }
+        if (options.onupdate) options.onupdate();
+    };
+
+    // Handle multi-field paste (comma separated values - eg: 2,3.5,8.1)
+    // let onpaste = (ev)=>{
+    //     ev.preventDefault();
+
+    //     let clip = ev.clipboardData.getData('text');
+    //     clip = clip.split(",");
+    //     if (clip.length === 3){
+    //         elInputX.value = parseFloat(clip[0]);
+    //         elInputY.value = parseFloat(clip[1]);
+    //         elInputZ.value = parseFloat(clip[2]);
+
+    //         if (V){
+    //             V.set(elInputX.value, elInputY.value, elInputZ.value);
+    //             if (options.onupdate) options.onupdate();
+    //         }
+    //     }
+    // };
+
+    // elInputX.onpaste = onpaste;
+    // elInputY.onpaste = onpaste;
+    // elInputZ.onpaste = onpaste;
 
     return el;
 };

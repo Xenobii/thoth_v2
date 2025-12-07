@@ -315,46 +315,46 @@ Events.setupUIEvents = () => {
         THOTH.fire("deleteLayerScene", (id));
         THOTH.firePhoton("deleteLayerScene", (id));
         THOTH.History.pushAction({
-            type    : THOTH.History.ACTIONS.DELETE_LAYER,
-            id      : id
+            type: THOTH.History.ACTIONS.DELETE_LAYER,
+            id  : id
         });
     });
 
     // Edit Layer metadata
     THOTH.on("editMetadata", (l) => {
-        const id        = l.id;
-        const data      = l.data;
-        const prevData  = l.prevData;
+        const id       = l.id;
+        const data     = l.data;
+        const prevData = l.prevData;
 
         if (id === -1) {
             THOTH.fire("editObjectScene", ({
-                value   : data
+                value: data
             }));
             THOTH.firePhoton("editObjectScene", ({
-                value   : data
+                value: data
             }));
             THOTH.History.pushAction({
-                type        : THOTH.History.ACTIONS.EDIT_METADATA_OBJECT,
-                value       : data,
-                prevValue   : prevData
+                type     : THOTH.History.ACTIONS.EDIT_METADATA_OBJECT,
+                value    : data,
+                prevValue: prevData
             });
         }
         else {
             THOTH.fire("editLayerScene", ({
-                id      : id,
-                attr    : "metadata",
-                value   : data
+                id   : id,
+                attr : "metadata",
+                value: data
             }));
             THOTH.firePhoton("editLayerScene", ({
-                id      : id,
-                attr    : "metadata",
-                value   : data
+                id   : id,
+                attr : "metadata",
+                value: data
             }));
             THOTH.History.pushAction({
-                type        : THOTH.History.ACTIONS.EDIT_METADATA_LAYER,
-                id          : id,
-                value       : data,
-                prevValue   : prevData
+                type     : THOTH.History.ACTIONS.EDIT_METADATA_LAYER,
+                id       : id,
+                value    : data,
+                prevValue: prevData
             });
         }
 
@@ -413,9 +413,47 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
         THOTH.UI.handleToolHighlight('measure');
-    })
+    });
+
+    // Model Transform
+    THOTH.on("modelTransformPosInput", (l) => {
+        const pos = THOTH.Scene.modelMap.get(l.modelName).modelData.position
+        const prevValue = {
+            x: pos.x,
+            y: pos.y,
+            z: pos.z
+        };
+
+        THOTH.History.pushAction({
+            type     : THOTH.History.ACTIONS.TRANSFORM_MODEL_POS,
+            id       : l.modelName,
+            value    : l.value,
+            prevValue: prevValue
+        });
+        THOTH.fire("modelTransformPosScene", (l));
+        THOTH.firePhoton("modelTransformPosScene", (l));
+    }); 
+
+    THOTH.on("modelTransformRotInput", (l) => {
+        const rot = THOTH.Scene.modelMap.get(l.modelName).modelData.rotation;
+        const prevValue = {
+            x: rot.x,
+            y: rot.y,
+            z: rot.z
+        };
+        
+        THOTH.History.pushAction({
+            type     : THOTH.History.ACTIONS.TRANSFORM_MODEL_ROT,
+            id       : l.modelName,
+            value    : l.value,
+            prevValue: prevValue
+        });
+        THOTH.fire("modelTransformRotScene", (l));
+        THOTH.firePhoton("modelTransformRotScene", (l));
+    }); 
 
     // Dlclick rename
+    // TODO: remove this and replace
     THOTH.Events.enableRename = (buttonElement, id) => {
 
         buttonElement.classList.add('renamable');
@@ -526,7 +564,23 @@ Events.setupSceneEvents = () => {
         THOTH.Scene.editLayer(id, "selection", tempSelection);
         THOTH.updateVisibility();
     });
+
+    THOTH.on("modelTransformPosScene", (l) => {
+        const modelName = l.modelName;
+        const value     = l.value;
+        
+        THOTH.Scene.modelTransformPos(modelName, value);
+        THOTH.updateVisibility();
+    });
     
+    THOTH.on("modelTransformRotScene", (l) => {
+        const modelName = l.modelName;
+        const value     = l.value;
+        
+        THOTH.Scene.modelTransformRot(modelName, value);
+        THOTH.updateVisibility();
+    });
+
     // Photon
     THOTH.onPhoton("createLayerScene", (id) => {
         THOTH.Scene.createLayer(id);
@@ -583,6 +637,14 @@ Events.setupSceneEvents = () => {
         }
 
         THOTH.Scene.editLayer(id, "selection", tempSelection);
+        THOTH.updateVisibility();
+    });
+
+    THOTH.onPhoton("modelTransformScene", (l) => {
+        const modelName = l.modelName;
+        const value     = l.value;
+        
+        THOTH.Scene.modelTransform(modelName, transform, value);
         THOTH.updateVisibility();
     });
 };
@@ -739,6 +801,8 @@ Events.setupPhotonEvents = () => {
     THOTH.onPhoton("syncScene", (currData) => {
         THOTH.Scene.syncScene(currData);
     });
+
+
 };
 
 

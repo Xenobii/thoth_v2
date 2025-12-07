@@ -25,11 +25,15 @@ History.ACTIONS = {};
 History.ACTIONS.CREATE_LAYER = 0;
 History.ACTIONS.DELETE_LAYER = 1;
 History.ACTIONS.RENAME_LAYER = 2;
+
 History.ACTIONS.SELEC_ADD    = 4;
 History.ACTIONS.SELEC_DEL    = 5;
 
 History.ACTIONS.EDIT_METADATA_LAYER  = 3;
 History.ACTIONS.EDIT_METADATA_OBJECT = 6;
+
+History.ACTIONS.TRANSFORM_MODEL_POS = 7;
+History.ACTIONS.TRANSFORM_MODEL_ROT = 8;
 
 // Setup
 
@@ -83,14 +87,14 @@ History.undo = () => {
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
-                id      : id,
-                attr    : "name",
-                value   : value
+                id   : id,
+                attr : "name",
+                value: value
             }); 
             THOTH.firePhoton("editLayerScene", {
-                id      : id,
-                attr    : "name",
-                value   : value
+                id   : id,
+                attr : "name",
+                value: value
             });
             break;
 
@@ -99,14 +103,14 @@ History.undo = () => {
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editLayerScene", {
-                id      : id,
-                attr    : "metadata",
-                value   : value
+                id   : id,
+                attr : "metadata",
+                value: value
             });
             THOTH.firePhoton("editLayerScene", {
-                id      : id,
-                attr    : "metadata",
-                value   : value
+                id   : id,
+                attr : "metadata",
+                value: value
             });
             break;
 
@@ -115,10 +119,10 @@ History.undo = () => {
             // Swap
             [value, prevValue] = [prevValue, value];
             THOTH.fire("editObjectScene", {
-                value   : value
+                value: value
             });
             THOTH.firePhoton("editObjectScene", {
-                value   : value
+                value: value
             });
             break;
 
@@ -147,6 +151,38 @@ History.undo = () => {
             });
             THOTH.updateVisibility();
             break;
+        
+        case History.ACTIONS.TRANSFORM_MODEL_POS:
+            inverseType = History.ACTIONS.TRANSFORM_MODEL_POS;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+
+            THOTH.fire("modelTransformPosScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.firePhoton("modelTransformPosScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.updateVisibility();
+            break;
+        
+        case History.ACTIONS.TRANSFORM_MODEL_ROT:
+            inverseType = History.ACTIONS.TRANSFORM_MODEL_ROT;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+
+            THOTH.fire("modelTransformRotScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.firePhoton("modelTransformRotScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.updateVisibility();
+            break;
 
         default:
             if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Invalid action type: " + type);
@@ -156,10 +192,10 @@ History.undo = () => {
 
     // Store inverse action in redo stack
     const inverseAction = {
-        type        : inverseType,
-        id          : id,
-        value       : value,
-        prevValue   : prevValue
+        type     : inverseType,
+        id       : id,
+        value    : value,
+        prevValue: prevValue
     };
 
     History.redoStack.push(inverseAction);
@@ -258,6 +294,38 @@ History.redo = () => {
             THOTH.firePhoton("addToSelectionScene", {
                 id       : id,
                 selection: value
+            });
+            THOTH.updateVisibility();
+            break;
+
+        case History.ACTIONS.TRANSFORM_MODEL_POS:
+            inverseType = History.ACTIONS.TRANSFORM_MODEL_POS;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+
+            THOTH.fire("modelTransformPosScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.firePhoton("modelTransformPosScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.updateVisibility();
+            break;
+
+        case History.ACTIONS.TRANSFORM_MODEL_ROT:
+            inverseType = History.ACTIONS.TRANSFORM_MODEL_ROT;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+
+            THOTH.fire("modelTransformRotScene", {
+                modelName: id,
+                value    : value
+            });
+            THOTH.firePhoton("modelTransformRotScene", {
+                modelName: id,
+                value    : value
             });
             THOTH.updateVisibility();
             break;

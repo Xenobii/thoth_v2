@@ -305,6 +305,20 @@ Scene.addModel = () => {
 
 };
 
+Scene.modelTransformPos = (modelName, value) => {
+    if (modelName === undefined) return;
+
+    const model = Scene.modelMap.get(modelName);
+    model.modelData.position.set(value.x, value.y, value.z);
+};
+
+Scene.modelTransformRot = (modelName, value) => {
+    if (modelName === undefined) return;
+
+    const model = Scene.modelMap.get(modelName);
+    model.modelData.rotation.set(value.x, value.y, value.z);
+};
+
 
 // Object management
 

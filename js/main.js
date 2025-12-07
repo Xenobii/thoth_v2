@@ -309,6 +309,15 @@ THOTH.toggleModelVisibility = (modelName) => {
     THOTH.updateVisibility();
 };
 
+THOTH.modelTransform = (modelName, transform, vector, value) => {
+    if (modelName === undefined) return;
+    if (vector === undefined) return;
+    if (transform === undefined) return;
+    
+    const model = THOTH.Scene.modelMap.get(modelName);
+    model.modelData[transform][vector] = value;
+};
+
 
 // Texture Maps
 
