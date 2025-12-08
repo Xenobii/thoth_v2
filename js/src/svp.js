@@ -14,32 +14,50 @@ let SVP = {};
 
 // Build
 
-SVP.buildVPNodes = (modelName) => {
-    const viewpoints = THOTH.Scene.currData.viewpoints;
-    if (viewpoints === undefined) return;
+SVP.buildVPNodes = (vpMap, modelName) => {
+    // Create viewpoints
+    const viewpoints = new ATON.Node(
+        `${modelName}Viewpoints`,
+        ATON.NTYPES.UI,
+    );
+    SVP.viewpoints = SVP.viewpoints || {}; 
+    SVP.viewpoints[modelName] = {};
     
-    SVP.VPNodes = new ATON.Node("SVPNodes", ATON.NTYPES.UI);
-    for (const vp of Object.keys(viewpoints)) {
-        if (vp !== "home") {
-            const VPBtn = SVP.createSVPNode(vp);
-            VPBtn.attachTo("SVPNodes");
-        }
-    }
-    SVP.VPNodes.attachTo(THOTH.Scene.modelMap.get(modelName).modelData);
+    for (const [id, vp] of vpMap) {
+        const [qw, qx, qy, qz, tx, ty, tz, , image] = vp;
+        
+        // Convert to three coords
+        const Q   = SVP.getQuatThree(qw, qx, qy, qz);
+        const pos = SVP.getPosThree(Q, tx, ty, tz);
+
+        // Get image url
+        const modelURL = THOTH.Scene.modelMap.get(modelName).url;
+        const imageURL = modelURL.split('/').slice(0, -1).join('/') + "/images/" + image;
+        
+        // Get target
+        const target = SVP.createTarget(Q, pos);
+        
+        // Create pov node
+        new ATON.POV(`${modelName}_vp_${id}`)
+            .setPosition(pos.x, pos.y, pos.z)
+            .setTarget(target.x, target.y, target.z)
+            .setFOV(70);
+            
+        // Create semantic node
+        const semNode = SVP.createSVPNode(`${modelName}_vp_${id}`, pos);
+        semNode.attachTo(`${modelName}Viewpoints`);
+        semNode.image = ATON.Utils.resolveCollectionURL(imageURL);
+        
+        // Add to SVP map for convenience
+        SVP.viewpoints[modelName][id] = semNode;
+    };
+
+    // Attach to model
+    viewpoints.attachTo(THOTH.Scene.modelMap.get(modelName).modelData);
 };
 
-SVP.createSVPNode = (vp) => {
-    const viewpoint = THOTH.Scene.currData.viewpoints[vp];
-    if (viewpoint === undefined) return;
-    
-    const position  = viewpoint.position;
-    const target    = viewpoint.target;
-    
-    // Temp logic
-    // const inPos = SVP.tempCreateIntermediatePosition(position, target);
-    const inPos = position
-
-    // Create nav mesh
+SVP.createSVPNode = (id, pos) => {
+    // Create Sphere geometry
     const radius = 0.2;
     const matSTD = new THREE.MeshStandardMaterial({
         color      : new THREE.Color(0xffffff),
@@ -47,17 +65,18 @@ SVP.createSVPNode = (vp) => {
         transparent: true,
         roughness  : 0.4
     });    
-    const geom   = new THREE.SphereGeometry(radius, 16, 12);
-    const mesh   = new THREE.Mesh(geom, matSTD);
+    const geom = new THREE.SphereGeometry(radius, 16, 12);
+    const mesh = new THREE.Mesh(geom, matSTD);
 
     mesh.renderOrder        = 1;
     mesh.material.depthTest = true;
 
-    const N = new ATON.Node(vp, ATON.NTYPES.UI);
+    // Create node
+    const N = new ATON.Node(id, ATON.NTYPES.UI);
     N.add(mesh);
     N.setPickable(true);
     N.setOpacity(0.7);
-    N.setPosition(...inPos);
+    N.setPosition(pos.x, pos.y, pos.z);
     N.orientToCamera();
     N.dirtyBound();
     N.setOnHover(() => {
@@ -69,24 +88,65 @@ SVP.createSVPNode = (vp) => {
         N.setScale(1.0);
     });
     N.setOnSelect(() => {
-        ATON.Nav.requestPOVbyID(vp, 0.5);
-        THOTH.UI.showVPPreview(vp);
+        ATON.Nav.requestPOVbyID(id, 0.5);
+        THOTH.UI.showVPPreview(id);
     });
-    
+
     return N;
+};
+
+SVP.deleteSVPNodes = (modelName) => {
+    if (!modelName) return;
+    const modelEntry = THOTH.Scene.modelMap.get(modelName);
+    if (!modelEntry || !modelEntry.modelData) return;
+
+    const modelData = modelEntry.modelData;
+    const vpName = `${modelName}Viewpoints`;
+    const parent = modelData.getObjectByName ? modelData.getObjectByName(vpName) : null;
+
+    if (parent) {
+        modelData.remove(parent);
+
+        parent.traverse((obj) => {
+            if (obj.isMesh) {
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) {
+                        obj.material.forEach(m => m?.dispose && m.dispose());
+                    } else {
+                        obj.material?.dispose && obj.material.dispose();
+                    }
+                }
+            }
+        });
+    }
+
+    if (SVP.viewpoints?.[modelName]) delete SVP.viewpoints[modelName];
 };
 
 
 // Visualization
 
-SVP.toggleVPNodes = (bool) => {
-    SVP.VPNodes.toggle(bool);
+SVP.toggleVPNodes = (bool, modelName) => {
+    if (!modelName) {
+        const modelNames = Object.keys(SVP.viewpoints);
+        for (const name of modelNames) {
+            SVP.toggleVPNodes(bool, name);
+        }
+        return;
+    }
+    const viewpoints = SVP.viewpoints?.[modelName];
+    if (viewpoints === undefined) return;
+    for (const vp in viewpoints) {
+        viewpoints[vp].toggle(bool);
+    }
 };
 
 SVP.resizeVPNodes = (scale) => {
-    if (SVP.VPNodes && SVP.VPNodes.children) {
-        for (const VPNode of SVP.VPNodes.children) {
-            VPNode.setScale(scale);
+    for (const modelName in SVP.viewpoints) {
+        const viewpoints = SVP.viewpoints[modelName];
+        for (const vp in viewpoints) {
+            viewpoints[vp].setScale(scale);
         }
     }
 };
@@ -94,105 +154,38 @@ SVP.resizeVPNodes = (scale) => {
 
 // Utils
 
-SVP.getNodeRotation = (position, target) => {
-    const posVec = new THREE.Vector3(...position)
-    const tarVec = new THREE.Vector3(...target)
-    const up     = new THREE.Vector3(0, 1, 0);
-
-    const m = new THREE.Matrix4();
-    m.lookAt(posVec, tarVec, up);
-
-    const quat  = new THREE.Quaternion().setFromRotationMatrix(m);
-    const euler = new THREE.Euler().setFromQuaternion(quat);
-
-    return euler
-};
-
-SVP.tempCreateIntermediatePosition = (position, target) => {
-    const posVec   = new THREE.Vector3(...position);
-    const tarVec   = new THREE.Vector3(...target);
-    const midpoint = posVec.clone().lerp(tarVec, 0.8);
-    return midpoint;
-};
-
-SVP.getCameraPosition = (camera) => {
-    // DONT KNOW IF THIS WORKS
-    const q_colmap = new THREE.Quaternion(camera.qx, camera.qy, camera.qz, camera.qw);
-    
-    // Rotation
-    const R = new THREE.Matrix3().setFromQuaternion(q_colmap);
-
-    // Translation
-    const t = new TRHEE.Vector3(camera.tx, camera.ty, camera.tz);
-
-    // Camera center
-    const Rt = R.clone().transpose();
-    const C  = t.clone().applyMatrix3(Rt).negate();
-
-    // Convert to threejs
-    const q_three = q_colmap.clone().invert();
-
-    return {
-        position: C,
-        quartenion: q_three
+SVP.getQuatThree = (qw, qx, qy, qz) => {
+    const process = (v) => {
+        const s = 10 ** 4;
+        return parseFloat(v) * s / s;
     }
-};
-
-SVP.convertToThreeCoords = (qw, qx, qy, qz, tx, ty, tz) => {
-    // World to camera
-    const q_wc = new THREE.Quaternion(-qx, qz, qy, qw).invert();
-    const c_wc = new THREE.Vector3(tx, tz, ty).negate().applyQuaternion(q_wc);
-    // Rotate to match COLMAP
     const flip = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(1, 0, 0), Math.PI
+        new THREE.Vector3(0, 0, 0), Math.PI
     );
-    const q_three = flip.clone().multiply(q_wc).multiply(flip);
-    const c_three = new THREE.Vector3(c_wc.x, -c_wc.y, -c_wc.z);
-
-    return [
-        q_three.w,
-        q_three.x,
-        q_three.y,
-        q_three.z,
-        c_three.x,
-        c_three.y,
-        c_three.z
-    ];
+    return new THREE.Quaternion(
+        -process(qx),
+        process(qz),
+        process(qy),
+        process(qw)
+    ).invert();
 };
 
-SVP.createVPTarget = (qw, qx, qy, qz, tx, ty, tz, mesh) => {
-    if (mesh === undefined) mesh = THOTH.Scene.mainMesh;
-
-    const camPos  = new THREE.Vector3(tx, ty, tz);
-    const camQuat = new THREE.Quaternion(qx, qy, qz, qw);
-
-    const forward = new THREE.Vector3(0, -1, 0).applyQuaternion(camQuat).normalize();
-
-    // Raycaster
-    const raycaster = new THREE.Raycaster();
-    raycaster.ray.origin.copy(camPos);
-    raycaster.ray.direction.copy(forward);
-    raycaster.near = 0.001;
-    raycaster.far  = 1000;
-
-    // visualization
-    const rayLength = 2;
-    const endPos = new THREE.Vector3().copy(raycaster.ray.origin)
-        .add(new THREE.Vector3().copy(raycaster.ray.direction).multiplyScalar(rayLength));
-
-    return endPos;
+SVP.getPosThree = (Q, tx, ty, tz) => {
+    const process = (v) => {
+        const s = 10 ** 4;
+        return parseFloat(v) * s / s;
+    };
+    return new THREE.Vector3(
+        -process(tx),
+        process(tz),
+        process(ty)
+    ).applyQuaternion(Q)
 };
 
-
-SVP.updatePosition = () => {
-
+SVP.createTarget = (Q, pos) => {
+    const forward = new THREE.Vector3(0, -1, 0).applyQuaternion(Q).normalize();
+    const length  = 10;
+    return pos.clone().addScaledVector(forward, length);
 };
-
-
-SVP.updateRotation = () => {
-
-};  
-
-
 
 export default SVP;

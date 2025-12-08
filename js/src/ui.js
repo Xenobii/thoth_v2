@@ -278,7 +278,7 @@ UI.setupToolbars = () => {
     // Top Toolbar
     UI._elTopToolbar.append(
         UI.createTestButton(() => {
-            console.log(THOTH.Scene.root.children)
+            console.log(THOTH.Scene.modelMap)
         }),
         ATON.UI.createButton({
             icon    : THOTH.PATH_RES_ICONS + "textailes.png",
@@ -688,6 +688,7 @@ UI.setupPanels = () => {
         });
         const elFocus = ATON.UI.createButton({
             text   : "Focus",
+            icon   : "focus",
             classes: "btn-default",
             onpress: ()=>{
                 ATON.Nav.requestPOVbyNode(N, 0.2);
@@ -700,14 +701,8 @@ UI.setupPanels = () => {
                 body  : UI._elScenePanel
             })
         });
-        const elBuildVP = ATON.UI.createButton({
-            text   : "Build Viewpoints",
-            classes: "btn-default",
-            icon   : "pov",
-            onpress: () => UI.modalBuildVP(modelName)
-        });
         elModelHeadLeft.append(elBack);
-        elModelHeadRight.append(elFocus, elBuildVP)
+        elModelHeadRight.append(elFocus)
         elModelHead.append(elModelHeadLeft, elModelHeadRight)
 
         // Transforms
@@ -721,12 +716,44 @@ UI.setupPanels = () => {
             };
             return elContainer;
         };
+        const createVPOptions = (modelName) => {
+            let vpVisible = true;
+            const elContainer = ATON.UI.createContainer();
+            elContainer.append(
+                ATON.UI.createButton({
+                    icon   : "visibility",
+                    size   : "small",
+                    onpress: () => {
+                        vpVisible = !vpVisible;
+                        THOTH.SVP.toggleVPNodes(vpVisible, modelName);
+                    }
+                }),
+                ATON.UI.createButton({
+                    text   : "Build Viewpoints",
+                    variant: "info",
+                    icon   : "pov",
+                    onpress: () => UI.modalBuildVP(modelName)
+                }),
+                ATON.UI.createButton({
+                    text   : "Delete All",
+                    variant: "secondary",
+                    icon   : "cancel",
+                    onpress: () => THOTH.SVP.deleteSVPNodes(modelName),
+                })
+            );
+            return elContainer;
+        };
         const elOptions = ATON.UI.createTreeGroup({
             items: [
                 {
                     title  : "Meshes",
                     open   : true,
                     content: createMeshList(modelName)
+                },
+                {
+                    title  : "Viewpoints",
+                    open   : true,
+                    content: createVPOptions(modelName)
                 },
                 {
                     title  : "Transform",
@@ -976,12 +1003,12 @@ UI.handleToolHighlight = (tool_id) => {
 
 // VP
 
-UI.showVPPreview = (vp) => {
-    const viewpoint = THOTH.Scene.currData.viewpoints[vp];
-    const subtitle  = 
-        "Position: " + viewpoint.position +
-        ",\n Target: " + viewpoint.target +
-        ",\n FOV: " + viewpoint.fov;
+UI.showVPPreview = (id) => {
+    const modelName = id.split("_vp_")[0];
+    const vpId      = id.split("_vp_")[1];
+
+    const viewpoint = THOTH.SVP.viewpoints[modelName][vpId];
+    const imageURL  = viewpoint.image;
 
     const elFooter = ATON.UI.createContainer();
     elFooter.append(
@@ -993,11 +1020,10 @@ UI.showVPPreview = (vp) => {
     );
     UI.elVPPreviewer.replaceChildren(
         ATON.UI.createCard({
-            title     : vp,
-            subtitle  : subtitle,
+            title     : id,
             size      : "large",
-            cover     : viewpoint["image"],
-            onactivate: () => UI.modalVPImage(vp),
+            cover     : imageURL,
+            onactivate: () => UI.modalVPImage(viewpoint),
             footer    : elFooter
         }),
     );
@@ -1351,15 +1377,13 @@ UI.modalBuildVP = (modelName) => {
             variant: "success",
             onpress: () => {
                 if (mode === "manual") {
-                    THOTH.Scene.buildViewpoints(vpMap, modelName);
-                    THOTH.SVP.buildVPNodes(modelName);
+                    THOTH.SVP.buildVPNodes(vpMap, modelName);
                     ATON.UI.hideModal();
                 }
                 else if (mode === "uniform") {
                     // Sample from vpNumber
                     vpMap = THOTH.Utils.uniformSamplingFromMap(colmapMap, vpNumber);
-                    THOTH.Scene.buildViewpoints(vpMap, modelName);
-                    THOTH.SVP.buildVPNodes(modelName);
+                    THOTH.SVP.buildVPNodes(vpMap, modelName);
                     ATON.UI.hideModal();
                 }
             }
@@ -1380,32 +1404,52 @@ UI.modalBuildVP = (modelName) => {
     });
 };
 
-UI.modalVPImage = (node) => {
-    const viewpoint = THOTH.Scene.currData.viewpoints[node];
-    
-    let elBody   = ATON.UI.createContainer();
-    let elFooter = ATON.UI.createContainer();
+UI.modalVPImage = (viewpoint) => {
+    const elBody = ATON.UI.createContainer({
+        classes: "d-flex flex-column"
+    });
     
     // Image
-    let elImg = document.createElement("img");
-    elImg.src = viewpoint["image"];
+    const elImgContainer = ATON.UI.createContainer({
+        classes: "d-flex ratio-16x9 w-100 bg-dark"
+    });
+    const elImg = document.createElement("img");
+    elImg.src = viewpoint.image;
+    elImg.alt = "Image";
     elImg.onerror = () => {};
+    elImg.className = "img-fluid w-100 h-100 object-fit-contain";
+    elImgContainer.append(elImg);
 
-    elBody.classList.add("thoth-vp-image");
-    elBody.append(
-        elImg,
-    );
-
+    // Description
+    const elDescription = ATON.UI.createContainer({
+        classes: "pt-2"
+    });
+    elDescription.append(ATON.UI.createTreeGroup({
+        items: [
+            {
+                title  : "position",
+                open   : true,
+                content: `x: ${viewpoint.position.x},
+                          y: ${viewpoint.position.y}, 
+                          z: ${viewpoint.position.z}`
+            }
+        ]
+    }))
+    
+    elBody.append(elImgContainer, elDescription);
+    
+    // Footer
+    const elFooter = ATON.UI.createContainer();
     elFooter.append(ATON.UI.createButton({
         text   : "Download",
         icon   : "download",
-        onpress: () => THOTH.Utils.downloadImage(viewpoint["image"]),
+        onpress: () => THOTH.Utils.downloadImage(viewpoint.image.replace("/a/thoth_v2", "")),
         variant: "success",
         tooltip: "Download image",
     }));
 
     ATON.UI.showModal({
-        header: node,
+        header: viewpoint.name,
         body  : elBody,
         footer: elFooter,
     });

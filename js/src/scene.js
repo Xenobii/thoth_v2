@@ -359,42 +359,6 @@ Scene.readColmap = (modelName) => {
         });
 };
 
-Scene.buildViewpoints = (vpMap, modelName) => {
-    THOTH.Scene.currData.viewpoints = {};
-    
-    for (const [id, cameraAttr] of vpMap) {
-        let [qw, qx, qy, qz, tx, ty, tz, , image] = cameraAttr;
-        
-        // Convert to floatsZ
-        [qw, qx, qy, qz, tx, ty, tz] = [qw, qx, qy, qz, tx, ty, tz]
-            .map(v => parseFloat(v));
-
-        // Convert to three js coords
-        [qw, qx, qy, qz, tx, ty, tz] = THOTH.SVP.convertToThreeCoords(qw, qx, qy, qz, tx, ty, tz);
-        
-        // Convert to .4f
-        [qw, qx, qy, qz, tx, ty, tz] = [qw, qx, qy, qz, tx, ty, tz].map(v => Math.round(v * 1000) / 1000);
-
-        let target = THOTH.SVP.createVPTarget(qw, qx, qy, qz, tx, ty, tz);
-        [target.x, target.y, target.z] = [target.x, target.y, target.z].map(v => Math.round(v * 1000) / 1000);
-        
-        const modelURL = Scene.modelMap.get(modelName).url;
-        Scene.currData.viewpoints[id] = {
-            "position": [tx, ty, tz],
-            "target"  : [target.x, target.y, target.z],
-            "fov"     : 70,
-            "image"   : ATON.Utils.resolveCollectionURL(
-                modelURL.split('/').slice(0, -1).join('/') + "/images/" + image
-            ),
-        }
-        new ATON.POV(id)
-            .setPosition(tx, ty, tz)
-            .setTarget(target.x, target.y, target.z)
-            .setFOV(70);
-    }
-};
-
-
 // Photon
 
 Scene.syncScene = (currData) => {
