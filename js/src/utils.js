@@ -128,5 +128,23 @@ Utils.downloadImage = async (url, filenameFallback = "image.png") => {
     }
 };
 
+Utils.bindInput = (value, min, max) => {
+    let num = parseInt(value);
+    if (isNaN(num) || num < min) return min;
+    if (num > max) return max;
+    return num;
+};
+
+Utils.uniformSamplingFromMap = (map, n) => {
+    const step = Math.floor(map.size / n);
+    const sampledMap = new Map();
+
+    for (const [key, value] of map) {
+        if (key % step !== 0) continue;
+        sampledMap.set(key, value);
+    }
+    return sampledMap;
+};
+
 
 export default Utils;

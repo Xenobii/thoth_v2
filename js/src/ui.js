@@ -278,7 +278,7 @@ UI.setupToolbars = () => {
     // Top Toolbar
     UI._elTopToolbar.append(
         UI.createTestButton(() => {
-            console.log(THOTH.Scene.currData.sceneMetadata)
+            console.log(THOTH.Scene.root.children)
         }),
         ATON.UI.createButton({
             icon    : THOTH.PATH_RES_ICONS + "textailes.png",
@@ -990,8 +990,7 @@ UI.showVPPreview = (vp) => {
             icon   : "cancel",
             onpress: () => UI.elVPPreviewer.replaceChildren()
         })
-    )
-    console.log(viewpoint.image)
+    );
     UI.elVPPreviewer.replaceChildren(
         ATON.UI.createCard({
             title     : vp,
@@ -1250,38 +1249,119 @@ UI.modalMetadata = (id) => {
 };
 
 UI.modalBuildVP = (modelName) => {
-    THOTH.Scene.readColmap(modelName).then((colmapCameras) => {
-        if (!colmapCameras) {
+    THOTH.Scene.readColmap(modelName).then((colmapMap) => {
+        if (!colmapMap) {
             UI.showToast("No COLMAP text detected");
             return;
-        }
-        // colmapCameras = colmapCameras ||  [1, 2, 3, 4]
-        let vpNumber = colmapCameras.length;
+        };
+        const recommended = Math.min(Math.floor(colmapMap.size / 2), 20);
+
+        // Return variables
+        let vpNumber = recommended;
+        let vpMap    = new Map();
+        let mode     = "uniform";
     
         const elBody   = ATON.UI.createContainer();
         const elFooter = ATON.UI.createContainer();
     
-        // Body
+        // Info
         const elInfo = ATON.UI.createContainer();
-        elInfo.textContent = `Found ${colmapCameras.length} cameras`;
+        elInfo.textContent = `Found ${colmapMap.size} cameras \n
+        Recomended number of viewpoints: ${recommended}`;
+
+        // Uniform Sampling
+        const vpUniformSelect = ATON.UI.createInputText({
+            placeholder: "Number of viewpoints",
+            value      : recommended,
+            label      : "Number of generated viewpoints",
+            oninput    : (v) => {
+                vpNumber = THOTH.Utils.bindInput(v, 1, colmapMap.size);
+                vpUniformSelect.querySelector('input').value = vpNumber;
+            },
+        });
+        // Manual Sampling
+        const vpManualSelect = ATON.UI.createTagsComponent({
+            list    : Array.from(colmapMap.keys()),
+            label   : "Generated viewpoints",
+            tags    : [],
+            onaddtag: (v) => {
+                if (colmapMap.has(v)) vpMap.set(v, colmapMap.get(v));
+            },
+            onremovetag: (v) => {
+                vpMap.delete(v);
+            }
+        })
+        
+        // Options
         const elOptions = ATON.UI.createContainer();
-        elInfo.append(
-            ATON.UI.createSlider({
-                range  : [0, colmapCameras.length],
-                value  : vpNumber,
-                oninput: (v) => {vpNumber = v}
-            })
-        );
-        elBody.append(elInfo, elOptions);
-    
+        const elButtonsRow = ATON.UI.createContainer({
+            classes: "row g-1 mb-2"
+        });
+        const elBtnColLeft = ATON.UI.createContainer({
+            classes: "col-6"
+        });
+        const elBtnColRight = ATON.UI.createContainer({
+            classes: "col-6"
+        });
+
+        const manualBtn = ATON.UI.createButton({
+            text   : "Manual Sampling",
+            classes: "w-100",
+            onpress: () => {
+                mode  = "manual";
+                updateMode();
+            },
+        });
+        const uniformBtn = ATON.UI.createButton({
+            text   : "Uniform Sampling",
+            classes: "w-100",
+            onpress: () => {
+                mode  = "uniform";
+                updateMode();
+            }
+        });
+        elBtnColLeft.append(uniformBtn);
+        elBtnColRight.append(manualBtn);
+        elButtonsRow.append(elBtnColLeft, elBtnColRight);
+        elOptions.append(elButtonsRow);
+        
+        const updateMode = () => {
+            if (mode === "uniform") {
+                vpMap = new Map();
+                uniformBtn.classList.add("aton-btn-highlight");
+                manualBtn.classList.remove("aton-btn-highlight");
+                elSamplingMethod.replaceChildren(vpUniformSelect);
+            } else {
+                vpMap = new Map();
+                manualBtn.classList.add("aton-btn-highlight");
+                uniformBtn.classList.remove("aton-btn-highlight");
+                elSamplingMethod.replaceChildren(vpManualSelect);
+            }
+        };
+        
+        const elSamplingMethod = ATON.UI.createContainer();
+        updateMode();
+
+        elBody.append(elInfo, elOptions, elSamplingMethod);
+        
         // Footer 
         const elBuildBtn = ATON.UI.createButton({
             text   : "Build",
             size   : "large",
-            variant: "primary",
+            variant: "success",
             onpress: () => {
-                THOTH.Scene.buildCameras(colmapCameras);
-                ATON.UI.hideModal();
+                if (mode === "manual") {
+                    THOTH.Scene.buildViewpoints(vpMap, modelName);
+                    THOTH.SVP.buildVPNodes(modelName);
+                    ATON.UI.hideModal();
+                }
+                else if (mode === "uniform") {
+                    // Sample from vpNumber
+                    vpMap = THOTH.Utils.uniformSamplingFromMap(colmapMap, vpNumber);
+                    THOTH.Scene.buildViewpoints(vpMap, modelName);
+                    THOTH.SVP.buildVPNodes(modelName);
+                    ATON.UI.hideModal();
+                }
             }
         });
         const elCancelBtn = ATON.UI.createButton({
@@ -1366,9 +1446,7 @@ UI.createMetadataEditor = (data, data_temp) => {
                         placeholder: "integer",
                         value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         label      : key,
-                        oninput    : (v) => {
-                            data_temp[key] = v;
-                        }
+                        oninput    : (v) => data_temp[key] = v,
                     });
                     break;
                 case "float" :

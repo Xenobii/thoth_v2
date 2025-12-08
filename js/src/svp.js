@@ -14,10 +14,10 @@ let SVP = {};
 
 // Build
 
-SVP.buildSVPNodes = (modelURL) => {
+SVP.buildVPNodes = (modelName) => {
     const viewpoints = THOTH.Scene.currData.viewpoints;
     if (viewpoints === undefined) return;
-
+    
     SVP.VPNodes = new ATON.Node("SVPNodes", ATON.NTYPES.UI);
     for (const vp of Object.keys(viewpoints)) {
         if (vp !== "home") {
@@ -25,7 +25,7 @@ SVP.buildSVPNodes = (modelURL) => {
             VPBtn.attachTo("SVPNodes");
         }
     }
-    SVP.VPNodes.attachToRoot();
+    SVP.VPNodes.attachTo(THOTH.Scene.modelMap.get(modelName).modelData);
 };
 
 SVP.createSVPNode = (vp) => {
@@ -182,6 +182,16 @@ SVP.createVPTarget = (qw, qx, qy, qz, tx, ty, tz, mesh) => {
 
     return endPos;
 };
+
+
+SVP.updatePosition = () => {
+
+};
+
+
+SVP.updateRotation = () => {
+
+};  
 
 
 

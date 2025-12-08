@@ -12,7 +12,7 @@ import Scene from "./src/scene.js";
 import Toolbox from "./src/toolbox.js";
 import History from "./src/history.js";
 import Events from "./src/events.js";
-import SVP from "./src/vp_sem.js";
+import SVP from "./src/svp.js";
 
 
 // Realize 
