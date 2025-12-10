@@ -223,6 +223,26 @@ UI.createVectorControl = (options, transform)=>{
     return el;
 };
 
+UI.createSplitRow = (options) => {
+    const elRow = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 py-1 mb-1"});
+    if (options.classes) elRow.classList.add(options.classes)
+    
+    let colLeft;
+    if (options.colLeft) colLeft = options.colLeft;
+    else colLeft = 7;
+
+    let colRight = 12 - colLeft;
+
+    const elLeft  = ATON.UI.createContainer({classes: `col-${colLeft} d-flex align-items-center`});
+    const elRight = ATON.UI.createContainer({classes: `col-${colRight} d-flex justify-content-end align-items-center`});
+
+    if (options.itemsLeft) elLeft.append(options.itemsLeft);
+    if (options.itemsRight) elRight.append(options.itemsRight);
+    
+    elRow.append(elLeft, elRight);
+    return elRow;
+};
+
 
 // Controllers
 
@@ -276,7 +296,7 @@ UI.createSceneController = () => {
         text   : "Scene Metadata",
         icon   : "list",
         size   : "small",
-        onpress: () => THOTH.FE.modalSceneMetadata(),
+        onpress: () => THOTH.UI.modalSceneMetadata(),
     });
     
     elLeft.append(elName);
@@ -323,7 +343,7 @@ UI.createLayerController = (layerId) => {
             icon   : "list",
             size   : "small",
             tooltip: "Edit metadata",
-            onpress: () => THOTH.FE.modalLayerMetadata(layerId),
+            onpress: () => UI.modalLayerDetails(layerId),
         }),
         // Delete
         ATON.UI.createButton({
@@ -437,7 +457,6 @@ UI.createMeshList = (modelName) => {
     }
     return elBody;
 };
-
 
 
 // Toolbars
@@ -1004,6 +1023,7 @@ UI.createMetadataEditor = (data, data_temp) => {
     // Properties creation logic
     for (const key in data) {
         if (key === "required") continue;
+        if (key === "schemaName") continue;
         
         let elAttr    = ATON.UI.createContainer({classes: "row"});
         let elInput   = ATON.UI.createContainer({classes: "col-12 col-md-7"});
@@ -1051,7 +1071,7 @@ UI.createMetadataEditor = (data, data_temp) => {
                     });
                     break;
                 case "enum":
-                    elDisplay.textContent = data_temp[key];
+                    elDisplay.textContent = (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined;
                     elInput = ATON.UI.createDropdown({
                         title: key,
                         items: attr.value.map(option => ({
@@ -1106,6 +1126,162 @@ UI.createMetadataEditor = (data, data_temp) => {
         }
     }
     return elData;
+};
+
+UI.modalLayerDetails = (layerId, data_temp) => {
+    const layer = THOTH.Layers.layerMap.get(layerId);
+    
+    if (data_temp === undefined) data_temp = structuredClone(layer.metadata) || {};
+    
+    const schemaName = data_temp?.schemaName;
+    const prev_data  = layer.metadata || {};
+    const schema     = THOTH.Scene.schemaMap.get(schemaName);
+    
+    // Body
+    const elBody = ATON.UI.createContainer();
+    // Name
+    const elName = ATON.UI.createInputText({
+        label  : "Layer name",
+        oninput: (v) => {
+            //
+        }
+    });
+    // Misc
+    const elMisc = UI.createSplitRow({
+        colLeft  : 2,
+        itemsLeft: ATON.UI.createColorPicker({
+            color  : layer.highlightColor,
+            oninput: (color) => {
+                layer.highlightColor = color,
+                THOTH.updateVisibility();
+            },
+        }),
+        itemsRight: ATON.UI.createButton({
+            text   : "Delete Layer",
+            icon   : "trash",
+            onpress: () => {
+                THOTH.fire("deleteLayer", (layerId));
+                ATON.UI.hideModal();
+            }
+        }),
+    });
+    
+    // Schema
+    let newSchemaName;
+    const elPickSchema = UI.createSplitRow({
+        colLeft  : 8,
+        itemsLeft: ATON.UI.createInputText({
+            label      : "Pick schema",
+            list       : Array.from(THOTH.Scene.schemaMap.keys()),
+            placeholder: schemaName || "", 
+            oninput    : (v) => newSchemaName = v,
+        }),
+        itemsRight: ATON.UI.createButton({
+            text   : `Build metadata`,
+            variant: "info",
+            onpress: () => {
+                data_temp = THOTH.Scene.createPropertiesfromSchema(newSchemaName);
+                UI.modalLayerDetails(layerId, data_temp);
+            }
+        }),
+    });
+
+    // Metadata
+    const elMetadata = ATON.UI.createContainer();
+    if (schema === undefined || Object.keys(schema).length !== 0) {
+        elMetadata.append(UI.createMetadataEditor(schema, data_temp))
+    }
+    elBody.append(elName, elMisc, elPickSchema, elMetadata);
+    
+    // Footer
+    const elFooter = UI.createModalFooter(() => {
+        THOTH.fire("editLayerMetadata", {
+            id      : layerId,
+            data    : data_temp,
+            prevData: prev_data
+        });
+        ATON.UI.hideModal();
+    });
+
+    ATON.UI.showModal({
+        header: `Edit layer ${layer.name}`,
+        body  : elBody,
+        footer: elFooter,
+    });
+}; 
+
+UI.modalSceneMetadata = (data_temp) => {
+    if (data_temp === undefined) data_temp = structuredClone(THOTH.Scene.currData.sceneMetadata) || {};
+    
+    const schemaName = data_temp?.schemaName;
+    const prev_data  = THOTH.Scene.currData.sceneMetadata || {};
+    const schema     = THOTH.Scene.schemaMap.get(schemaName);
+
+    // Body
+    const elBody = ATON.UI.createContainer();
+    
+    // Schema
+    let newSchemaName;
+    const elPickSchema = UI.createSplitRow({
+        colLeft: 8,
+        itemsLeft: ATON.UI.createInputText({
+            label      : "Pick schema",
+            list       : Array.from(THOTH.Scene.schemaMap.keys()),
+            placeholder: schemaName || "",
+            oninput    : (v) => newSchemaName = v,
+        }),
+        itemsRight: ATON.UI.createButton({
+            text   : "Build schema",
+            variant: "info",
+            onpress: () => {
+                data_temp = THOTH.Scene.createPropertiesfromSchema(newSchemaName);
+                UI.modalSceneMetadata(data_temp);
+            }
+        }),
+    });
+    
+    // Metadata
+    const elMetadata = ATON.UI.createContainer();
+    if (schema === undefined || Object.keys(schema).length !== 0) {
+        elMetadata.append(UI.createMetadataEditor(schema, data_temp))
+    }
+    elBody.append(elPickSchema, elMetadata);
+
+    // Footer
+    const elFooter = UI.createModalFooter(() => {
+        THOTH.fire("editSceneMetadata", {
+            data    : data_temp,
+            prevData: prev_data
+        });
+        ATON.UI.hideModal();
+    });
+
+    ATON.UI.showModal({
+        header: `Edit scene metadata`,
+        body  : elBody,
+        footer: elFooter,
+    });
+};  
+
+UI.createModalFooter = (onsuccess) => {
+    const elFooter = ATON.UI.createContainer();
+    elFooter.append(
+        // Save
+        ATON.UI.createButton({
+            text   : "Save changes",
+            size   : "large",
+            variant: "success",
+            onpress: () => onsuccess()
+        }),
+        // Cancel
+        ATON.UI.createButton({
+            text   : "Cancel",
+            size   : "large",
+            variant: "secondary",
+            onpress: () => ATON.UI.hideModal()
+        }),
+    );
+    return elFooter;
 };
 
 

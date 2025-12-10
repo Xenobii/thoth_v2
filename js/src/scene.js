@@ -21,7 +21,8 @@ Scene.setup = (sid) => {
 
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
-    Scene.initSceneMetadata();
+
+    Scene.schemaMap = Scene.getMetadataSchemas();
     
     Scene.activeLayer = undefined;
 };
@@ -45,6 +46,19 @@ Scene.initSceneMetadata = () => {
 
 
 // Data schema
+
+Scene.getMetadataSchemas = () => {
+    const schemaMap = new Map();
+
+    $.getJSON(THOTH.PATH_RES_SCHEMA + "list_of_schemas.json", (list) => {
+        for (const schema of list) {
+            $.getJSON(THOTH.PATH_RES_SCHEMA + schema, (data) => {
+                schemaMap.set(schema, data);
+            });
+        }
+    });
+    return schemaMap;
+};
 
 Scene.validateSchema = (data) => {
     let check = true;
@@ -79,9 +93,13 @@ Scene.validateSchema = (data) => {
     return check;
 };
 
-Scene.createPropertiesfromSchema = (data) => {
+Scene.createPropertiesfromSchema = (schemaName) => {
+    const data = Scene.schemaMap.get(schemaName);
+    
+    
     // Annotation object
     let A = {};
+    A.schemaName = schemaName;
 
     for (const key in data) {
         if (key === "required") continue;
@@ -117,6 +135,10 @@ Scene.createPropertiesfromSchema = (data) => {
         }
     }
     return A;
+};
+
+Scene.changeSceneSchema = (schemaName) => {
+    Scene.currData.sceneMetadata.schemaName = schemaName;
 };
 
 

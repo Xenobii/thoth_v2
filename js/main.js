@@ -37,7 +37,7 @@ THOTH.FE      = FE;
 
 
 THOTH.BASE_URL        = "../thoth_v2";
-THOTH.PATH_RES_ICONS  = `${THOTH.BASE_URL}/js/res/`;
+THOTH.PATH_RES        = `${THOTH.BASE_URL}/js/res/`;
 THOTH.PATH_RES_ICONS  = `${THOTH.BASE_URL}/js/res/icons/`;
 THOTH.PATH_RES_SCHEMA = `${THOTH.BASE_URL}/js/res/schema/`;
 

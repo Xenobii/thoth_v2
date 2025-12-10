@@ -114,6 +114,11 @@ Layers.delFromSelection = (layerId, selection) => {
     THOTH.updateVisibility();
 };
 
+Layers.changeLayerSchema = (layerId, schemaName) => {
+    const layer = Layers.layerMap.get(layerId);
+    layer.metadata.schemaName = schemaName;
+};
+
 
 // Visibility
 
