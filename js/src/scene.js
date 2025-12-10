@@ -16,9 +16,6 @@ Scene.setup = (sid) => {
     Scene.root     = ATON._rootVisible;
     Scene.currData = ATON.SceneHub.currData;
     
-    // Models
-    Scene.modelMap = Scene.getSceneModels(Scene.root.children);
-    
     // Maps
     // Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
 
@@ -28,33 +25,6 @@ Scene.setup = (sid) => {
     Scene.getSchemaJSON();
     
     Scene.activeLayer = undefined;
-};
-
-Scene.getSceneModels = (children) => {
-    const getAllMeshes = (model) => {
-        let meshes = new Map();
-        model.traverse(obj => {
-            if (obj.isMesh) {
-                meshes.set(obj.name, obj);
-            }
-        })
-        return meshes;
-    }
-
-    let sceneModels = new Map();
-    for (const model of children) {
-        if (model.name !== "") {
-            const model_data = {
-                "modelData": model,
-                "url"      : Object.keys(model._reqURLs)[0],
-                "meshes"   : getAllMeshes(model),
-                "visible"  : model.visible,
-            }
-            sceneModels.set(model.name, model_data);
-        }
-    }
-    console.log("Found", sceneModels.size, "models.");
-    return sceneModels;
 };
 
 
@@ -296,27 +266,6 @@ Scene.inheritFromScene = (id) => {
     };
 
     THOTH.fire("editMetadata", l);
-};
-
-
-// Model Management
-
-Scene.addModel = () => {
-
-};
-
-Scene.modelTransformPos = (modelName, value) => {
-    if (modelName === undefined) return;
-
-    const model = Scene.modelMap.get(modelName);
-    model.modelData.position.set(value.x, value.y, value.z);
-};
-
-Scene.modelTransformRot = (modelName, value) => {
-    if (modelName === undefined) return;
-
-    const model = Scene.modelMap.get(modelName);
-    model.modelData.rotation.set(value.x, value.y, value.z);
 };
 
 

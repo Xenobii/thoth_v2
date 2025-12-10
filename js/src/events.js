@@ -364,55 +364,55 @@ Events.setupUIEvents = () => {
     THOTH.on("selectBrush", () => {
         THOTH.Toolbox.activateBrush();
         THOTH.setUserControl(false);
-        THOTH.UI.showBrushOptions();
-        THOTH.UI.hideLassoOptions();
+        // THOTH.UI.showBrushOptions();
+        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.UI.handleToolHighlight('brush');
+        THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
     });
 
     // Eraser
     THOTH.on("selectEraser", () => {
         THOTH.Toolbox.activateEraser();
         THOTH.setUserControl(false);
-        THOTH.UI.showBrushOptions();
-        THOTH.UI.hideLassoOptions();
+        // THOTH.UI.showBrushOptions();
+        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.UI.handleToolHighlight('eraser');
+        THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
     });
 
     // Lasso add
     THOTH.on("selectLasso", () => {
         THOTH.Toolbox.activateLasso();
         THOTH.setUserControl(false);
-        THOTH.UI.showLassoOptions();
-        THOTH.UI.hideBrushOptions();
+        // THOTH.UI.showLassoOptions();
+        // THOTH.UI.hideBrushOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.UI.handleToolHighlight('lasso');
+        THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
     });
 
     // Select no tool
     THOTH.on("selectNone", () => {
         THOTH.Toolbox.deactivate();
         THOTH.setUserControl(true);
-        THOTH.UI.hideBrushOptions();
-        THOTH.UI.hideLassoOptions();
+        // THOTH.UI.hideBrushOptions();
+        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.UI.handleToolHighlight('no_tool');
+        THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
     });
 
     // Select measure
     THOTH.on("selectMeasure", () => {
         THOTH.Toolbox.activateMeasure();
         THOTH.setUserControl(false);
-        THOTH.UI.hideBrushOptions();
-        THOTH.UI.hideLassoOptions();
+        // THOTH.UI.hideBrushOptions();
+        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.UI.handleToolHighlight('measure');
+        THOTH.FE.handleToolHighlight('measure', THOTH.FE.toolMap);
     });
 
     // Model Transform
@@ -509,7 +509,7 @@ Events.setupSceneEvents = () => {
     // Local
     THOTH.on("createLayerScene", (id) => {
         THOTH.Scene.createLayer(id);
-        THOTH.UI.createLayer(id);
+        THOTH.FE.addNewLayer(id);
     });
 
     THOTH.on("deleteLayerScene", (id) => {
