@@ -15,6 +15,7 @@ Scene.setup = (sid) => {
     Scene.id       = sid;
     Scene.root     = ATON._rootVisible;
     Scene.currData = ATON.SceneHub.currData;
+    Scene.initData = Scene.createBackup();
     
     // Maps
     // Scene.normalMapPath = ATON.Utils.resolveCollectionURL(Scene.modelFolder + "/normal_map.png");
@@ -25,6 +26,16 @@ Scene.setup = (sid) => {
     Scene.schemaMap = Scene.getMetadataSchemas();
     
     Scene.activeLayer = undefined;
+};
+
+
+Scene.createBackup = () => {
+    let A = {};
+
+    A.layers        = structuredClone(Scene.currData.layers);
+    A.sceneMetadata = structuredClone(Scene.currData.sceneMetadata);
+
+    return A;
 };
 
 
@@ -96,45 +107,50 @@ Scene.validateSchema = (data) => {
 Scene.createPropertiesfromSchema = (schemaName) => {
     const data = Scene.schemaMap.get(schemaName);
     
+    const buildProperties = (data) => {
+        let A = {};
     
-    // Annotation object
-    let A = {};
-    A.schemaName = schemaName;
-
-    for (const key in data) {
-        if (key === "required") continue;
-
-        const attr = data[key];
-        if (attr["type"]) {
-            switch (attr.type.toLowerCase()) {
-                case "string":
-                    A[key] = "-";
-                    break;
-                case "integer":
-                    A[key] = 0;
-                    break;
-                case "float": 
-                    A[key] = 0.0;
-                    break;
-                case "bool": 
-                    A[key] = false;
-                    break;
-                case "enum":
-                    A[key] = "-";
-                    break;
-                case "enum-multiple": 
-                    A[key] = [];
-                    break;
-                default: 
-                    A[key] = null;
-                    break;
+        for (const key in data) {
+            if (key === "required") continue;
+    
+            const attr = data[key];
+            if (attr["type"]) {
+                switch (attr.type.toLowerCase()) {
+                    case "string":
+                        A[key] = "-";
+                        break;
+                    case "integer":
+                        A[key] = 0;
+                        break;
+                    case "float": 
+                        A[key] = 0.0;
+                        break;
+                    case "bool": 
+                        A[key] = false;
+                        break;
+                    case "enum":
+                        A[key] = "-";
+                        break;
+                    case "enum-multiple": 
+                        A[key] = [];
+                        break;
+                    default: 
+                        A[key] = null;
+                        break;
+                }
+            }
+            else if (typeof attr === "object") {
+                A[key] = buildProperties(attr);
             }
         }
-        else if (typeof attr === "object") {
-            A[key] = Scene.createPropertiesfromSchema(attr);
-        }
-    }
-    return A;
+        return A;
+
+    };
+    
+    const metadata = buildProperties(data);
+    metadata.schemaName = schemaName;
+
+    return metadata;
 };
 
 Scene.changeSceneSchema = (schemaName) => {
@@ -153,12 +169,12 @@ Scene.exportChanges = () => {
     A.layers = THOTH.Layers.getExportData();
     // Scene metadata
     A.sceneMetadata = structuredClone(Scene.currData.sceneMetadata);
-
+    
     // Model data
     // TODO
-
+    
     // Remove all annotation objects and ADD them again with changes
-    Scene.patch(A, Scene.MODE_DEL, () => {});
+    Scene.patch(Scene.initData, Scene.MODE_DEL, () => {});
     
     // Patch changes
     Scene.patch(A, Scene.MODE_ADD, () => {
@@ -168,6 +184,9 @@ Scene.exportChanges = () => {
         THOTH.UI.showToast("Export failed: " + error);
         console.log("Export failed:", error)
     });
+
+    // Update for next export;
+    Scene.initData = A;
 };
 
 Scene.patch = (patch, mode, onComplete, onFail)=>{

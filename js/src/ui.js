@@ -1130,7 +1130,6 @@ UI.createMetadataEditor = (data, data_temp) => {
 
 UI.modalLayerDetails = (layerId, data_temp) => {
     const layer = THOTH.Layers.layerMap.get(layerId);
-    
     if (data_temp === undefined) data_temp = structuredClone(layer.metadata) || {};
     
     const schemaName = data_temp?.schemaName;
@@ -1195,6 +1194,7 @@ UI.modalLayerDetails = (layerId, data_temp) => {
     
     // Footer
     const elFooter = UI.createModalFooter(() => {
+        console.log(data_temp)
         THOTH.fire("editLayerMetadata", {
             id      : layerId,
             data    : data_temp,
