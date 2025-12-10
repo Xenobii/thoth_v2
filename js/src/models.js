@@ -70,7 +70,6 @@ Models.addModel = (url) => {
     })
 };
 
-
 Models.initModelForRC = (modelName) => {
     const meshes = Models.getModelMeshes(modelName);
     for (const [name, mesh] of meshes) {
@@ -134,17 +133,19 @@ Models.toggleVisibility = (modelName) => {
     if (modelName === undefined) return;
 
     const model = Models.modelMap.get(modelName);
+    const modelController = THOTH.FE?.modelMap.get(modelName);
+
     if (model === undefined) return;
 
     if (model.visible) {
         Models.hideModelMeshes(modelName);
         model.visible = false;
-        return false;
+        THOTH.FE.toggleControllerVisibility(modelController, false);
     }
     else {
         Models.showModelMeshes(modelName);
         model.visible = true;
-        return true;
+        THOTH.FE.toggleControllerVisibility(modelController, true);
     }
 };  
 

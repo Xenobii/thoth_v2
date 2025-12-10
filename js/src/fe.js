@@ -310,14 +310,14 @@ FE.setupLayersPanel = (elLayerList) => {
             text   : "Export changes",
             variant: "success",
             tooltip: "Export changes",
-            onpress: () => UI.modalExport()
+            onpress: () => THOTH.UI.modalExport(),
         }),
         ATON.UI.createButton({
             text   : "New Layer",
             icon   : "add",
             variant: "info",
             tooltip: "Create new layer",
-            onpress: () => THOTH.fire("createLayer")
+            onpress: () => THOTH.fire("createLayer"),
         }),
     );
     elBody.append(elSceneController, elTopOptions, elLayerList);
@@ -331,7 +331,7 @@ FE.setupLayersPanel = (elLayerList) => {
 FE.addNewLayer = (layerName) => {
     // Resurrect layer if it already exists
     if (FE.layerMap.has(layerName)) {
-        FE.layerList.get(layerName).style.display = 'flex';
+        FE.layerMap.get(layerName).style.display = 'flex';
         return;
     }
     // Create new
@@ -341,7 +341,7 @@ FE.addNewLayer = (layerName) => {
 };
 
 FE.deleteLayer = (layerName) => {
-    FE.layerList.get(layerName).style.display = 'none';
+    FE.layerMap.get(layerName).style.display = 'none';
 };
 
 
@@ -370,6 +370,100 @@ FE.toggleControllerVisibility = (controller, visible) => {
         }
     }
 };
+
+
+// Modal 
+
+FE.modalSceneMetadata = () => {
+    const data_temp = structuredClone(THOTH.Scene.currData.sceneMetadata);
+    const prev_data = THOTH.Scene.currData.sceneMetadata;
+
+    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+        const elBody   = THOTH.UI.createMetadataEditor(data, data_temp);
+        const elFooter = ATON.UI.createContainer();
+        
+        elFooter.append(
+            // Save
+            ATON.UI.createButton({
+                text   : "Save changes",
+                size   : "large",
+                variant: "success",
+                onpress: () => {
+                    THOTH.fire("editSceneMetadata", {
+                        data    : data_temp,
+                        prevData: prev_data
+                    });
+                    ATON.UI.hideModal();
+                }
+            }),
+            // Cancel
+            ATON.UI.createButton({
+                text   : "Cancel",
+                size   : "large",
+                variant: "secondary",
+                onpress: () => ATON.UI.hideModal(),
+            }),
+        );
+
+        ATON.UI.showModal({
+            header: `Edit scene metadata`,
+            body  : elBody,
+            footer: elFooter
+        });
+    });
+};
+
+FE.modalLayerMetadata = (layerId) => {
+    const layer     = THOTH.Layers.layerMap.get(layerId);
+    const data_temp = structuredClone(layer.metadata);
+    const prev_data = layer.metadata;
+    
+    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
+        const elBody   = THOTH.UI.createMetadataEditor(data, data_temp);
+        const elFooter = ATON.UI.createContainer();
+
+        elFooter.append(
+            // Inherit
+            ATON.UI.createButton({
+                text   : "Inherit from scene",
+                size   : "large",
+                variant: "primary",
+                onpress: () => {
+                    THOTH.Scene.inheritFromScene(layerId);
+                    ATON.UI.hideModal();
+                }
+            }),
+            // Save
+            ATON.UI.createButton({
+                text   : "Save changes",
+                size   : "large",
+                variant: "success",
+                onpress: () => {
+                    THOTH.fire("editLayerMetadata", {
+                        id      : layerId,
+                        data    : data_temp,
+                        prevData: prev_data
+                    });
+                    ATON.UI.hideModal();
+                }
+            }),
+            // Cancel
+            ATON.UI.createButton({
+                text   : "Cancel",
+                size   : "large",
+                variant: "secondary",
+                onpress: () => ATON.UI.hideModal(),
+            }),
+        );
+
+        ATON.UI.showModal({
+            header: `Edit metadata for ${layer.name}`,
+            body  : elBody,
+            footer: elFooter
+        });
+    });
+};
+
 
 
 export default FE;

@@ -43,6 +43,8 @@ THOTH.PATH_RES_SCHEMA = `${THOTH.BASE_URL}/js/res/schema/`;
 
 
 
+// Init 
+
 THOTH.setSceneToLoad = () => {
 	const sid = THOTH.params.get('s');
 	THOTH._sidToLoad = sid;
@@ -107,8 +109,6 @@ THOTH.parseAtonElements = () => {
 	THOTH.fire 	= ATON.fire;
 
 	THOTH._renderer	= ATON._renderer;
-	THOTH._rcScene	= ATON._rcScene;
-    THOTH._rcLayer  = ATON.NTYPES.SCENE
     THOTH._camera   = ATON.Nav._camera;
 
 	// Photon
@@ -188,7 +188,7 @@ THOTH.highlightSelection = (selection, highlightColor, modelName, meshName) => {
 
 THOTH.highlightAllLayers = () => {
     // All layers
-    for (const [layerName, layer] of THOTH.Layers.layerMap) {
+    for (const [ , layer] of THOTH.Layers.layerMap) {
         if (layer.trash) return;
         if (layer.visible === false) return;
         
@@ -226,23 +226,6 @@ THOTH.updateVisibility = () => {
     THOTH.highlightAllLayers();
 };
 
-THOTH.toggleLayerVisibility = (layerName) => {
-    if (layerName === undefined) return;
-
-    const controller = THOTH.FE?.layerMap.get(layerName);
-    const visible    = Layers.toggleVisibility(layerName)
-
-    THOTH.FE.toggleControllerVisibility(controller, visible);
-};
-
-THOTH.toggleModelVisibility = (modelName) => {
-    if (modelName === undefined) return;
-    
-    const controller = THOTH.FE?.modelMap.get(modelName);
-    const visible    = Models.toggleVisibility(modelName);
-    
-    THOTH.FE.toggleControllerVisibility(controller, visible);
-};
 
 // Texture Maps
 

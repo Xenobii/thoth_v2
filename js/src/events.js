@@ -15,9 +15,9 @@ Events.setup = () => {
     Events.setupWindowEL();
 
     Events.setupToolboxEvents();
-    Events.setupSceneEvents();
     Events.setupPhotonEvents();
-    Events.setupUIEvents();
+    Events.setupLayerEvents();
+    Events.setupModelEvents();
 };
 
 
@@ -297,69 +297,73 @@ Events.setupWindowEL = () => {
 
 // Events
 
-Events.setupUIEvents = () => {
-    // Create Layer
+Events.setupLayerEvents = () => {
+    // Create layer
     THOTH.on("createLayer", () => {
-        const id = THOTH.Utils.getFirstUnusedKey(THOTH.Scene.currData.layers);
-
-        THOTH.fire("createLayerScene", (id));
-        THOTH.firePhoton("createLayerScene", (id));
+        const layerId = THOTH.Utils.getFirstUnusedKey(THOTH.Layers.layerMap);
+        // Local
+        THOTH.Layers.createLayer(layerId);
+        THOTH.FE.addNewLayer(layerId);
+        // Photon
+        THOTH.firePhoton("createLayer", (layerId));
+        // History
         THOTH.History.pushAction({
             type: THOTH.History.ACTIONS.CREATE_LAYER,
-            id  : id
+            id  : layerId
         });
     });
-
     // Delete Layer
-    THOTH.on("deleteLayer", (id) => {
-        THOTH.fire("deleteLayerScene", (id));
-        THOTH.firePhoton("deleteLayerScene", (id));
+    THOTH.on("deleteLayer", (layerId) => {
+        // Local
+        THOTH.Layers.deleteLayer(layerId);
+        THOTH.FE.deleteLayer(layerId);
+        // Photon
+        THOTH.firePhoton("deleteLayer", (layerId));
+        // History
         THOTH.History.pushAction({
             type: THOTH.History.ACTIONS.DELETE_LAYER,
-            id  : id
+            id  : layerId
         });
     });
-
-    // Edit Layer metadata
-    THOTH.on("editMetadata", (l) => {
-        const id       = l.id;
+    // Edit layer metadata
+    THOTH.on("editLayerMetadata", (l) => {
+        const layerId  = l.id;
+        const data     = l.data;
+        const prevData = l.prevData;
+        
+        // Local
+        THOTH.Layers.editLayer(layerId, "metadata", data);
+        // Photon
+        THOTH.firePhoton("editLayerMetadata", ({
+            id   : layerId,
+            value: data
+        }));
+        // History
+        THOTH.History.pushAction({
+            type     : THOTH.History.ACTIONS.EDIT_METADATA_LAYER,
+            id       : layerId,
+            value    : data,
+            prevValue: prevData
+        });
+    });
+    // Edit scene metadata
+    THOTH.on("editSceneMetadata", (l) => {
         const data     = l.data;
         const prevData = l.prevData;
 
-        if (id === -1) {
-            THOTH.fire("editObjectScene", ({
-                value: data
-            }));
-            THOTH.firePhoton("editObjectScene", ({
-                value: data
-            }));
-            THOTH.History.pushAction({
-                type     : THOTH.History.ACTIONS.EDIT_METADATA_OBJECT,
-                value    : data,
-                prevValue: prevData
-            });
-        }
-        else {
-            THOTH.fire("editLayerScene", ({
-                id   : id,
-                attr : "metadata",
-                value: data
-            }));
-            THOTH.firePhoton("editLayerScene", ({
-                id   : id,
-                attr : "metadata",
-                value: data
-            }));
-            THOTH.History.pushAction({
-                type     : THOTH.History.ACTIONS.EDIT_METADATA_LAYER,
-                id       : id,
-                value    : data,
-                prevValue: prevData
-            });
-        }
-
+        // Local event
+        THOTH.Scene.editSceneMetadata(data)
+        // Photon event
+        THOTH.firePhoton("editSceneMetadata", ({
+            value: data
+        }));
+        // History 
+        THOTH.History.pushAction({
+            type     : THOTH.History.ACTIONS.EDIT_METADATA_SCENE,
+            value    : data,
+            prevValue: prevData
+        });
     });
-
     // Brush
     THOTH.on("selectBrush", () => {
         THOTH.Toolbox.activateBrush();
@@ -370,7 +374,6 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.clearMeasure();
         THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
     });
-
     // Eraser
     THOTH.on("selectEraser", () => {
         THOTH.Toolbox.activateEraser();
@@ -381,7 +384,6 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.clearMeasure();
         THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
     });
-
     // Lasso add
     THOTH.on("selectLasso", () => {
         THOTH.Toolbox.activateLasso();
@@ -392,7 +394,6 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.clearMeasure();
         THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
     });
-
     // Select no tool
     THOTH.on("selectNone", () => {
         THOTH.Toolbox.deactivate();
@@ -403,7 +404,6 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.clearMeasure();
         THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
     });
-
     // Select measure
     THOTH.on("selectMeasure", () => {
         THOTH.Toolbox.activateMeasure();
@@ -414,238 +414,96 @@ Events.setupUIEvents = () => {
         THOTH.Toolbox.clearMeasure();
         THOTH.FE.handleToolHighlight('measure', THOTH.FE.toolMap);
     });
+    
+};
 
+Events.setupModelEvents = () => {
     // Model Transform
     THOTH.on("modelTransformPosInput", (l) => {
-        const pos = THOTH.Scene.modelMap.get(l.modelName).modelData.position
+        const pos = THOTH.Models.modelMap.get(l.modelName).position
         const prevValue = {
             x: pos.x,
             y: pos.y,
             z: pos.z
         };
-
+        // Local
+        THOTH.Models.modelTransformPos(l.modelName, l.value);
+        // Photon
+        THOTH.firePhoton("modelTransformPosScene", (l));
+        // History
         THOTH.History.pushAction({
             type     : THOTH.History.ACTIONS.TRANSFORM_MODEL_POS,
             id       : l.modelName,
             value    : l.value,
             prevValue: prevValue
         });
-        THOTH.fire("modelTransformPosScene", (l));
-        THOTH.firePhoton("modelTransformPosScene", (l));
     }); 
 
-    THOTH.on("modelTransformRotInput", (l) => {
-        const rot = THOTH.Scene.modelMap.get(l.modelName).modelData.rotation;
+    THOTH.on("modelTransformRot", (l) => {
+        const rot = THOTH.Models.modelMap.get(l.modelName).rotation;
         const prevValue = {
             x: rot.x,
             y: rot.y,
             z: rot.z
         };
-        
+        // Local
+        THOTH.Models.modelTransformRot(l.modelName, l.value);
+        // Photon
+        THOTH.firePhoton("modelTransformRot", (l));
+        // History
         THOTH.History.pushAction({
             type     : THOTH.History.ACTIONS.TRANSFORM_MODEL_ROT,
             id       : l.modelName,
             value    : l.value,
             prevValue: prevValue
         });
-        THOTH.fire("modelTransformRotScene", (l));
-        THOTH.firePhoton("modelTransformRotScene", (l));
     }); 
-
-    // Dlclick rename
-    // TODO: remove this and replace
-    THOTH.Events.enableRename = (buttonElement, id) => {
-
-        buttonElement.classList.add('renamable');
-        const layer 	= THOTH.Scene.currData.layers[id];
-        const attr 		= "name";
-
-        buttonElement.addEventListener('dblclick', () => {
-            const input            = document.createElement('input');
-            input.type             = 'text';
-            input.value            = layer[attr];
-            input.style.width      = `${buttonElement.offsetWidth}px`;
-            input.style.fontSize   = 'inherit';
-            input.style.border     = 'none';
-            input.style.outline    = 'none';
-            input.style.background = 'white';
-            input.style.color      = 'gray';
-
-            THOTH._bListenKeyboardEvents = false;
-
-            const applyRename = () => {
-                let newTitle = input.value.trim();
-                if (newTitle.length > 20) {
-                    // Trim to 24 characters
-                    newTitle = newTitle.substring(0, 20) + ".."; 
-                } 
-                if (newTitle !== '') {
-                    buttonElement.textContent = newTitle;
-                    layer[attr] = newTitle;
-
-                    // Update the scene with the new name
-                    THOTH.fire("editLayerScene", { id: id, attr: "name", value: newTitle });
-                    THOTH.firePhoton("editLayerScene", { id: id, attr: "name", value: newTitle });
-                }
-                input.replaceWith(buttonElement);
-            };
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') applyRename();
-            });
-            input.addEventListener('blur', () => {
-                applyRename();
-            });
-
-            buttonElement.replaceWith(input);
-            input.focus();
-            input.select();
-        });
-    };
-
 };
 
-Events.setupSceneEvents = () => {
-    // Local
-    THOTH.on("createLayerScene", (id) => {
-        THOTH.Scene.createLayer(id);
-        THOTH.FE.addNewLayer(id);
+Events.setupPhotonEvents = () => {
+    THOTH.onPhoton("createLayer", (layerId) => {
+        THOTH.Layers.createLayer(layerId);
+        THOTH.FE.addNewLayer(layerId);
     });
 
-    THOTH.on("deleteLayerScene", (id) => {
-        THOTH.Scene.deleteLayer(id);
-        THOTH.UI.deleteLayer(id);
-    });
-    
-    THOTH.on("editLayerScene", (l) => {
-        const id    = l.id;
-        const attr  = l.attr;
-        const value = l.value;
-        THOTH.Scene.editLayer(id, attr, value);
+    THOTH.onPhoton("deleteLayer", (layerId) => {
+        THOTH.Scene.deleteLayer(layerId);
+        THOTH.FE.deleteLayer(layerId);
     });
 
-    THOTH.on("editObjectScene", (l) => {
-        THOTH.Scene.editObject(l.value);
+    THOTH.onPhoton("editSceneMetadata", (l) => {
+        THOTH.Scene.editSceneMetadata(l.data);
     });
     
-    THOTH.on("addToSelectionScene", (l) => {
-        const id        = l.id;
-        const selection = l.selection;
-        const layer     = THOTH.Scene.currData.layers[id];
-        
-        const tempSelection = layer.selection || {};
-        for (const modelName of Object.keys(selection)) {
-            tempSelection[modelName] = tempSelection[modelName] || {};
-            
-            for (const meshName of Object.keys(selection[modelName])) {
-                tempSelection[modelName][meshName] = 
-                [...THOTH.Toolbox.addFacesToSelection(selection[modelName][meshName], tempSelection[modelName][meshName])];
-            }
-        }
-        THOTH.Scene.editLayer(id, "selection", tempSelection);
-        THOTH.updateVisibility();
+    THOTH.onPhoton("editLayerMetadata", (l) => {
+        THOTH.Scene.editLayer(l.id, "metadata", l.value);
+    });
+
+    THOTH.onPhoton("addToSelection", (l) => {
+        THOTH.Layers.addToSelection(l.id, l.selection);
     });
     
-    THOTH.on("delFromSelectionScene", (l) => {
-        const id        = l.id;
-        const selection = l.selection;
-        const layer     = THOTH.Scene.currData.layers[id];
-        
-        const tempSelection = layer.selection || {};
-        for (const modelName of Object.keys(selection)) {
-            tempSelection[modelName] = tempSelection[modelName] || {};
-            
-            for (const meshName of Object.keys(selection[modelName])) {
-                tempSelection[modelName][meshName] =
-                [...THOTH.Toolbox.delFacesFromSelection(selection[modelName][meshName], tempSelection[modelName][meshName])];
-            }
-        }
-
-        THOTH.Scene.editLayer(id, "selection", tempSelection);
-        THOTH.updateVisibility();
+    THOTH.onPhoton("delFromSelection", (l) => {
+        THOTH.Layers.delFromSelection(l.id, l.selection);
     });
 
-    THOTH.on("modelTransformPosScene", (l) => {
-        const modelName = l.modelName;
-        const value     = l.value;
-        
-        THOTH.Scene.modelTransformPos(modelName, value);
-        THOTH.updateVisibility();
+    THOTH.onPhoton("modelTransformRot", (l) => {
+        THOTH.Models.modelTransformRot(l.modelName, l.value);
+    });
+
+    THOTH.onPhoton("modelTransformPos", (l) => {
+        THOTH.Models.modelTransformPos(l.modelName, l.value);
+    });
+
+    // On new user join
+    THOTH.on("VRC_UserEnter", () => {
+        const currData = THOTH.Scene.currData;
+        THOTH.firePhoton("syncScene", currData);
     });
     
-    THOTH.on("modelTransformRotScene", (l) => {
-        const modelName = l.modelName;
-        const value     = l.value;
-        
-        THOTH.Scene.modelTransformRot(modelName, value);
-        THOTH.updateVisibility();
-    });
-
-    // Photon
-    THOTH.onPhoton("createLayerScene", (id) => {
-        THOTH.Scene.createLayer(id);
-
-        const layers = THOTH.Scene.currData.layers; 
-        if (layers[id] !== undefined && layers[id].trash === true) THOTH.UI.ressurectLayer(id);
-        else THOTH.UI.createLayer(id);
-    });
-    
-    THOTH.onPhoton("deleteLayerScene", (id) => {
-        THOTH.Scene.deleteLayer(id);
-        THOTH.UI.deleteLayer(id);
-    });
-    
-    THOTH.onPhoton("editLayerScene", (l) => {
-        const id    = l.id;
-        const attr  = l.attr;
-        const value = l.value;
-        THOTH.Scene.editLayer(id, attr, value);
-    });
-
-    THOTH.onPhoton("addToSelectionScene", (l) => {
-        const id        = l.id;
-        const selection = l.selection;
-        const layer     = THOTH.Scene.currData.layers[id];
-        
-        const tempSelection = layer.selection || {};
-        for (const modelName of Object.keys(selection)) {
-            tempSelection[modelName] = tempSelection[modelName] || {};
-
-            for (const meshName of Object.keys(selection[modelName])) {
-                tempSelection[modelName][meshName] =
-                [...THOTH.Toolbox.addFacesToSelection(selection[modelName][meshName], layer.selection[modelName][meshName])];
-            }
-        }
-
-        THOTH.Scene.editLayer(id, "selection", tempSelection);
-        THOTH.updateVisibility();
-    });
-
-    THOTH.onPhoton("delFromSelectionScene", (l) => {
-        const id        = l.id;
-        const selection = l.selection;
-        const layer     = THOTH.Scene.currData.layers[id];
-        
-        const tempSelection = layer.selection || {};
-        for (const modelName of Object.keys(selection)) {
-            tempSelection[modelName] = tempSelection[modelName] || {};
-
-            for (const meshName of Object.keys(selection[modelName])) {
-                tempSelection[modelName][meshName] = 
-                [...THOTH.Toolbox.delFacesFromSelection(selection[modelName][meshName], layer.selection[modelName][meshName])];
-            } 
-        }
-
-        THOTH.Scene.editLayer(id, "selection", tempSelection);
-        THOTH.updateVisibility();
-    });
-
-    THOTH.onPhoton("modelTransformScene", (l) => {
-        const modelName = l.modelName;
-        const value     = l.value;
-        
-        THOTH.Scene.modelTransform(modelName, transform, value);
-        THOTH.updateVisibility();
+    // Sync scene
+    THOTH.onPhoton("syncScene", (currData) => {
+        THOTH.Scene.syncScene(currData);
     });
 };
 
@@ -666,23 +524,23 @@ Events.setupToolboxEvents = () => {
         if (THOTH.Toolbox.tempSelection === null) return;
         
         // Get only faces that don't already belong to layer
-        const id        = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Scene.activeLayer.id;
         const selection = THOTH.Toolbox.endBrush();
         
         if (Object.keys(selection).length === 0) return;
 
+        // Local
+        THOTH.Layers.addToSelection(layerId, selection);
+        // Photon
+        THOTH.firePhoton("addToSelectionScene", {
+            id       : layerId,
+            selection: selection
+        });
+        // History
         THOTH.History.pushAction({
             type : THOTH.History.ACTIONS.SELEC_ADD,
-            id   : id,
+            id   : layerId,
             value: selection
-        });
-        THOTH.fire("addToSelectionScene", {
-            id       : id,
-            selection: selection
-        });
-        THOTH.firePhoton("addToSelectionScene", {
-            id       : id,
-            selection: selection
         });
 
         THOTH.Toolbox.tempSelection = null;
@@ -703,24 +561,24 @@ Events.setupToolboxEvents = () => {
         if (THOTH.Toolbox.tempSelection === null) return;
         
         // Get only faces that don't already belong to layer
-        const id        = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Scene.activeLayer.id;
         const selection = THOTH.Toolbox.endEraser();
         
         // Return if selection is empty
         if (Object.keys(selection).length === 0) return;
         
+        // Local
+        THOTH.Layers.delFromSelection(layerId, selection);
+        // Photon
+        THOTH.firePhoton("delFromSelection", {
+            id       : layerId,
+            selection: selection
+        });
+        // History
         THOTH.History.pushAction({
             type : THOTH.History.ACTIONS.SELEC_DEL,
-            id   : id,
+            id   : layerId,
             value: selection
-        });
-        THOTH.fire("delFromSelectionScene", {
-            id       : id,
-            selection: selection
-        });
-        THOTH.firePhoton("delFromSelectionScene", {
-            id       : id,
-            selection: selection
         });
 
         THOTH.Toolbox.tempSelection = null;
@@ -737,23 +595,23 @@ Events.setupToolboxEvents = () => {
     THOTH.on("endLassoAdd", (l) => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
 
-        const id        = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Scene.activeLayer.id;
         const selection = THOTH.Toolbox.endLassoAdd();
 
         if (Object.keys(selection).length === 0) return;
 
+        // Local
+        THOTH.Layers.addToSelection(layerId, selection);
+        // Photon
+        THOTH.firePhoton("addToSelection", {
+            id       : layerId,
+            selection: selection
+        });
+        // History
         THOTH.History.pushAction({
             type : THOTH.History.ACTIONS.SELEC_ADD,
-            id   : id,
+            id   : layerId,
             value: selection
-        });
-        THOTH.fire("addToSelectionScene", {
-            id       : id,
-            selection: selection
-        });
-        THOTH.firePhoton("addToSelectionScene", {
-            id       : id,
-            selection: selection
         });
 
         THOTH.Toolbox.tempSelection = null;
@@ -761,23 +619,23 @@ Events.setupToolboxEvents = () => {
     THOTH.on("endLassoDel", (l) => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
 
-        const id        = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Scene.activeLayer.id;
         const selection = THOTH.Toolbox.endLassoDel();
 
         if (Object.keys(selection).length === 0) return;
 
+        // Local
+        THOTH.Layers.delFromSelection(layerId, selection);
+        // Photon
+        THOTH.firePhoton("delFromSelection", {
+            id       : layerId,
+            selection: selection
+        });
+        // History
         THOTH.History.pushAction({
             type : THOTH.History.ACTIONS.SELEC_DEL,
-            id   : id,
+            id   : layerId,
             value: selection
-        });
-        THOTH.fire("delFromSelectionScene", {
-            id       : id,
-            selection: selection
-        });
-        THOTH.firePhoton("delFromSelectionScene", {
-            id       : id,
-            selection: selection
         });
 
         THOTH.Toolbox.tempSelection = null;
@@ -788,21 +646,6 @@ Events.setupToolboxEvents = () => {
     THOTH.on("endAllToolOps", () => {
         THOTH.fire("endLasso");
     });
-};
-
-Events.setupPhotonEvents = () => {
-    // On new user join
-    THOTH.on("VRC_UserEnter", () => {
-        const currData = THOTH.Scene.currData;
-        THOTH.firePhoton("syncScene", currData);
-    });
-    
-    // Sync scene
-    THOTH.onPhoton("syncScene", (currData) => {
-        THOTH.Scene.syncScene(currData);
-    });
-
-
 };
 
 

@@ -36,8 +36,17 @@ Utils.getHighlightColor = (id) => {
     return color;
 };
 
-Utils.getFirstUnusedKey = (obj) => {
-    const keys = Object.keys(obj).map(Number); // Convert to numbers
+Utils.getFirstUnusedKey = (objOrMap) => {
+    let keys;
+
+    if (objOrMap instanceof Map) {
+        // Extract map keys
+        keys = Array.from(objOrMap.keys()).map(Number);
+    } else {
+        // Extract object keys
+        keys = Object.keys(objOrMap).map(Number);
+    }
+
     const keySet = new Set(keys);
 
     let id = 0;
@@ -47,6 +56,7 @@ Utils.getFirstUnusedKey = (obj) => {
 
     return id;
 };
+
 
 Utils.getJSON = (jsonurl, onLoad)=>{
     fetch(jsonurl, {

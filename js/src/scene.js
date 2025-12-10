@@ -21,23 +21,30 @@ Scene.setup = (sid) => {
 
     Scene.MODE_ADD  = 0;
     Scene.MODE_DEL  = 1;
-
-    Scene.getSchemaJSON();
+    Scene.initSceneMetadata();
     
     Scene.activeLayer = undefined;
 };
 
 
-// Data schema
+// Metadata
 
-Scene.getSchemaJSON = () => {
+Scene.initSceneMetadata = () => {
+    // Build metadata
+    // TODO: check compliance with new schemas
+    if (Scene.currData.sceneMetadata !== undefined) return;
     $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
-        let check = Scene.validateSchema(data);
-        if (!check && THOTH.UI._elToast !== undefined) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
-        
-        Scene.currData.sceneMetadata = Scene.currData.sceneMetadata || Scene.createPropertiesfromSchema(data);
+        const check = Scene.validateSchema(data);
+        if (!check) {
+            THOTH.UI.showToast("Invalid Metadata Schema", 5000);
+            return;
+        }
+        Scene.currData.sceneMetadata = Scene.createPropertiesfromSchema(data);
     });
 };
+
+
+// Data schema
 
 Scene.validateSchema = (data) => {
     let check = true;
@@ -115,27 +122,28 @@ Scene.createPropertiesfromSchema = (data) => {
 
 // Import/Export
 
-Scene.exportLayers = () => {
+Scene.exportChanges = () => {
     console.log("Exporting changes...");
 
     let A = {};
-    A.layers = structuredClone(Scene.currData.layers);
-    // Exclude trash items
-    for (const id in A.layers) {
-        if (A.layers[id].trash === true) delete A.layers[id];
-    }
 
+    // Layer data
+    A.layers = THOTH.Layers.getExportData();
+    // Scene metadata
     A.sceneMetadata = structuredClone(Scene.currData.sceneMetadata);
+
+    // Model data
+    // TODO
 
     // Remove all annotation objects and ADD them again with changes
     Scene.patch(A, Scene.MODE_DEL, () => {});
     
     // Patch changes
     Scene.patch(A, Scene.MODE_ADD, () => {
-        if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Changes exported successfully");
+        THOTH.UI.showToast("Changes exported successfully");
         console.log("Changes exported successfully");
     }, (error) => {
-        if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("Export failed: " + error);
+        THOTH.UI.showToast("Export failed: " + error);
         console.log("Export failed:", error)
     });
 };
@@ -173,105 +181,23 @@ Scene.patch = (patch, mode, onComplete, onFail)=>{
     });
 };
 
-
-// Layer Management
-
-Scene.createLayer = (id) => {
-    if (id === undefined) return;
-
-    const layers = Scene.currData.layers;
-
-    // Resolve id conflict
-    if (layers[id] !== undefined) {
-        if (layers[id].trash === true) {
-            Scene.resurrectLayer(id);
-            return;
-        }
-        else {
-            alert("Id conflict");
-            return;
-        }
-    };
-
-    let layer = {
-        id            : id,
-        name          : "New Layer",
-        metadata      : null,
-        selection     : {},
-        visible       : true,
-        highlightColor: THOTH.Utils.getHighlightColor(id),
-        trash         : false
-    };
-    $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
-        let check = Scene.validateSchema(data);
-        if (!check) {
-            if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("METADATA CREATION FAILED, INVALID METADATA SCHEMA", 10000);
-            else console.log("Metadata creation failed, invalid schema")
-        }
-        layer.metadata = Scene.createPropertiesfromSchema(data);
-    });
-    
-    layers[id] = layer;
-};
-
-Scene.deleteLayer = (id) => {
-    if (id === undefined) return;
-
-    let layers = Scene.currData.layers;
-    let layer  = layers[id];
-    
-    // Move layer to trash
-    layer.trash = true;
-    Scene.activeLayer = undefined;
-
-    // Update visuals
-    THOTH.updateVisibility();
-};
-
-Scene.resurrectLayer = (id) => {
-    if (id === undefined) return;
-
-    const layers = Scene.currData.layers;
-    const layer = layers[id];
-
-    if (!layer.trash) return;
-
-    // Remove from trash
-    layer.trash = false;
-
-    // Update visuals
-    THOTH.updateVisibility();
-};
-
-Scene.editLayer = (id, attr, value) => {
-    if (id === undefined || attr === undefined) return;
-    
-    const layer = Scene.currData.layers?.[id];
-    if (!layer) return;
-
-    if (value === undefined) value = layer[attr];
-
-    // Edit layer
-    layer[attr] = value;
-};
-
-Scene.inheritFromScene = (id) => {
+Scene.inheritFromScene = (layerId) => {
     const sceneMetadata = THOTH.Scene.currData.sceneMetadata;
-    const layerMetadata = THOTH.Scene.currData.layers[id].metadata;
+    const layerMetadata = THOTH.Scene.currData.layers[layerId].metadata;
     
     let l = {
-        id      : id,
+        id      : layerId,
         data    : sceneMetadata,
         prevData: layerMetadata
     };
 
-    THOTH.fire("editMetadata", l);
+    THOTH.fire("editLayerMetadata", l);
 };
 
 
 // Object management
 
-Scene.editObject = (value) => {
+Scene.editSceneMetadata = (value) => {
     if (value === undefined) return;
     Scene.currData.sceneMetadata = value;
 };
