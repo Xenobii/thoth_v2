@@ -3,14 +3,16 @@ let FE = {};
 
 FE.setup = () => {
     // Maps for accessibility
-    FE.modelMap = FE.initModelMap();
-    FE.layerMap = FE.initLayerMap();
-    FE.toolMap  = FE.initToolMap();
+    FE.modelMap   = FE.initModelMap();
+    FE.layerMap   = FE.initLayerMap();
+    FE.toolMap    = FE.initToolMap();
+    FE.toolOptMap = FE.initToolOptMap();
 
     // Toolbars
-    FE.topToolbar  = FE.setupTopToolbar();
-    FE.userToolbar = FE.setupUserToolbar();
-    FE.mainToolbar = FE.setupMainToolbar(FE.toolMap);
+    FE.topToolbar     = FE.setupTopToolbar();
+    FE.userToolbar    = FE.setupUserToolbar();
+    FE.mainToolbar    = FE.setupMainToolbar(FE.toolMap);
+    FE.toolOptToolbar = FE.setupToolOptToolbar();
 
     // Lists
     FE.modelList = FE.setupModelList(FE.modelMap);
@@ -20,6 +22,9 @@ FE.setup = () => {
     FE.settingsPanel = FE.setupSettingsPanel();
     FE.modelsPanel   = FE.setupModelsPanel(FE.modelList);
     FE.layersPanel   = FE.setupLayersPanel(FE.layerList);
+
+    // Toast
+    FE.toast = FE.createToast();
 };
 
 
@@ -108,6 +113,25 @@ FE.initToolMap = () => {
     return toolMap;
 };
 
+FE.initToolOptMap = () => {
+    const toolOptMap = new Map();
+
+    // Brush
+    const elBrushOpt = THOTH.UI.createBrushOptions();
+    toolOptMap.set("brush", elBrushOpt);
+    // Eraser
+    const elEraserOpt = THOTH.UI.createBrushOptions();
+    toolOptMap.set("eraser", elEraserOpt);
+    // Lasso
+    const elLassoOpt = THOTH.UI.createLassoOptions();
+    toolOptMap.set("lasso", elLassoOpt);
+    // No tool
+    const elNoToolOpt = ATON.UI.createContainer();
+    toolOptMap.set("no_tool", elNoToolOpt);
+
+    return toolOptMap;
+};
+
 
 // Lists
 
@@ -122,7 +146,7 @@ FE.setupModelList = (modelMap) => {
 };
 
 FE.setupLayerList = (layerMap) => {
-    const elLayerList = ATON.UI.createContainer();
+    const elLayerList = ATON.UI.createContainer({classes: ""});
     
     for (const [ , elLayerController] of layerMap) {
         elLayerList.append(elLayerController)
@@ -210,6 +234,12 @@ FE.setupMainToolbar = (toolMap) => {
     }
 
     return mainToolbar;
+};
+
+FE.setupToolOptToolbar = () => {
+    const toolOptToolbar = ATON.UI.get("toolOptToolbar");
+
+    return toolOptToolbar;
 };
 
 
@@ -371,6 +401,50 @@ FE.toggleControllerVisibility = (controller, visible) => {
     }
 };
 
+FE.handleToolOptions = (elToolName) => {
+    const elOptions = FE.toolOptMap.get(elToolName);
+    FE.toolOptToolbar.replaceChildren(elOptions);
+    FE.toolOptToolbar.style.display = 'inline-block';
+};
+
+
+// Toast
+
+FE.createToast = () => {
+    const elBody = ATON.UI.get("toastElement");
+
+    return elBody;
+};
+
+FE.showToast = (msg, timeout=2000) => {
+    const elMsg = THOTH.UI.createSplitRow({
+        classes: "bg-body-secondary opacity-75",
+        colLeft  : 10,
+        itemsLeft: ATON.UI.createButton({
+            text: msg,
+        }),
+        itemsRight: ATON.UI.createButton({
+            icon   : "cancel",
+            onpress: () => {
+                FE.toast.replaceChildren();
+                clearTimeout(FE._toastTimeout);
+                FE._toastTimeout = null;
+            },
+        }),
+    });
+    
+    FE.toast.replaceChildren(elMsg);
+
+    // Handle timeout
+    if (FE._toastTimeout) {
+        clearTimeout(FE._toastTimeout);
+    }
+
+    FE._toastTimeout = setTimeout(() => {
+        FE.toast.replaceChildren();
+        FE._toastTimeout = null;
+    }, timeout);
+};
 
 
 export default FE;

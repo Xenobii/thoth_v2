@@ -69,7 +69,7 @@ Events.setupActiveEL = () => {
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No Layer Selected");
+                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             if (THOTH.Toolbox.tempSelection !== null) return;
@@ -78,7 +78,7 @@ Events.setupActiveEL = () => {
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No Layer Selected");
+                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             if (THOTH.Toolbox.tempSelection !== null) return;
@@ -87,7 +87,7 @@ Events.setupActiveEL = () => {
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No Layer Selected");
+                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             THOTH.fire("startLasso");
@@ -119,7 +119,7 @@ Events.setupActiveEL = () => {
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No Layer Selected");
+                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
                 else console.log("No layer selected")
                 return;
             }
@@ -128,7 +128,7 @@ Events.setupActiveEL = () => {
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No Layer Selected");
+                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
                 else console.log("No layer selected")
                 return;
             }
@@ -137,7 +137,7 @@ Events.setupActiveEL = () => {
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No Layer Selected");
+                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
                 else console.log("No layer selected")
                 return;
             }
@@ -368,40 +368,36 @@ Events.setupLayerEvents = () => {
     THOTH.on("selectBrush", () => {
         THOTH.Toolbox.activateBrush();
         THOTH.setUserControl(false);
-        // THOTH.UI.showBrushOptions();
-        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.FE.handleToolOptions('brush');
         THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
     });
     // Eraser
     THOTH.on("selectEraser", () => {
         THOTH.Toolbox.activateEraser();
         THOTH.setUserControl(false);
-        // THOTH.UI.showBrushOptions();
-        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.FE.handleToolOptions('eraser');
         THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
     });
     // Lasso add
     THOTH.on("selectLasso", () => {
         THOTH.Toolbox.activateLasso();
         THOTH.setUserControl(false);
-        // THOTH.UI.showLassoOptions();
-        // THOTH.UI.hideBrushOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.FE.handleToolOptions('lasso');
         THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
     });
     // Select no tool
     THOTH.on("selectNone", () => {
         THOTH.Toolbox.deactivate();
         THOTH.setUserControl(true);
-        // THOTH.UI.hideBrushOptions();
-        // THOTH.UI.hideLassoOptions();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.FE.handleToolOptions('no_tool');
         THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
     });
     // Select measure

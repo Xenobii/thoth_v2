@@ -13,12 +13,11 @@ let UI = {}
 
 UI.setup = () => {
     // Maps for easy access
-    UI.setupToast();
     UI.setupVPPreview();
 };
 
 
-// General
+// Modules
 
 UI.createBool = (options) => {
     let container = document.createElement('div');
@@ -224,8 +223,8 @@ UI.createVectorControl = (options, transform)=>{
 };
 
 UI.createSplitRow = (options) => {
-    const elRow = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 py-1 mb-1"});
-    if (options.classes) elRow.classList.add(options.classes)
+    const elRow = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 px-2 py-1 mb-1"});
+    if (options.classes) elRow.className = elRow.className + " " + options.classes;
     
     let colLeft;
     if (options.colLeft) colLeft = options.colLeft;
@@ -247,9 +246,8 @@ UI.createSplitRow = (options) => {
 // Controllers
 
 UI.createModelController = (modelName) => {
-    const elController = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1"});
-    const elLeft       = ATON.UI.createContainer({classes: "col-7 d-flex align-items-center"});
-    const elRight      = ATON.UI.createContainer({classes: "col-5 d-flex justify-content-end align-items-center"});
+    const elLeft  = ATON.UI.createContainer();
+    const elRight = ATON.UI.createContainer();
 
     elLeft.append(
         // Visibility
@@ -268,50 +266,44 @@ UI.createModelController = (modelName) => {
             })
         }),
     );
-    elRight.append(
-        // Trash
-        ATON.UI.createButton({
+    const elController = UI.createSplitRow({
+        // classes   : "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1",
+        colLeft   : 7,
+        itemsLeft : elLeft,
+        itemsRight: ATON.UI.createButton({
             icon   : "trash",
             onpress: () => {}
-        })
-    );
-    elController.append(elLeft, elRight);
-
+        }),
+    });
+    
     return elController;
 };
 
 UI.createSceneController = () => {
-    const elController = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1"});
-    const elLeft       = ATON.UI.createContainer({classes: "col-7 d-flex align-items-center"});
-    const elRight      = ATON.UI.createContainer({classes: "col-5 d-flex justify-content-end align-items-center"});
-    
-    // Name
-    const elName = ATON.UI.createButton({
-        text: "Scene Layer",
-        icon: "scene",
-        size: "small"
+    const elController = UI.createSplitRow({
+        classes   : "bg-body-secondary",
+        colLeft   : 7,
+        itemsLeft : ATON.UI.createButton({
+            text: "Scene Layer",
+            icon: "scene",
+            size: "small"
+        }),
+        itemsRight: ATON.UI.createButton({
+            text   : "Scene Metadata",
+            icon   : "list",
+            size   : "small",
+            onpress: () => THOTH.UI.modalSceneMetadata(),
+        }),
     });
-    // Metadata
-    const elMetadata = ATON.UI.createButton({
-        text   : "Scene Metadata",
-        icon   : "list",
-        size   : "small",
-        onpress: () => THOTH.UI.modalSceneMetadata(),
-    });
-    
-    elLeft.append(elName);
-    elRight.append(elMetadata);
-    elController.append(elLeft, elRight);
     return elController;
 };
 
 UI.createLayerController = (layerId) => {
-    const elController = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 border px-2 py-1 mb-1"});
-    const elLeft       = ATON.UI.createContainer({classes: "col-7 d-flex align-items-center"});
-    const elRight      = ATON.UI.createContainer({classes: "col-5 d-flex justify-content-end align-items-center"});
-
+    const elLeft       = ATON.UI.createContainer();
+    const elRight      = ATON.UI.createContainer();
+    
     const layer = THOTH.Layers.layerMap.get(layerId);
-
+    
     elLeft.append(
         // Visibility
         ATON.UI.createButton({
@@ -352,9 +344,14 @@ UI.createLayerController = (layerId) => {
             onpress: () => THOTH.fire("deleteLayer", (layerId))
         }),
     );
-
-    elController.append(elLeft, elRight);
-
+    
+    const elController = UI.createSplitRow({
+        // classes   : "bg-body-secondary",
+        colLeft   : 7,
+        itemsLeft : elLeft,
+        itemsRight: elRight,
+    });
+    
     return elController;
 };
 
@@ -459,97 +456,6 @@ UI.createMeshList = (modelName) => {
 };
 
 
-// Toolbars
-
-UI.setupToolbars = () => {
-    UI._elToolOptionsToolbar = ATON.UI.get("toolOptToolbar");
-    
-    // Tool options
-    const createBrushOptions = () => {
-        const elOptionsBrush = ATON.UI.createContainer({ classes: "p-1" });
-
-        const createOptionRow = (labelText, controlEl) => {
-            const row = ATON.UI.createContainer({ classes: "d-flex w-100 align-items-center mb-2" });
-            const left = ATON.UI.createContainer({ classes: "col-5 pe-2 text-truncate" });
-            const right = ATON.UI.createContainer({ classes: "col" });
-
-            left.textContent = labelText;
-            // make control fill available space
-            if (controlEl && controlEl.classList) controlEl.classList.add("w-100");
-            right.append(controlEl);
-
-            row.append(left, right);
-            return row;
-        };
-
-        // Size (use existing createSlider)
-        UI._elBrushSlider = ATON.UI.createSlider({
-            range  : [0, 10],
-            value  : THOTH.Toolbox.selectorSize,
-            oninput: (v) => THOTH.Toolbox.setSelectorSize(v),
-        });
-        elOptionsBrush.append(createOptionRow("Size", UI._elBrushSlider));
-
-        return elOptionsBrush;
-    };
-
-    const createLassoOptions = () => {
-        const elOptionsLasso = ATON.UI.createContainer({ classes: "p-1" });
-
-        const createOptionRow = (labelText, controlEl) => {
-            const row   = ATON.UI.createContainer({ classes: "d-flex w-100 align-items-center mb-2" });
-            const left  = ATON.UI.createContainer({ classes: "col-4 pe-2 text-truncate" });
-            const right = ATON.UI.createContainer({ classes: "col" });
-
-            left.textContent = labelText;
-            if (controlEl && controlEl.classList) controlEl.classList.add("w-100");
-            right.append(controlEl);
-
-            row.append(left, right);
-            return row;
-        };
-
-        // Lasso Precision
-        const precisionSlider = ATON.UI.createSlider({
-            range   : [0.1, 1],
-            value   : THOTH.Toolbox.lassoPrecision,
-            step    : 0.1,
-            oninput : (v) => THOTH.Toolbox.lassoPrecision = v,
-        });
-        elOptionsLasso.append(createOptionRow("Precision", precisionSlider));
-
-        // Normal Threshold
-        const normalSlider = ATON.UI.createSlider({
-            range  : [-1, 1],
-            step   : 0.1,
-            value  : THOTH.Toolbox.normalThreshold,
-            oninput: (v) => THOTH.Toolbox.normalThreshold = v,
-        });
-        elOptionsLasso.append(createOptionRow("Normal threshold", normalSlider));
-
-        // Select Occluded Faces (use createBool but without its internal label)
-        const occludedBool = UI.createBool({
-            // omit 'text' so createBool only creates the input control
-            onchange: (input) => THOTH.Toolbox.selectObstructedFaces = input,
-            tooltip : "Select occluded faces",
-        });
-        elOptionsLasso.append(createOptionRow("Select occluded faces", occludedBool));
-
-        return elOptionsLasso;
-    };
-    UI._elOptionsBrush = createBrushOptions(),
-    UI._elOptionsLasso = createLassoOptions(),
-
-    UI._elToolOptionsToolbar.append(
-        UI._elOptionsBrush,
-        UI._elOptionsLasso
-    );
-
-    // Manage visibility
-    UI.hideBrushOptions();
-    UI.hideLassoOptions();
-};
-
 // Buttons
 
 UI.createUserButton = ()=>{
@@ -578,22 +484,84 @@ UI.createTestButton = (testfunc) => {
 };
 
 
-// Tool options
-
-UI.showBrushOptions = () => {
-    // ATON.UI.showElement(UI._elOptionsBrush);
+UI.createBrushOptions = () => {
+    const elHeader = ATON.UI.createContainer({classes: "bg-body-secondary"});
+    elHeader.append(ATON.UI.createButton({
+        text: "Brush/Eraser Options"
+    }));
+    
+    const elBody = ATON.UI.createContainer();
+    // Size
+    const elBrushSize = UI.createSplitRow({
+        colLeft: 7,
+        itemsLeft: ATON.UI.createButton({
+            text   : "Size",
+            tooltop: "Select the size of the tool",
+        }),
+        itemsRight: ATON.UI.createSlider({
+            range  : [0, 10],
+            value  : THOTH.Toolbox.selectorSize,
+            oninput: (v) => THOTH.Toolbox.setSelectorSize(v)
+        })
+    });
+    elBody.append(elHeader, elBrushSize);
+    
+    return elBody;
 };
 
-UI.hideBrushOptions = () => {
-    // ATON.UI.hideElement(UI._elOptionsBrush);
-};
+UI.createLassoOptions = () => {
+    const elHeader = ATON.UI.createContainer({classes: "bg-body-secondary"});
+    elHeader.append(ATON.UI.createButton({
+        text: "Brush/Eraser Options"
+    }));
+    
+    const elBody = ATON.UI.createContainer();
+    // Precision
+    const elPrecision = UI.createSplitRow({
+        colLeft: 7,
+        itemsLeft: ATON.UI.createButton({
+            text   : "Pixel precision",
+            tooltip: "Select the precision of the lasso tool. \n" +
+            "Higher precision leads to more accurate selection but lower performance"
+        }),
+        itemsRight: ATON.UI.createSlider({
+            range  : [0.1, 1],
+            value  : THOTH.Toolbox.lassoPrecision,
+            step    : 0.1,
+            oninput : (v) => THOTH.Toolbox.lassoPrecision = v,
+        })
+    });
+    // Normal
+    const elNormal = UI.createSplitRow({
+        colLeft: 7,
+        itemsLeft: ATON.UI.createButton({
+            text: "Normal threshold",
+            tooltip: "Select the threshold for face selection. \n" +
+            "-1: Highest tolerance. \n" + 
+            "+1: Lower tolerance"
+        }),
+        itemsRight: ATON.UI.createSlider({
+            range  : [-1, 1],
+            step   : 0.1,
+            value  : THOTH.Toolbox.normalThreshold,
+            oninput: (v) => THOTH.Toolbox.normalThreshold = v,
+        })
+    });
+    // Occluded
+    const elOccluded = UI.createSplitRow({
+        colLeft: 7,
+        itemsLeft: ATON.UI.createButton({
+            text: "Select occluded faces",
+            tooltip: "Select obscured areas.\n"
+        }),
+        itemsRight: UI.createBool({
+            onchange: (input) => THOTH.Toolbox.selectObstructedFaces = input,
+            tooltip : "Select occluded faces",
+        })
+    });
+    elBody.append(elHeader, elPrecision, elNormal, elOccluded);
 
-UI.showLassoOptions = () => {
-    ATON.UI.showElement(UI._elOptionsLasso);
-};
-
-UI.hideLassoOptions = () => {
-    // ATON.UI.hideElement(UI._elOptionsLasso);
+    return elBody;
 };
 
 
@@ -633,67 +601,6 @@ UI.setupVPPreview = () => {
     UI.elVPPreviewer.style.display = "block";
     UI.elVPPreviewer.style.opacity = 1;
     document.body.appendChild(UI.elVPPreviewer)
-};
-
-
-// Toast
-
-UI.setupToast = () => {
-    const createToast = () => {
-        const container = document.createElement('div');
-        container.id = 'toastContainer';
-        container.className = 'position-fixed bottom-0 end-0 p-3';
-        container.style.zIndex = 1100;
-
-        const toast = document.createElement('div');
-        toast.className = 'toast align-items-center text-bg-body-secondary border-0';
-        toast.setAttribute('role', 'status');
-        toast.setAttribute('aria-live', 'polite');
-        toast.setAttribute('aria-atomic', 'true');
-
-        const toastBody = document.createElement('div');
-        toastBody.className = 'd-flex toast-body align-items-center';
-        toast.message = document.createElement('span');
-        toastBody.appendChild(toast.message);
-
-        const btnClose = document.createElement('button');
-        btnClose.type = 'button';
-        btnClose.className = 'btn-close btn-close-white ms-2 mb-1';
-        btnClose.setAttribute('aria-label', 'Close');
-        btnClose.onclick = () => {
-            toast.classList.remove('show');
-            setTimeout(() => { container.style.display = 'none'; }, 200);
-        };
-        toastBody.appendChild(btnClose);
-
-        toast.appendChild(toastBody);
-        container.appendChild(toast);
-        document.body.appendChild(container);
-
-        container._toast   = toast;
-        container._message = toast.message;
-        return container;
-    };
-    UI._elToast = createToast();
-    // hide initially
-    UI._elToast.style.display = 'none';
-};
- 
-UI.showToast = (message, timeout = 2500) => {
-    if (!UI._elToast) return;
-    const container = UI._elToast;
-    const toast = container._toast;
-    const msgEl = container._message;
-
-    msgEl.textContent = message;
-    container.style.display = 'block';
-    // show bootstrap toast (class 'show' used by bs to display)
-    toast.classList.add('show');
-
-    UI._toastTimeout = setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => { container.style.display = 'none'; }, 200);
-    }, timeout);
 };
 
 
@@ -784,7 +691,7 @@ UI.modalExport = () => {
 UI.modalBuildVP = (modelName) => {
     THOTH.Scene.readColmap(modelName).then((colmapMap) => {
         if (!colmapMap) {
-            UI.showToast("No COLMAP text detected");
+            FE.showToast("No COLMAP text detected");
             return;
         };
         const recommended = Math.min(Math.floor(colmapMap.size / 2), 20);
@@ -1008,7 +915,7 @@ UI.modalAddModel = () => {
         
                 }, error => {
                     console.log(error)
-                    UI.showToast("Error loading models:" + error)
+                    FE.showToast("Error loading models:" + error)
                 });
         }
     )

@@ -48,7 +48,7 @@ Scene.initSceneMetadata = () => {
     $.getJSON(THOTH.PATH_RES_SCHEMA + "annotation_schema.json", (data) => {
         const check = Scene.validateSchema(data);
         if (!check) {
-            THOTH.UI.showToast("Invalid Metadata Schema", 5000);
+            THOTH.FE.showToast("Invalid Metadata Schema", 5000);
             return;
         }
         Scene.currData.sceneMetadata = Scene.createPropertiesfromSchema(data);
@@ -178,10 +178,10 @@ Scene.exportChanges = () => {
     
     // Patch changes
     Scene.patch(A, Scene.MODE_ADD, () => {
-        THOTH.UI.showToast("Changes exported successfully");
+        THOTH.FE.showToast("Changes exported successfully");
         console.log("Changes exported successfully");
     }, (error) => {
-        THOTH.UI.showToast("Export failed: " + error);
+        THOTH.FE.showToast("Export failed: " + error);
         console.log("Export failed:", error)
     });
 
@@ -270,7 +270,7 @@ Scene.readColmap = (modelName) => {
         })
         .catch(err => {
             console.error("Failed to load " + colmapPath + ": " + err);
-            if (THOTH.UI._elToast !== undefined) THOTH.UI.showToast("No COLMAP txt detected")
+            if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No COLMAP txt detected")
             return null;
         });
 };
