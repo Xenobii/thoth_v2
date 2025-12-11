@@ -14,6 +14,9 @@ Layers.setup = () => {
     for (const id in layerGraph) {
         Layers.layerMap.set(Number(id), layerGraph[id])
     };
+
+    // Active layer
+    Layers.activeLayer = undefined;
 };
 
 
@@ -26,12 +29,10 @@ Layers.createLayer = (layerId) => {
 
     // Resolve id conflict
     if (layer !== undefined) {
-        if (layer.trash === true) {
-            Layers.resurrectLayer(layerId);
-        }
-        else {
-            alert(`Layer id conflict ${layerId}`);
-        }
+        if (layer.trash === true) Layers.resurrectLayer(layerId);
+        else alert(`Layer id conflict ${layerId}`);
+
+        return;
     }
 
     // Build layer data
@@ -47,6 +48,9 @@ Layers.createLayer = (layerId) => {
 
     // Append to map
     Layers.layerMap.set(layerId, layerData);
+
+    // Update front end
+    THOTH.FE.addNewLayer(layerId);
 };
 
 Layers.deleteLayer = (layerId) => {
@@ -55,8 +59,11 @@ Layers.deleteLayer = (layerId) => {
     const layer = Layers.layerMap.get(layerId);
 
     layer.trash = true;
-    THOTH.Scene.activeLayer = undefined;
+    Layers.activeLayer = undefined;
 
+    // Update UI
+    THOTH.FE.deleteLayer(layerId);
+    
     THOTH.updateVisibility();
 };
 

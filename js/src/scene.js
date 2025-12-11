@@ -24,8 +24,6 @@ Scene.setup = (sid) => {
     Scene.MODE_DEL  = 1;
 
     Scene.schemaMap = Scene.getMetadataSchemas();
-    
-    Scene.activeLayer = undefined;
 };
 
 

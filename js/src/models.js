@@ -11,17 +11,20 @@ Models.setup = () => {
     };
     
     // Create model map for easy access
-    const modelGraph = ATON.SceneHub.currData.scenegraph.nodes;
+    const modelGraph = ATON.SceneHub.currData.scenegraph.nodes || {};
     Models.modelMap = new Map();
 
     for (const name in modelGraph) {
-        const node = ATON.getSceneNode(name);
-        Models.modelMap.set(name, node);
+        const N = ATON.getSceneNode(name);
+        if (N.parent === null) {
+            N.attachToRoot();
+        }
+        Models.modelMap.set(name, N);
     };
 
     // Initialize raycasting for models
-    for (const model of Models.modelMap.keys()) {
-        Models.initModelForRC(model);
+    for (const modelName of Models.modelMap.keys()) {
+        Models.initModelForRC(modelName);
     }
 };
 
@@ -40,7 +43,6 @@ Models.getModelURL = (modelName) => {
 
 Models.getModelMeshes = (modelName) => {
     if (!modelName) return;
-    
     const model = Models.modelMap.get(modelName);
     if (model === undefined) return;
 
@@ -56,18 +58,64 @@ Models.getModelMeshes = (modelName) => {
 
 // Model Management
 
-Models.addModel = (url) => {
-    if (url === undefined) return;
+Models.addModelsFromList = (modelList) => {
+    if (modelList === undefined || modelList.length === 0) return;
 
-    const N = ATON.createSceneNode();
-    N.attachToRoot();
+    for (const modelURL of modelList) {
+        Models.addModel(modelURL);
+    }
+};
 
-    N.load(url, () => {
-        const modelName = ""
-        N.as(modelName)
+Models.addModel = (modelURL) => {
+    if (!modelURL) return;
 
-        //
+    // modelURL can act as modelName 
+    const modelName = modelURL.split('/').filter(Boolean).pop();
+    
+    if (ATON.getSceneNode(modelName) !== undefined) {
+        Models.resurrectModel(modelName);
+        return;
+    }
+
+    // Create node
+    const N = ATON.createSceneNode(modelName);
+
+    N.load(modelURL, () => {
+        // Attach to root
+        N.attachToRoot();
+        
+        // Add to modelMap
+        Models.modelMap.set(modelName, N);
+        
+        // Init RC
+        Models.initModelForRC(modelName);
+
+        // Update FE
+        THOTH.FE.addModel(modelName);
     })
+};
+
+Models.deleteModel = (modelName) => {
+    if (!modelName) return;
+
+    const model = Models.modelMap.get(modelName);
+    
+    // Dettach node
+    model.parent.remove(model);
+    
+    // Update FE
+    THOTH.FE.deleteModel(modelName);
+};
+
+Models.resurrectModel = (modelName) => {
+    if (!modelName) return;
+
+    // Reattach to root
+    const model = Models.modelMap.get(modelName);
+    model.attachToRoot();
+    
+    // Update FE
+    THOTH.FE.addModel(modelName)
 };
 
 Models.initModelForRC = (modelName) => {

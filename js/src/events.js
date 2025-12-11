@@ -300,7 +300,6 @@ Events.setupLayerEvents = () => {
         const layerId = THOTH.Utils.getFirstUnusedKey(THOTH.Layers.layerMap);
         // Local
         THOTH.Layers.createLayer(layerId);
-        THOTH.FE.addNewLayer(layerId);
         // Photon
         THOTH.firePhoton("createLayer", (layerId));
         // History
@@ -313,7 +312,6 @@ Events.setupLayerEvents = () => {
     THOTH.on("deleteLayer", (layerId) => {
         // Local
         THOTH.Layers.deleteLayer(layerId);
-        THOTH.FE.deleteLayer(layerId);
         // Photon
         THOTH.firePhoton("deleteLayer", (layerId));
         // History
@@ -349,7 +347,7 @@ Events.setupLayerEvents = () => {
         const prevData = l.prevData;
 
         // Local event
-        THOTH.Scene.editSceneMetadata(data)
+        THOTH.Scene.editSceneMetadata(data);
         // Photon event
         THOTH.firePhoton("editSceneMetadata", ({
             value: data
@@ -364,36 +362,36 @@ Events.setupLayerEvents = () => {
     // Brush
     THOTH.on("selectBrush", () => {
         THOTH.Toolbox.activateBrush();
-        THOTH.setUserControl(false);
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(false);
         THOTH.FE.handleToolOptions('brush');
         THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
     });
     // Eraser
     THOTH.on("selectEraser", () => {
         THOTH.Toolbox.activateEraser();
-        THOTH.setUserControl(false);
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(false);
         THOTH.FE.handleToolOptions('eraser');
         THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
     });
     // Lasso add
     THOTH.on("selectLasso", () => {
         THOTH.Toolbox.activateLasso();
-        THOTH.setUserControl(false);
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(false);
         THOTH.FE.handleToolOptions('lasso');
         THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
     });
     // Select no tool
     THOTH.on("selectNone", () => {
         THOTH.Toolbox.deactivate();
-        THOTH.setUserControl(true);
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(true);
         THOTH.FE.handleToolOptions('no_tool');
         THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
     });
@@ -411,6 +409,17 @@ Events.setupLayerEvents = () => {
 };
 
 Events.setupModelEvents = () => {
+    // Add models
+    THOTH.on("addModels", (l) => {
+        // Local
+        THOTH.Models.addModels(l.modelList);
+        // Photon
+        // THOTH.firePhoton("addModels");
+        // History
+        // THOTH.History.pushAction({
+        //     type: THOTH.History.ACTIONS
+        // })
+    });
     // Model Transform
     THOTH.on("modelTransformPosInput", (l) => {
         const pos = THOTH.Models.modelMap.get(l.modelName).position
@@ -517,7 +526,7 @@ Events.setupToolboxEvents = () => {
         if (THOTH.Toolbox.tempSelection === null) return;
         
         // Get only faces that don't already belong to layer
-        const layerId   = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Layers.activeLayer.id;
         const selection = THOTH.Toolbox.endBrush();
         
         if (Object.keys(selection).length === 0) return;
@@ -554,7 +563,7 @@ Events.setupToolboxEvents = () => {
         if (THOTH.Toolbox.tempSelection === null) return;
         
         // Get only faces that don't already belong to layer
-        const layerId   = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Layers.activeLayer.id;
         const selection = THOTH.Toolbox.endEraser();
         
         // Return if selection is empty
@@ -588,7 +597,7 @@ Events.setupToolboxEvents = () => {
     THOTH.on("endLassoAdd", (l) => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
 
-        const layerId   = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Layers.activeLayerr.id;
         const selection = THOTH.Toolbox.endLassoAdd();
 
         if (Object.keys(selection).length === 0) return;
@@ -612,7 +621,7 @@ Events.setupToolboxEvents = () => {
     THOTH.on("endLassoDel", (l) => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
 
-        const layerId   = THOTH.Scene.activeLayer.id;
+        const layerId   = THOTH.Layers.activeLayer.id;
         const selection = THOTH.Toolbox.endLassoDel();
 
         if (Object.keys(selection).length === 0) return;
@@ -645,7 +654,7 @@ Events.setupToolboxEvents = () => {
 // Utils
 
 Events.activeLayerExists = () => {
-    if (THOTH.Scene.activeLayer === undefined) return false;
+    if (THOTH.Layers.activeLayer === undefined) return false;
     else return true;
 };
 

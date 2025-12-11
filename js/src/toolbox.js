@@ -224,7 +224,7 @@ Toolbox.brushActive = () => {
     const meshName  = THOTH.hoveredMesh;
     
     const newFaces       = Toolbox.selectMultipleFaces(THOTH.hoveredModel, THOTH.hoveredMesh);
-    const highlightColor = THOTH.Utils.hex2rgb(THOTH.Scene.activeLayer.highlightColor);
+    const highlightColor = THOTH.Utils.hex2rgb(THOTH.Layers.activeLayer.highlightColor);
     
     Toolbox.tempSelection[modelName] = Toolbox.tempSelection[modelName] || {};
     Toolbox.tempSelection[modelName][meshName] = 
@@ -233,7 +233,7 @@ Toolbox.brushActive = () => {
         Toolbox.tempSelection[modelName][meshName]
     );
     
-    if (!THOTH.Scene.activeLayer.visible) return;
+    if (!THOTH.Layers.activeLayer.visible) return;
     THOTH.highlightSelection(newFaces, highlightColor, modelName, meshName);
 };
 
@@ -251,17 +251,17 @@ Toolbox.eraserActive = () => {
         Toolbox.tempSelection[modelName][meshName]
     );
 
-    if (!THOTH.Scene.activeLayer.visible) return;
+    if (!THOTH.Layers.activeLayer.visible) return;
     THOTH.highlightSelection(newFaces, highlightColor, modelName, meshName);
 };
 
 Toolbox.endBrush = () => {
     // Get only faces that don't already belong to layer
     for (const model of Object.keys(Toolbox.tempSelection)) {
-        THOTH.Scene.activeLayer.selection[model] = THOTH.Scene.activeLayer.selection[model] || {};
+        THOTH.Layers.activeLayer.selection[model] = THOTH.Layers.activeLayer.selection[model] || {};
         
         for (const mesh of Object.keys(Toolbox.tempSelection[model])) {
-            const activeLayerSelection = new Set(THOTH.Scene.activeLayer.selection[model][mesh]);
+            const activeLayerSelection = new Set(THOTH.Layers.activeLayer.selection[model][mesh]);
             
             if (Toolbox.tempSelection[model][mesh].size === 0) continue;
             
@@ -275,10 +275,10 @@ Toolbox.endBrush = () => {
 Toolbox.endEraser = () => {
     // Get only faces that already belong to layer
     for (const model of Object.keys(Toolbox.tempSelection)) {
-        THOTH.Scene.activeLayer.selection[model] = THOTH.Scene.activeLayer.selection[model] || {};
+        THOTH.Layers.activeLayer.selection[model] = THOTH.Layers.activeLayer.selection[model] || {};
         
         for (const mesh of Object.keys(Toolbox.tempSelection[model])) {
-            const activeLayerSelection = new Set(THOTH.Scene.activeLayer.selection[model][mesh]);
+            const activeLayerSelection = new Set(THOTH.Layers.activeLayer.selection[model][mesh]);
             
             if (Toolbox.tempSelection[model][mesh].size === 0) continue;
 
@@ -342,8 +342,8 @@ Toolbox.endLassoAdd = () => {
             const newFaces = Toolbox.processLassoSelection(mesh);
             if (newFaces === undefined || newFaces?.length === 0) continue;
             
-            THOTH.Scene.activeLayer.selection[modelName] = THOTH.Scene.activeLayer.selection[modelName] || {};
-            const activeLayerSelection = new Set(THOTH.Scene.activeLayer.selection[modelName][meshName]);
+            THOTH.Layers.activeLayer.selection[modelName] = THOTH.Layers.activeLayer.selection[modelName] || {};
+            const activeLayerSelection = new Set(THOTH.Layers.activeLayer.selection[modelName][meshName]);
             
             tempSelection[modelName] = {};
             tempSelection[modelName][meshName] = [...newFaces.filter(f => !activeLayerSelection.has(f))];
@@ -365,8 +365,8 @@ Toolbox.endLassoDel = () => {
             const newFaces = Toolbox.processLassoSelection(mesh);
             if (newFaces === undefined || newFaces?.length === 0) continue;
             
-            THOTH.Scene.activeLayer.selection[modelName] = THOTH.Scene.activeLayer.selection[modelName] || {};
-            const activeLayerSelection = new Set(THOTH.Scene.activeLayer.selection[modelName][meshName]);
+            THOTH.Layers.activeLayer.selection[modelName] = THOTH.Layers.activeLayer.selection[modelName] || {};
+            const activeLayerSelection = new Set(THOTH.Layers.activeLayer.selection[modelName][meshName]);
             
             tempSelection[modelName] = {};
             tempSelection[modelName][meshName] = [...newFaces.filter(f => activeLayerSelection.has(f))];

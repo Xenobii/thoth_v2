@@ -395,22 +395,43 @@ FE.setupLayersPanel = (elLayerList) => {
 };
 
 
-// New 
+// Layers
 
-FE.addNewLayer = (layerName) => {
+FE.addNewLayer = (layerId) => {
     // Resurrect layer if it already exists
-    if (FE.layerMap.has(layerName)) {
-        FE.layerMap.get(layerName).style.display = 'flex';
+    if (FE.layerMap.has(layerId)) {
+        FE.layerMap.get(layerId).style.display = 'flex';
         return;
     }
     // Create new
-    const newLayerController = THOTH.UI.createLayerController(layerName);
-    FE.layerMap.set(layerName, newLayerController);
+    const newLayerController = THOTH.UI.createLayerController(layerId);
+    FE.layerMap.set(layerId, newLayerController);
     FE.layerList.append(newLayerController);
 };
 
 FE.deleteLayer = (layerName) => {
     FE.layerMap.get(layerName).style.display = 'none';
+    if (THOTH.Layers.activeLayer === layerName) THOTH.Layers.activeLayer = undefined;
+    FE.handleElementHighlight(null, FE.layerMap);
+};
+
+
+// Models
+
+FE.addModel = (modelName) => {
+    // Handle resurrection for undo
+    if (FE.modelMap.has(modelName)) {
+        FE.modelMap.get(modelName).style.display = 'flex';
+        return;
+    }
+    // Create new
+    const newModelController = THOTH.UI.createModelController(modelName);
+    FE.modelMap.set(modelName, newModelController);
+    FE.modelList.append(newModelController);
+};
+
+FE.deleteModel = (modelName) => {
+    FE.modelMap.get(modelName).style.display = 'none';
 };
 
 

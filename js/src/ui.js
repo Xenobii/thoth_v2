@@ -279,7 +279,7 @@ UI.createModelController = (modelName) => {
         itemsLeft : elLeft,
         itemsRight: ATON.UI.createButton({
             icon   : "trash",
-            onpress: () => {}
+            onpress: () => THOTH.Models.deleteModel(modelName),
         }),
     });
     
@@ -323,7 +323,7 @@ UI.createLayerController = (layerId) => {
             text   : layer.name,
             size   : "small",
             onpress: () => {
-                THOTH.Scene.activeLayer = layer;
+                THOTH.Layers.activeLayer = layer;
                 THOTH.FE.handleElementHighlight(layerId, THOTH.FE.layerMap);
             }
         }),
@@ -597,7 +597,8 @@ UI.modalExport = () => {
         onsuccess: () => {
             THOTH.Scene.exportChanges();
             ATON.UI.hideModal();
-        }
+        },
+        successText: "Export changes"
     }) 
 
     ATON.UI.showModal({
@@ -708,7 +709,8 @@ UI.modalBuildVP = (modelName) => {
                     THOTH.SVP.buildVPNodes(vpMap, modelName);
                     ATON.UI.hideModal();
                 }
-            }
+            },
+            successText: "Build"
         })
         
         ATON.UI.showModal({
@@ -778,27 +780,30 @@ UI.modalAddModel = () => {
                 "items/"+u.username+"/models",
                 entries => {
                     // Body
-                    const elBody = ATON.UI.createContainer();
+                    const modelList = new Set();
+
                     const itemNames = entries.map(item => {
-                        return item.replace(u.username+"/models/", "")
+                        return item.replace("items/"+u.username+"/models/", "")
                     });
-                    const elIT = ATON.UI.createInputText({
-                        label      : "Input model",
-                        placeholder: "3D model URL",
-                        list       : entries,
-                        listnames  : itemNames
+                    const elInput = ATON.UI.createTagsComponent({
+                        list       : itemNames,
+                        label      : "Input models",
+                        onaddtag   : (k) => modelList.add(k),
+                        onremovetag: (k) => modelList.delete(k)
                     });
-                    elBody.append(elIT);
-                    let elInput = elIT.getElementsByTagName("input")[0];
         
-                    // Footer 
+                    // Footer
                     const elFooter = UI.createModalFooter({
-                        onsuccess: THOTH.Models.addModel(elInput.value)
+                        onsuccess  : () => {
+                            THOTH.Models.addModelsFromList(Array.from(modelList));
+                            ATON.UI.hideModal();
+                        },
+                        successText: "Add models"
                     });
         
                     ATON.UI.showModal({
-                        header: "Add model",
-                        body  : elBody,
+                        header: "Add models",
+                        body  : elInput,
                         footer: elFooter,
                     });
         
@@ -806,6 +811,9 @@ UI.modalAddModel = () => {
                     console.log(error)
                     THOTH.FE.showToast("Error loading models:" + error)
                 });
+        },
+        () => {
+            THOTH.FE.showToast("Cannot add model: unauthorized")
         }
     )
 };
@@ -989,14 +997,16 @@ UI.modalLayerDetails = (layerId, data_temp) => {
     elBody.append(elName, elMisc, elPickSchema, elMetadata);
     
     // Footer
-    const elFooter = UI.createModalFooter(() => {
-        console.log(data_temp)
-        THOTH.fire("editLayerMetadata", {
-            id      : layerId,
-            data    : data_temp,
-            prevData: prev_data
-        });
-        ATON.UI.hideModal();
+    const elFooter = UI.createModalFooter({
+        onsuccess: () => {
+            THOTH.fire("editLayerMetadata", {
+                id      : layerId,
+                data    : data_temp,
+                prevData: prev_data
+            });
+            ATON.UI.hideModal();
+        },
+        successText: "Save changes"
     });
 
     ATON.UI.showModal({
@@ -1044,12 +1054,15 @@ UI.modalSceneMetadata = (data_temp) => {
     elBody.append(elPickSchema, elMetadata);
 
     // Footer
-    const elFooter = UI.createModalFooter(() => {
-        THOTH.fire("editSceneMetadata", {
-            data    : data_temp,
-            prevData: prev_data
-        });
-        ATON.UI.hideModal();
+    const elFooter = UI.createModalFooter({
+        onsuccess: () => {
+            THOTH.fire("editSceneMetadata", {
+                data    : data_temp,
+                prevData: prev_data
+            });
+            ATON.UI.hideModal();
+        },
+        successText: "Save changes"
     });
 
     ATON.UI.showModal({
@@ -1059,15 +1072,17 @@ UI.modalSceneMetadata = (data_temp) => {
     });
 };  
 
-UI.createModalFooter = (onsuccess) => {
+UI.createModalFooter = (options) => {
     const elFooter = ATON.UI.createContainer();
     elFooter.append(
         // Save
         ATON.UI.createButton({
-            text   : "Save changes",
+            text   : options.successText || "Save changes",
             size   : "large",
             variant: "success",
-            onpress: () => onsuccess()
+            onpress: () => {
+                if (options.onsuccess) options.onsuccess();
+            }
         }),
         // Cancel
         ATON.UI.createButton({
