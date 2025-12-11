@@ -59,7 +59,7 @@ Layers.deleteLayer = (layerId) => {
     const layer = Layers.layerMap.get(layerId);
 
     layer.trash = true;
-    Layers.activeLayer = undefined;
+    THOTH.Layers.setActiveLayer(null);
 
     // Update UI
     THOTH.FE.deleteLayer(layerId);
@@ -178,6 +178,16 @@ Layers.getExportData = () => {
         if (layerObjects[layerId].trash === true) layerObjects.delete(layerId)
     }
     return layerObjects;
+};
+
+
+// Misc
+
+Layers.setActiveLayer = (layerId) => {
+    if (layerId === null || Layers.layerMap.has(layerId)) {
+        Layers.activeLayer = Layers.layerMap.get(layerId);
+        THOTH.FE.handleElementHighlight(layerId, THOTH.FE.layerMap);
+    }
 };
 
 

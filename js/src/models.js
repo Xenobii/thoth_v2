@@ -58,14 +58,6 @@ Models.getModelMeshes = (modelName) => {
 
 // Model Management
 
-Models.addModelsFromList = (modelList) => {
-    if (modelList === undefined || modelList.length === 0) return;
-
-    for (const modelURL of modelList) {
-        Models.addModel(modelURL);
-    }
-};
-
 Models.addModel = (modelURL) => {
     if (!modelURL) return;
 
@@ -95,10 +87,12 @@ Models.addModel = (modelURL) => {
     })
 };
 
-Models.deleteModel = (modelName) => {
-    if (!modelName) return;
+Models.deleteModel = (modelURL) => {
+    if (!modelURL) return;
 
-    const model = Models.modelMap.get(modelName);
+    // modelURL can act as modelName 
+    const modelName = modelURL.split('/').filter(Boolean).pop();
+    const model     = Models.modelMap.get(modelName);
     
     // Dettach node
     model.parent.remove(model);

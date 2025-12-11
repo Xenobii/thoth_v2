@@ -35,6 +35,9 @@ History.ACTIONS.EDIT_METADATA_OBJECT = 6;
 History.ACTIONS.TRANSFORM_MODEL_POS = 7;
 History.ACTIONS.TRANSFORM_MODEL_ROT = 8;
 
+History.ACTIONS.ADD_MODEL    = 9;
+History.ACTIONS.DEL_MODEL = 10;
+
 // Setup
 
 History.setup = () => {
@@ -73,7 +76,6 @@ History.undo = () => {
         case History.ACTIONS.CREATE_LAYER:
             inverseType = History.ACTIONS.DELETE_LAYER;
             THOTH.Layers.deleteLayer(id);
-            THOTH.FE.deleteLayer(id);
             THOTH.firePhoton("deleteLayer", id);
             break;
             
@@ -162,6 +164,18 @@ History.undo = () => {
                 value    : value
             });
             break;
+        
+        case History.ACTIONS.ADD_MODEL:
+            inverseType = History.ACTIONS.DEL_MODEL;
+            THOTH.Models.deleteModel(id);
+            THOTH.firePhoton("deleteModel", id);
+            break;
+
+        case History.ACTIONS.DEL_MODEL:
+            inverseType = History.ACTIONS.ADD_MODEL;
+            THOTH.Models.addModel(id);
+            THOTH.firePhoton("addModel");
+            break; 
 
         default:
             THOTH.UI.showToast("Invalid action type: " + type);
@@ -288,7 +302,19 @@ History.redo = () => {
                 value    : value
             });
             break;
+        
+        case History.ACTIONS.ADD_MODEL:
+            inverseType = History.ACTIONS.DEL_MODEL;
+            THOTH.Models.deleteModel(id);
+            THOTH.firePhoton("deleteModel", id);
+            break;
 
+        case History.ACTIONS.DEL_MODEL:
+            inverseType = History.ACTIONS.ADD_MODEL;
+            THOTH.Models.addModel(id);
+            THOTH.firePhoton("addModel");
+            break; 
+            
         default:
             THOTH.UI.showToast("Invalid action type: " + type);
             console.warn("Invalid action: " + type);

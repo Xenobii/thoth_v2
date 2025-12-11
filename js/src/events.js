@@ -52,10 +52,8 @@ Events.setupInputEL = () => {
         THOTH.fire("MouseMove", (e));
     });
     // Key down
-    window.addEventListener("keydown", (e) => {
-        THOTH.fire("KeyDown", (e.code), false);
-    });
-    // Existing keyup event since it doesn't support caps/other languages
+    window.addEventListener("keydown", (e) => THOTH.fire("KeyDown", (e.code), false));
+    // Discard existing keyup event since it doesn't support caps/other languages
     THOTH.discardAtonEventHandler("KeyUp");
     // Key up
     window.addEventListener("keyup", (e) => {
@@ -202,21 +200,38 @@ Events.setupActiveEL = () => {
     
     // Key
     THOTH.on("KeyDown", (k) => {
+        // Layers
+        if (k.startsWith("Digit")) {
+            const id = Number(k.replace("Digit", ""));
+            if (THOTH._bShiftDown) THOTH.UI.modalLayerDetails(id);
+            else THOTH.Layers.setActiveLayer(id);
+        }
+        if (k === "KeyN") {
+            if (THOTH._bShiftDown) THOTH.fire("createLayer");
+            else THOTH.fire("selectNone");
+        }
+        if (k === "KeyS") {
+            if (THOTH._bShiftDown) THOTH.UI.modalSceneMetadata();
+        }
+
+        // Models
+        if (k === "KeyA") {
+            if (THOTH._bShiftDown) THOTH.UI.modalAddModel();
+        }
+
         // Tools
         if (k === "KeyB") {
             THOTH.fire("selectBrush");
         }
         if (k === "KeyE") {
-            THOTH.fire("selectEraser");
+            if (THOTH._bShiftDown) THOTH.UI.modalExport();
+            else THOTH.fire("selectEraser");
         }
         if (k === "KeyL") {
             THOTH.fire("selectLasso");
         }
-        if (k === "keyN") {
-            THOTH.fire("selectNone");
-        }
         if (k === "KeyM") {
-            THOTH.fire("selectMeasure");
+            // THOTH.fire("selectMeasure");
         }
 
         // Tool size
@@ -254,6 +269,8 @@ Events.setupActiveEL = () => {
                 THOTH.Toolbox.clearMeasure();
             }
         }
+
+        // Export
     });
     THOTH.on("KeyUp", (k) => {
         // Shift
@@ -409,16 +426,29 @@ Events.setupLayerEvents = () => {
 };
 
 Events.setupModelEvents = () => {
-    // Add models
-    THOTH.on("addModels", (l) => {
+    // Add model
+    THOTH.on("addModel", (l) => {
         // Local
-        THOTH.Models.addModels(l.modelList);
+        THOTH.Models.addModel(l.id);
         // Photon
-        // THOTH.firePhoton("addModels");
+        THOTH.firePhoton("addModel");
         // History
-        // THOTH.History.pushAction({
-        //     type: THOTH.History.ACTIONS
-        // })
+        THOTH.History.pushAction({
+            type: THOTH.History.ACTIONS.ADD_MODEL,
+            id  : l.id
+        });
+    });
+    // Delete model
+    THOTH.on("deleteModel", (l) => {
+        // Local
+        THOTH.Models.deleteModel(l.id);
+        // Photon
+        THOTH.firePhoton("deleteModels");
+        // History
+        THOTH.History.pushAction({
+            type: THOTH.History.ACTIONS.DEL_MODEL,
+            id  : l.id
+        });
     });
     // Model Transform
     THOTH.on("modelTransformPosInput", (l) => {
@@ -495,6 +525,14 @@ Events.setupPhotonEvents = () => {
 
     THOTH.onPhoton("modelTransformPos", (l) => {
         THOTH.Models.modelTransformPos(l.modelName, l.value);
+    });
+
+    THOTH.onPhoton("addModel", (l) => {
+        THOTH.Models.addModel(l.id);
+    });
+
+    THOTH.onPhoton("deleteModel", (l) => {
+        THOTH.Models.deleteModel(l.id);
     });
 
     // On new user join
@@ -597,7 +635,7 @@ Events.setupToolboxEvents = () => {
     THOTH.on("endLassoAdd", (l) => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
 
-        const layerId   = THOTH.Layers.activeLayerr.id;
+        const layerId   = THOTH.Layers.activeLayer.id;
         const selection = THOTH.Toolbox.endLassoAdd();
 
         if (Object.keys(selection).length === 0) return;

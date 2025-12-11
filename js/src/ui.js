@@ -279,7 +279,9 @@ UI.createModelController = (modelName) => {
         itemsLeft : elLeft,
         itemsRight: ATON.UI.createButton({
             icon   : "trash",
-            onpress: () => THOTH.Models.deleteModel(modelName),
+            onpress: () => THOTH.fire("deleteModel", {
+                id: modelName
+            }),
         }),
     });
     
@@ -306,8 +308,8 @@ UI.createSceneController = () => {
 };
 
 UI.createLayerController = (layerId) => {
-    const elLeft       = ATON.UI.createContainer();
-    const elRight      = ATON.UI.createContainer();
+    const elLeft  = ATON.UI.createContainer();
+    const elRight = ATON.UI.createContainer();
     
     const layer = THOTH.Layers.layerMap.get(layerId);
     
@@ -322,10 +324,7 @@ UI.createLayerController = (layerId) => {
         ATON.UI.createButton({
             text   : layer.name,
             size   : "small",
-            onpress: () => {
-                THOTH.Layers.activeLayer = layer;
-                THOTH.FE.handleElementHighlight(layerId, THOTH.FE.layerMap);
-            }
+            onpress: () => THOTH.Layers.setActiveLayer(layerId)
         }),
     );
     elRight.append(
@@ -795,7 +794,11 @@ UI.modalAddModel = () => {
                     // Footer
                     const elFooter = UI.createModalFooter({
                         onsuccess  : () => {
-                            THOTH.Models.addModelsFromList(Array.from(modelList));
+                            for (const modelURL of Array.from(modelList)) {
+                                THOTH.fire("addModel", {
+                                    id: modelURL
+                                });
+                            }
                             ATON.UI.hideModal();
                         },
                         successText: "Add models"
@@ -813,7 +816,7 @@ UI.modalAddModel = () => {
                 });
         },
         () => {
-            THOTH.FE.showToast("Cannot add model: unauthorized")
+            THOTH.FE.showToast("Cannot add model: unauthorized");
         }
     )
 };
@@ -934,6 +937,8 @@ UI.createMetadataEditor = (data, data_temp) => {
 
 UI.modalLayerDetails = (layerId, data_temp) => {
     const layer = THOTH.Layers.layerMap.get(layerId);
+    if (layer === undefined) return;
+
     if (data_temp === undefined) data_temp = structuredClone(layer.metadata) || {};
     
     const schemaName = data_temp?.schemaName;

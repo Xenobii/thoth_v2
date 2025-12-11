@@ -409,10 +409,9 @@ FE.addNewLayer = (layerId) => {
     FE.layerList.append(newLayerController);
 };
 
-FE.deleteLayer = (layerName) => {
-    FE.layerMap.get(layerName).style.display = 'none';
-    if (THOTH.Layers.activeLayer === layerName) THOTH.Layers.activeLayer = undefined;
-    FE.handleElementHighlight(null, FE.layerMap);
+FE.deleteLayer = (layerId) => {
+    FE.layerMap.get(layerId).style.display = 'none';
+    if (THOTH.Layers.activeLayer === layerId) THOTH.Layers.setActiveLayer(layerId);
 };
 
 
