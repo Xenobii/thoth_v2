@@ -7,16 +7,18 @@ FE.setup = () => {
     FE.layerMap   = FE.initLayerMap();
     FE.toolMap    = FE.initToolMap();
     FE.toolOptMap = FE.initToolOptMap();
+    
+    // Lists
+    FE.modelList = FE.setupModelList(FE.modelMap);
+    FE.layerList = FE.setupLayerList(FE.layerMap);
+    // FE.historyList = FE.setupHistoryList();
 
     // Toolbars
     FE.topToolbar     = FE.setupTopToolbar();
     FE.userToolbar    = FE.setupUserToolbar();
     FE.mainToolbar    = FE.setupMainToolbar(FE.toolMap);
     FE.toolOptToolbar = FE.setupToolOptToolbar();
-
-    // Lists
-    FE.modelList = FE.setupModelList(FE.modelMap);
-    FE.layerList = FE.setupLayerList(FE.layerMap);
+    // FE.historyToolbar = FE.setupHistoryToolbar(FE.historyList);
 
     // Panels
     FE.settingsPanel = FE.setupSettingsPanel();
@@ -25,6 +27,9 @@ FE.setup = () => {
 
     // Toast
     FE.toast = FE.createToast();
+
+    // VP
+    FE.viewpointCard = FE.setupVPCard();
 };
 
 
@@ -155,6 +160,12 @@ FE.setupLayerList = (layerMap) => {
     return elLayerList;
 };
 
+FE.setupHistoryList = () => {
+    const elHistoryList = ATON.UI.createContainer();
+
+    return elHistoryList;
+};
+
 
 // Toolbars
 
@@ -240,6 +251,34 @@ FE.setupToolOptToolbar = () => {
     const toolOptToolbar = ATON.UI.get("toolOptToolbar");
 
     return toolOptToolbar;
+};
+
+FE.setupHistoryToolbar = (historyList) => {
+    const historyToolbar = ATON.UI.get("historyToolbar");
+    const elButtons = ATON.UI.createContainer();
+    elButtons.append(
+        ATON.UI.createButton({
+            icon   : THOTH.PATH_RES_ICONS + "undo.png",
+            tooltip: "Undo (Ctrl + Z)",
+            onpress: () => THOTH.History.undo()
+        }),
+        ATON.UI.createButton({
+            icon   : THOTH.PATH_RES_ICONS + "redo.png",
+            tooltip: "Redo (Ctrl + Y)",
+            onpress: () => THOTH.History.redo()
+        })
+    );
+    const elHeader = THOTH.UI.createSplitRow({
+        classes: "bg-body-secondary",
+        colLeft: 7,
+        itemsLeft: ATON.UI.createButton({
+            text: "History",
+        }),
+        itemsRight: elButtons,
+    });
+    historyToolbar.append(elHeader, historyList);
+
+    return historyToolbar;
 };
 
 
@@ -408,6 +447,41 @@ FE.handleToolOptions = (elToolName) => {
 };
 
 
+// VP
+
+FE.setupVPCard = () => {
+    const elCard = ATON.UI.get("vpCard");
+
+    return elCard;
+};
+
+FE.showVPCard = (id) => {
+    const modelName = id.split("_vp_")[0];
+    const vpId      = id.split("_vp_")[1];
+
+    const viewpoint = THOTH.SVP.viewpoints[modelName][vpId];
+    const imageURL  = viewpoint.image;
+    
+    const elFooter = ATON.UI.createContainer();
+    elFooter.append(
+        ATON.UI.createButton({
+            text   : "Close",
+            icon   : "cancel",
+            onpress: () => FE.viewpointCard.replaceChildren()
+        })
+    );
+    FE.viewpointCard.replaceChildren(
+        ATON.UI.createCard({
+            title     : id,
+            size      : "large",
+            cover     : imageURL,
+            onactivate: () => THOTH.UI.modalVPImage(viewpoint),
+            footer    : elFooter
+        }),
+    );
+};
+
+
 // Toast
 
 FE.createToast = () => {
@@ -445,6 +519,7 @@ FE.showToast = (msg, timeout=2000) => {
         FE._toastTimeout = null;
     }, timeout);
 };
+
 
 
 export default FE;

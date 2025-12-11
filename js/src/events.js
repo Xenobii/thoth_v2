@@ -69,7 +69,7 @@ Events.setupActiveEL = () => {
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
+                THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             if (THOTH.Toolbox.tempSelection !== null) return;
@@ -78,7 +78,7 @@ Events.setupActiveEL = () => {
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
+                THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             if (THOTH.Toolbox.tempSelection !== null) return;
@@ -87,7 +87,7 @@ Events.setupActiveEL = () => {
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
+                THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             THOTH.fire("startLasso");
@@ -119,8 +119,7 @@ Events.setupActiveEL = () => {
         // Brush
         if (THOTH.Toolbox.brushEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
-                else console.log("No layer selected")
+                THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             THOTH.fire("startEraser");
@@ -128,8 +127,7 @@ Events.setupActiveEL = () => {
         // Eraser
         if (THOTH.Toolbox.eraserEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
-                else console.log("No layer selected")
+                THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             THOTH.fire("startBrush");
@@ -137,8 +135,7 @@ Events.setupActiveEL = () => {
         // Lasso
         if (THOTH.Toolbox.lassoEnabled) {
             if (!Events.activeLayerExists()) {
-                if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No Layer Selected");
-                else console.log("No layer selected")
+                THOTH.FE.showToast("No Layer Selected");
                 return;
             }
             THOTH.fire("startLasso");

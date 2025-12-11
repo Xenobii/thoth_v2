@@ -77,7 +77,6 @@ THOTH.setup = () => {
         THOTH.Toolbox.setup();
         THOTH.Models.setup();
         THOTH.Layers.setup();
-        THOTH.UI.setup();
         THOTH.FE.setup();
         
         THOTH.initRC();

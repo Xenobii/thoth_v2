@@ -9,13 +9,6 @@
 let UI = {}
 
 
-// Setup
-
-UI.setup = () => {
-    // Maps for easy access
-    UI.setupVPPreview();
-};
-
 
 // Modules
 
@@ -67,7 +60,7 @@ UI.modelTransformControl = (options) => {
     
     // Position
     if (options.position){
-        let elPos = THOTH.UI.createVectorControl({
+        let elPos = UI.createVectorControl({
             vector   : N.position,
             step     : options.position.step,
             reset    : [0,0,0],
@@ -79,7 +72,7 @@ UI.modelTransformControl = (options) => {
 
     // Scale
     if (options.scale){
-        let elScale = THOTH.UI.createVectorControl({
+        let elScale = UI.createVectorControl({
             vector   : N.scale,
             step     : options.scale.step,
             reset    : [1,1,1],
@@ -91,7 +84,7 @@ UI.modelTransformControl = (options) => {
 
     // Rotation
     if (options.rotation){
-        let elRot = THOTH.UI.createVectorControl({
+        let elRot = UI.createVectorControl({
             vector   : N.rotation,
             step     : options.rotation.step,
             reset    : [0,0,0],
@@ -242,12 +235,26 @@ UI.createSplitRow = (options) => {
     return elRow;
 };
 
+UI.createUserButton = ()=>{
+    UI._elUserBTN = ATON.UI.createButton({
+        icon    : "user",
+        onpress : UI.modalUser,
+        tooltip : "User"
+    });
+
+    ATON.checkAuth((u)=>{
+        UI._elUserBTN.classList.add("aton-btn-highlight");
+    });
+    UI._elUserBTN.classList.add("thoth-dark-btn");
+
+    return UI._elUserBTN;
+};
+
 
 // Controllers
 
 UI.createModelController = (modelName) => {
     const elLeft  = ATON.UI.createContainer();
-    const elRight = ATON.UI.createContainer();
 
     elLeft.append(
         // Visibility
@@ -292,7 +299,7 @@ UI.createSceneController = () => {
             text   : "Scene Metadata",
             icon   : "list",
             size   : "small",
-            onpress: () => THOTH.UI.modalSceneMetadata(),
+            onpress: () => UI.modalSceneMetadata(),
         }),
     });
     return elController;
@@ -364,30 +371,22 @@ UI.createModelEditor = (modelName) => {
     const elBody = ATON.UI.createContainer();
 
     // Top buttons
-    const elModelHead      = ATON.UI.createContainer({classes: "row g-0 align-items-center w-100 rounded-2 px-2 py-1 mb-1"});
-    const elModelHeadLeft  = ATON.UI.createContainer({classes: "col-4 d-flex align-items-center"});
-    const elModelHeadRight = ATON.UI.createContainer({classes: "col-8 d-flex justify-content-end align-items-center"});
-    
-    elModelHeadLeft.append(
-        // Back
-        ATON.UI.createButton({
+    const elModelHead = UI.createSplitRow({
+        colLeft  : 4,
+        itemsLeft: ATON.UI.createButton({
             icon   : "back",
             onpress: () => ATON.UI.showSidePanel({
                 header: "Scene",
                 body  : THOTH.FE.modelsPanel
             })
-        })
-    );
-    elModelHeadRight.append(
-        // Focus
-        ATON.UI.createButton({
+        }),
+        itemsRight: ATON.UI.createButton({
             text   : "Focus",
             icon   : "focus",
             classes: "btn-default",
             onpress: () => ATON.Nav.requestPOVbyNode(model, 0.2)
-        })
-    );
-    elModelHead.append(elModelHeadLeft, elModelHeadRight);
+        }),
+    });
 
     // Options
     const elVPOptions = ATON.UI.createContainer();
@@ -395,19 +394,19 @@ UI.createModelEditor = (modelName) => {
         ATON.UI.createButton({
             icon   : "visibility",
             size   : "small",
-            onpress: () => THOTH.SVP.toggleVPNodes(vpVisible, modelName)
+            // onpress: () => THOTH.SVP.toggleVPNodes(vpVisible, modelName)
         }),
         ATON.UI.createButton({
             text   : "Build Viewpoints",
             variant: "info",
             icon   : "pov",
-            onpress: () => UI.modalBuildVP(modelName),
+            // onpress: () => UI.modalBuildVP(modelName),
         }),
         ATON.UI.createButton({
             text   : "Delete All",
             variant: "secondary",
             icon   : "cancel",
-            onpress: () => THOTH.SVP.deleteSVPNodes(modelName),
+            // onpress: () => THOTH.SVP.deleteSVPNodes(modelName),
         })
     ) 
     
@@ -456,33 +455,7 @@ UI.createMeshList = (modelName) => {
 };
 
 
-// Buttons
-
-UI.createUserButton = ()=>{
-    UI._elUserBTN = ATON.UI.createButton({
-        icon    : "user",
-        onpress : UI.modalUser,
-        tooltip : "User"
-    });
-
-    ATON.checkAuth((u)=>{
-        UI._elUserBTN.classList.add("aton-btn-highlight");
-    });
-    UI._elUserBTN.classList.add("thoth-dark-btn");
-
-    return UI._elUserBTN;
-};
-
-UI.createTestButton = (testfunc) => {
-    return ATON.UI.createButton({
-        text    : "Test",
-        onpress : () => {
-            if (testfunc) testfunc()
-        },
-        tooltip : "test"   
-    });
-};
-
+// Options
 
 UI.createBrushOptions = () => {
     const elHeader = ATON.UI.createContainer({classes: "bg-body-secondary"});
@@ -565,45 +538,6 @@ UI.createLassoOptions = () => {
 };
 
 
-// VP
-
-UI.showVPPreview = (id) => {
-    const modelName = id.split("_vp_")[0];
-    const vpId      = id.split("_vp_")[1];
-
-    const viewpoint = THOTH.SVP.viewpoints[modelName][vpId];
-    const imageURL  = viewpoint.image;
-
-    const elFooter = ATON.UI.createContainer();
-    elFooter.append(
-        ATON.UI.createButton({
-            text   : "Close",
-            icon   : "cancel",
-            onpress: () => UI.elVPPreviewer.replaceChildren()
-        })
-    );
-    UI.elVPPreviewer.replaceChildren(
-        ATON.UI.createCard({
-            title     : id,
-            size      : "large",
-            cover     : imageURL,
-            onactivate: () => UI.modalVPImage(viewpoint),
-            footer    : elFooter
-        }),
-    );
-};
-
-UI.setupVPPreview = () => {
-    UI.elVPPreviewer = ATON.UI.createContainer({
-        id     : "VPPreviewer",
-        classes: "thoth-vp-preview"
-    });
-    UI.elVPPreviewer.style.display = "block";
-    UI.elVPPreviewer.style.opacity = 1;
-    document.body.appendChild(UI.elVPPreviewer)
-};
-
-
 // Modals
 
 UI.modalUser = () => {
@@ -648,42 +582,27 @@ UI.modalUser = () => {
 };
 
 UI.modalExport = () => {
-    let elFooter = ATON.UI.createContainer();
-    let elBody   = ATON.UI.createContainer();
-    
     // Body
     const elInfo = ATON.UI.createContainer();
     if (THOTH.collabExists()) {
         elInfo.textContent = `AN EXISTING VERSION OF THIS SCENE EXISTS. OVERWRITE IT?`;
     }
     else {
-        elInfo.textContent = `OVERWRITE CURRENT SCENE DATA?`;
+        elInfo.textContent = "OVERWRITE CURRENT SCENE DATA?" + 
+        "THIS WILL OVERWRITE ANY EXISTING DATA";
     }
-    elBody.append(elInfo);
 
     // Footer
-    elFooter.append(
-        ATON.UI.createButton({
-            text   : "Export",
-            icon   : "link",
-            size   : "large",
-            variant: "success",
-            onpress: () => {
-                THOTH.Scene.exportChanges();
-                ATON.UI.hideModal();
-            }
-        }),
-        ATON.UI.createButton({
-            text   : "Cancel",
-            size   : "large",
-            variant: "secondary",
-            onpress: () => ATON.UI.hideModal(),
-        }),
-    );
+    const elFooter = UI.createModalFooter({
+        onsuccess: () => {
+            THOTH.Scene.exportChanges();
+            ATON.UI.hideModal();
+        }
+    }) 
 
     ATON.UI.showModal({
         header: "Export changes?",
-        body  : elBody,
+        body  : elInfo,
         footer: elFooter
     });
 };
@@ -691,7 +610,7 @@ UI.modalExport = () => {
 UI.modalBuildVP = (modelName) => {
     THOTH.Scene.readColmap(modelName).then((colmapMap) => {
         if (!colmapMap) {
-            FE.showToast("No COLMAP text detected");
+            THOTH.FE.showToast("No COLMAP text detected");
             return;
         };
         const recommended = Math.min(Math.floor(colmapMap.size / 2), 20);
@@ -702,7 +621,6 @@ UI.modalBuildVP = (modelName) => {
         let mode     = "uniform";
     
         const elBody   = ATON.UI.createContainer();
-        const elFooter = ATON.UI.createContainer();
     
         // Info
         const elInfo = ATON.UI.createContainer();
@@ -734,14 +652,10 @@ UI.modalBuildVP = (modelName) => {
         
         // Options
         const elOptions = ATON.UI.createContainer();
-        const elButtonsRow = ATON.UI.createContainer({
-            classes: "row g-1 mb-2"
-        });
-        const elBtnColLeft = ATON.UI.createContainer({
-            classes: "col-6"
-        });
-        const elBtnColRight = ATON.UI.createContainer({
-            classes: "col-6"
+        const elButtonsRow = UI.createSplitRow({
+            elLeft: 6,
+            itemsLeft: manualBtn,
+            itemsRight: uniformBtn
         });
 
         const manualBtn = ATON.UI.createButton({
@@ -760,9 +674,6 @@ UI.modalBuildVP = (modelName) => {
                 updateMode();
             }
         });
-        elBtnColLeft.append(uniformBtn);
-        elBtnColRight.append(manualBtn);
-        elButtonsRow.append(elBtnColLeft, elBtnColRight);
         elOptions.append(elButtonsRow);
         
         const updateMode = () => {
@@ -784,12 +695,9 @@ UI.modalBuildVP = (modelName) => {
 
         elBody.append(elInfo, elOptions, elSamplingMethod);
         
-        // Footer 
-        const elBuildBtn = ATON.UI.createButton({
-            text   : "Build",
-            size   : "large",
-            variant: "success",
-            onpress: () => {
+        // Footer
+        const elFooter = UI.createModalFooter({
+            onsuccess: () => {
                 if (mode === "manual") {
                     THOTH.SVP.buildVPNodes(vpMap, modelName);
                     ATON.UI.hideModal();
@@ -801,14 +709,7 @@ UI.modalBuildVP = (modelName) => {
                     ATON.UI.hideModal();
                 }
             }
-        });
-        const elCancelBtn = ATON.UI.createButton({
-            text   : "Cancel",
-            size   : "large",
-            variant: "secondary",
-            onpress: () => ATON.UI.hideModal()
-        });
-        elFooter.append(elBuildBtn, elCancelBtn);
+        })
         
         ATON.UI.showModal({
             header: "Build viewpoints for " + modelName,
@@ -891,21 +792,9 @@ UI.modalAddModel = () => {
                     let elInput = elIT.getElementsByTagName("input")[0];
         
                     // Footer 
-                    const elFooter = ATON.UI.createContainer();
-                    const elAddBtn = ATON.UI.createButton({
-                        text   : "Add",
-                        size   : "large",
-                        variant: "success",
-                        onpress: () => THOTH.Scene.addModel(elInput.value),
-                        // onpress: () => console.log(elInput.value)
+                    const elFooter = UI.createModalFooter({
+                        onsuccess: THOTH.Models.addModel(elInput.value)
                     });
-                    const elCancelBtn = ATON.UI.createButton({
-                        text   : "Cancel",
-                        size   : "large",
-                        variant: "secondary",
-                        onpress: () => ATON.UI.hideModal()
-                    });
-                    elFooter.append(elAddBtn, elCancelBtn);
         
                     ATON.UI.showModal({
                         header: "Add model",
@@ -915,7 +804,7 @@ UI.modalAddModel = () => {
         
                 }, error => {
                     console.log(error)
-                    FE.showToast("Error loading models:" + error)
+                    THOTH.FE.showToast("Error loading models:" + error)
                 });
         }
     )

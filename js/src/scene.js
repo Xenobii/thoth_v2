@@ -247,7 +247,7 @@ Scene.editSceneMetadata = (value) => {
 // SVP
 
 Scene.readColmap = (modelName) => {
-    const modelURL = Scene.modelMap.get(modelName).url; 
+    const modelURL = THOTH.Models.getModelURL(modelName); 
     if (!modelURL) return Promise.resolve(null);
     
     const colmapPath = ATON.Utils.resolveCollectionURL(
@@ -270,7 +270,7 @@ Scene.readColmap = (modelName) => {
         })
         .catch(err => {
             console.error("Failed to load " + colmapPath + ": " + err);
-            if (THOTH.UI._elToast !== undefined) THOTH.FE.showToast("No COLMAP txt detected")
+            THOTH.FE.showToast("No COLMAP txt detected")
             return null;
         });
 };

@@ -89,7 +89,7 @@ SVP.createSVPNode = (id, pos) => {
     });
     N.setOnSelect(() => {
         ATON.Nav.requestPOVbyID(id, 0.5);
-        THOTH.UI.showVPPreview(id);
+        THOTH.FE.showVPCard(id);
     });
 
     return N;
