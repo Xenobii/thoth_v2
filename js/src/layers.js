@@ -1,4 +1,14 @@
+/*===========================================================================
+
+    THOTH
+    Layer management
+
+    Author: steliosalvanos@gmail.com
+
+===========================================================================*/
 let Layers = {};
+
+
 
 // Init
 
@@ -85,6 +95,17 @@ Layers.editLayer = (layerId, attr, value) => {
     if (!layer) return;
     
     layer[attr] = value;
+};
+
+Layers.renameLayer = (layerId, newName) => {
+    if (layerId === undefined) return;
+    
+    const layer = Layers.layerMap.get(layerId);
+    if (!layer) return;
+
+    layer.name = newName;
+    let layerNameBtn = THOTH.FE.layerNameMap.get(layerId);
+    layerNameBtn.textContent = newName;
 };
 
 Layers.addToSelection = (layerId, selection) => {

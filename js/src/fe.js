@@ -1,12 +1,22 @@
+/*===========================================================================
+
+    THOTH
+    Front End
+
+    Author: steliosalvanos@gmail.com
+
+===========================================================================*/
 let FE = {};
+
 
 
 FE.setup = () => {
     // Maps for accessibility
-    FE.modelMap   = FE.initModelMap();
-    FE.layerMap   = FE.initLayerMap();
-    FE.toolMap    = FE.initToolMap();
-    FE.toolOptMap = FE.initToolOptMap();
+    FE.modelMap     = FE.initModelMap();
+    FE.layerNameMap = FE.initLayerNameMap();
+    FE.layerMap     = FE.initLayerMap();
+    FE.toolMap      = FE.initToolMap();
+    FE.toolOptMap   = FE.initToolOptMap();
     
     // Lists
     FE.modelList = FE.setupModelList(FE.modelMap);
@@ -51,6 +61,18 @@ FE.initLayerMap = () => {
         layerMap.set(layerName, layerControler);
     }
     return layerMap;
+};
+
+FE.initLayerNameMap = () => {
+    const layerNameMap = new Map();
+    for (const [layerId, layer] of THOTH.Layers.layerMap) {
+        const layerNameBtn = ATON.UI.createButton({
+            text   : layer.name,
+            onpress: () => THOTH.Layers.setActiveLayer(layerId),
+        });
+        layerNameMap.set(layerId, layerNameBtn);
+    }
+    return layerNameMap;
 };
 
 FE.initToolMap = () => {
@@ -403,9 +425,19 @@ FE.addNewLayer = (layerId) => {
         FE.layerMap.get(layerId).style.display = 'flex';
         return;
     }
-    // Create new
+
+    // Create new name button
+    const newLayerNameBtn = ATON.UI.createButton({
+        text   : THOTH.Layers.layerMap.get(layerId).name,
+        onpress: () => THOTH.Layers.setActiveLayer(layerId)
+    });
+    FE.layerNameMap.set(layerId, newLayerNameBtn);
+    
+    // Create new controller
     const newLayerController = THOTH.UI.createLayerController(layerId);
     FE.layerMap.set(layerId, newLayerController);
+
+    // Add to list
     FE.layerList.append(newLayerController);
 };
 

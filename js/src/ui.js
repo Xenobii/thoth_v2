@@ -250,7 +250,6 @@ UI.createUserButton = ()=>{
     return UI._elUserBTN;
 };
 
-
 // Controllers
 
 UI.createModelController = (modelName) => {
@@ -313,6 +312,7 @@ UI.createLayerController = (layerId) => {
     
     const layer = THOTH.Layers.layerMap.get(layerId);
     
+    // Name
     elLeft.append(
         // Visibility
         ATON.UI.createButton({
@@ -320,22 +320,19 @@ UI.createLayerController = (layerId) => {
             size   : "small",
             onpress: () => THOTH.Layers.toggleVisibility(layerId),
         }),
-        // Name
-        ATON.UI.createButton({
-            text   : layer.name,
-            size   : "small",
-            onpress: () => THOTH.Layers.setActiveLayer(layerId)
-        }),
+        THOTH.FE.layerNameMap.get(layerId),
     );
+    let elCP = ATON.UI.createColorPicker({
+        color  : layer.highlightColor,
+        id     : `layer${layerId}CP`,
+        oninput: (color) => {
+            layer.highlightColor = color
+            THOTH.updateVisibility();
+        },
+    });
+    elCP.id = `layer${layerId}CP`;
     elRight.append(
-        // Color Picker
-        ATON.UI.createColorPicker({
-            color  : layer.highlightColor,
-            oninput: (color) => {
-                layer.highlightColor = color
-                THOTH.updateVisibility();
-            },
-        }),
+        elCP,
         // Metadata
         ATON.UI.createButton({
             icon   : "list",
@@ -827,14 +824,21 @@ UI.modalAddModel = () => {
 UI.createMetadataEditor = (data, data_temp) => {
     let elData = ATON.UI.createContainer();
     
+    if (data === undefined || Object.keys(data).length === 0) {
+        elData.append(
+            ATON.UI.createButton({
+                text: "No metadata found"
+            })
+        );
+        return elData;
+    };
+
     // Properties creation logic
     for (const key in data) {
         if (key === "required") continue;
         if (key === "schemaName") continue;
         
-        let elAttr    = ATON.UI.createContainer({classes: "row"});
-        let elInput   = ATON.UI.createContainer({classes: "col-12 col-md-7"});
-        let elDisplay = ATON.UI.createContainer({classes: "col-12 col-md-5"});
+        let elBody;
 
         const attr = data[key];
         
@@ -843,17 +847,15 @@ UI.createMetadataEditor = (data, data_temp) => {
         if (attr["type"]) {
             switch (attr.type.toLowerCase()) {
                 case "string":
-                    elInput = ATON.UI.createInputText({
+                    elBody = ATON.UI.createInputText({
                         label      : key,
                         value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         placeholder: "string",
-                        oninput    : (v) => {
-                            data_temp[key] = v;
-                        }
+                        oninput    : (v) => data_temp[key] = v,
                     });
                     break;
                 case "integer":
-                    elInput = ATON.UI.createInputText({
+                    elBody = ATON.UI.createInputText({
                         placeholder: "integer",
                         value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         label      : key,
@@ -861,40 +863,42 @@ UI.createMetadataEditor = (data, data_temp) => {
                     });
                     break;
                 case "float" :
-                    elInput = ATON.UI.createInputText({
+                    elBody = ATON.UI.createInputText({
                         placeholder: "float",
                         label      : key,
                         value      : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
-                        oninput    : (v) => {
-                            data_temp[key] = v;
-                        }
+                        oninput    : (v) => data_temp[key] = v,
                     });
                     break;
                 case "bool":
-                    elInput = UI.createBool({
+                    elBody = UI.createBool({
                         text    : key,
                         value   : (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined,
                         onchange: (input) => data_temp[key] = input
                     });
                     break;
                 case "enum":
-                    elDisplay.textContent = (data_temp && data_temp[key] !== undefined) ? data_temp[key] : undefined;
-                    elInput = ATON.UI.createDropdown({
-                        title: key,
-                        items: attr.value.map(option => ({
-                            el  : ATON.UI.createButton({
-                                text   : option,
-                                onpress: () => {
-                                    data_temp[key]        = option;
+                    let elDisplay = ATON.UI.createButton({
+                        text   : data_temp[key],
+                    });
+                    elBody = THOTH.UI.createSplitRow({
+                        colLeft: 6,
+                        itemsLeft: ATON.UI.createDropdown({
+                            title: key,
+                            items: attr.value.map(option => ({
+                                title   : option,
+                                onselect: () => {
+                                    data_temp[key] = option;
                                     elDisplay.textContent = option;
                                 }
-                            })
-                        }))
+                            }))
+                        }),
+                        itemsRight: elDisplay,
                     });
                     
                     break;
                 case "enum-multiple":
-                    elInput = ATON.UI.createTagsComponent({
+                    elBody = ATON.UI.createTagsComponent({
                         list    : attr.value,
                         label   : key,
                         tags    : data_temp[key],
@@ -914,10 +918,9 @@ UI.createMetadataEditor = (data, data_temp) => {
                 default:
                     break;
             }
-            elAttr.append(elInput, elDisplay);
         }
         else if (typeof attr === "object") {
-            elAttr = ATON.UI.createTreeGroup({
+            elBody = ATON.UI.createTreeGroup({
                 items: 
                 [
                     {
@@ -928,8 +931,9 @@ UI.createMetadataEditor = (data, data_temp) => {
                 ]
             });
         }
-        if (elAttr) {
-            elData.append(elAttr);
+
+        if (elBody) {
+            elData.append(elBody);
         }
     }
     return elData;
@@ -937,32 +941,35 @@ UI.createMetadataEditor = (data, data_temp) => {
 
 UI.modalLayerDetails = (layerId, data_temp) => {
     const layer = THOTH.Layers.layerMap.get(layerId);
-    if (layer === undefined) return;
+    if (layer === undefined || layer.trash) return;
 
     if (data_temp === undefined) data_temp = structuredClone(layer.metadata) || {};
     
     const schemaName = data_temp?.schemaName;
     const prev_data  = layer.metadata || {};
     const schema     = THOTH.Scene.schemaMap.get(schemaName);
-    
-    // Body
-    const elBody = ATON.UI.createContainer();
-    // Name
-    const elName = ATON.UI.createInputText({
-        label  : "Layer name",
-        oninput: (v) => {
-            //
-        }
-    });
-    // Misc
-    const elMisc = UI.createSplitRow({
-        colLeft  : 2,
+
+    const metadataBody = ATON.UI.createContainer({classes: "row g-0 w-100"});
+    metadataBody.append(
+        ATON.UI.createButton({
+            text   : "Inherit from Scene",
+            variant: "info",
+            onpress: () => {
+                data_temp = structuredClone(THOTH.Scene.currData.sceneMetadata);
+                UI.modalLayerDetails(layerId, data_temp);
+            }
+        }),
+        UI.createMetadataEditor(schema, data_temp),
+    )
+
+    const ellayerDetails = UI.createSplitRow({
+        colLeft: 7,
         itemsLeft: ATON.UI.createColorPicker({
-            color  : layer.highlightColor,
-            oninput: (color) => {
-                layer.highlightColor = color,
-                THOTH.updateVisibility();
-            },
+            color: layer.highlightColor,
+            onchange: (c) => {
+                layer.highlightColor = c,
+                THOTH.updateVisibility
+            }
         }),
         itemsRight: ATON.UI.createButton({
             text   : "Delete Layer",
@@ -974,33 +981,53 @@ UI.modalLayerDetails = (layerId, data_temp) => {
         }),
     });
     
-    // Schema
-    let newSchemaName;
-    const elPickSchema = UI.createSplitRow({
-        colLeft  : 8,
-        itemsLeft: ATON.UI.createInputText({
-            label      : "Pick schema",
-            list       : Array.from(THOTH.Scene.schemaMap.keys()),
-            placeholder: schemaName || "", 
-            oninput    : (v) => newSchemaName = v,
-        }),
-        itemsRight: ATON.UI.createButton({
-            text   : `Build metadata`,
-            variant: "info",
-            onpress: () => {
-                data_temp = THOTH.Scene.createPropertiesfromSchema(newSchemaName);
-                UI.modalLayerDetails(layerId, data_temp);
+    // Body
+    const elBody = ATON.UI.createTreeGroup({
+        items: [
+            // Name
+            {
+                title  : "Layer name",
+                open   : true,
+                content: ATON.UI.createInputText({
+                    label   : "Layer name",
+                    value   : layer.name,
+                    onchange: (v) => THOTH.fire("renameLayer", {
+                        id  : layerId,
+                        data: v
+                    }),
+                })
+            },
+            // Layer details
+            {
+                title  : "Details",
+                open   : false,
+                content: ellayerDetails
+            },
+            // Schema selection
+            {
+                title  : "Metadata schema",
+                open   : true,
+                content: ATON.UI.createInputText({
+                    label      : "Build metadata from schema",
+                    value      : schemaName,
+                    list       : Array.from(THOTH.Scene.schemaMap.keys()),
+                    placeholder: "Choose chema",
+                    onchange   : (v) => {
+                        if (v !== schemaName) {
+                            data_temp = THOTH.Scene.createPropertiesfromSchema(v);
+                            UI.modalLayerDetails(layerId, data_temp);
+                        }
+                    }
+                })
+            },
+            // Metadata
+            {
+                title  : "Metadata",
+                open   : true,
+                content: metadataBody,
             }
-        }),
+        ]
     });
-
-    // Metadata
-    const elMetadata = ATON.UI.createContainer();
-    if (schema === undefined || Object.keys(schema).length !== 0) {
-        elMetadata.append(UI.createMetadataEditor(schema, data_temp))
-    }
-    elBody.append(elName, elMisc, elPickSchema, elMetadata);
-    
     // Footer
     const elFooter = UI.createModalFooter({
         onsuccess: () => {
@@ -1015,7 +1042,7 @@ UI.modalLayerDetails = (layerId, data_temp) => {
     });
 
     ATON.UI.showModal({
-        header: `Edit layer ${layer.name}`,
+        header: `Edit layer with id: ${layerId}`,
         body  : elBody,
         footer: elFooter,
     });
@@ -1029,34 +1056,33 @@ UI.modalSceneMetadata = (data_temp) => {
     const schema     = THOTH.Scene.schemaMap.get(schemaName);
 
     // Body
-    const elBody = ATON.UI.createContainer();
-    
-    // Schema
-    let newSchemaName;
-    const elPickSchema = UI.createSplitRow({
-        colLeft: 8,
-        itemsLeft: ATON.UI.createInputText({
-            label      : "Pick schema",
-            list       : Array.from(THOTH.Scene.schemaMap.keys()),
-            placeholder: schemaName || "",
-            oninput    : (v) => newSchemaName = v,
-        }),
-        itemsRight: ATON.UI.createButton({
-            text   : "Build schema",
-            variant: "info",
-            onpress: () => {
-                data_temp = THOTH.Scene.createPropertiesfromSchema(newSchemaName);
-                UI.modalSceneMetadata(data_temp);
+    const elBody = ATON.UI.createTreeGroup({
+        items: [
+            // Schema
+            {
+                title  : "Metadata schema",
+                open   : true,
+                content: ATON.UI.createInputText({
+                    label      : "Build metadata from schema",
+                    value      : schemaName,
+                    list       : Array.from(THOTH.Scene.schemaMap.keys()),
+                    placeholder: "Choose chema",
+                    onchange   : (v) => {
+                        if (v !== schemaName) {
+                            data_temp = THOTH.Scene.createPropertiesfromSchema(v);
+                            UI.modalSceneMetadata(data_temp);
+                        }
+                    }
+                })
+            },
+            // Metadata
+            {
+                title  : "Metadata",
+                open   : true,
+                content: UI.createMetadataEditor(schema, data_temp),
             }
-        }),
-    });
-    
-    // Metadata
-    const elMetadata = ATON.UI.createContainer();
-    if (schema === undefined || Object.keys(schema).length !== 0) {
-        elMetadata.append(UI.createMetadataEditor(schema, data_temp))
-    }
-    elBody.append(elPickSchema, elMetadata);
+        ]
+    });    
 
     // Footer
     const elFooter = UI.createModalFooter({

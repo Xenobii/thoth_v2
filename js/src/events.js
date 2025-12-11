@@ -200,6 +200,9 @@ Events.setupActiveEL = () => {
     
     // Key
     THOTH.on("KeyDown", (k) => {
+        // Ignore if modal
+        if (ATON.UI._bModal) return;
+
         // Layers
         if (k.startsWith("Digit")) {
             const id = Number(k.replace("Digit", ""));
@@ -312,7 +315,7 @@ Events.setupWindowEL = () => {
 // Events
 
 Events.setupLayerEvents = () => {
-    // Create layer
+    // Create/Delet
     THOTH.on("createLayer", () => {
         const layerId = THOTH.Utils.getFirstUnusedKey(THOTH.Layers.layerMap);
         // Local
@@ -325,7 +328,6 @@ Events.setupLayerEvents = () => {
             id  : layerId
         });
     });
-    // Delete Layer
     THOTH.on("deleteLayer", (layerId) => {
         // Local
         THOTH.Layers.deleteLayer(layerId);
@@ -337,7 +339,7 @@ Events.setupLayerEvents = () => {
             id  : layerId
         });
     });
-    // Edit layer metadata
+    // Edit layer data
     THOTH.on("editLayerMetadata", (l) => {
         const layerId  = l.id;
         const data     = l.data;
@@ -358,7 +360,12 @@ Events.setupLayerEvents = () => {
             prevValue: prevData
         });
     });
-    // Edit scene metadata
+    THOTH.on("renameLayer", (l) => {
+        // Local
+        THOTH.Layers.renameLayer(l.id, l.data);
+        // Photon
+        // History
+    });
     THOTH.on("editSceneMetadata", (l) => {
         const data     = l.data;
         const prevData = l.prevData;
@@ -376,57 +383,10 @@ Events.setupLayerEvents = () => {
             prevValue: prevData
         });
     });
-    // Brush
-    THOTH.on("selectBrush", () => {
-        THOTH.Toolbox.activateBrush();
-        THOTH.Toolbox.cleanupLasso();
-        THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(false);
-        THOTH.FE.handleToolOptions('brush');
-        THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
-    });
-    // Eraser
-    THOTH.on("selectEraser", () => {
-        THOTH.Toolbox.activateEraser();
-        THOTH.Toolbox.cleanupLasso();
-        THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(false);
-        THOTH.FE.handleToolOptions('eraser');
-        THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
-    });
-    // Lasso add
-    THOTH.on("selectLasso", () => {
-        THOTH.Toolbox.activateLasso();
-        THOTH.Toolbox.cleanupLasso();
-        THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(false);
-        THOTH.FE.handleToolOptions('lasso');
-        THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
-    });
-    // Select no tool
-    THOTH.on("selectNone", () => {
-        THOTH.Toolbox.deactivate();
-        THOTH.Toolbox.cleanupLasso();
-        THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(true);
-        THOTH.FE.handleToolOptions('no_tool');
-        THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
-    });
-    // Select measure
-    THOTH.on("selectMeasure", () => {
-        THOTH.Toolbox.activateMeasure();
-        THOTH.setUserControl(false);
-        // THOTH.UI.hideBrushOptions();
-        // THOTH.UI.hideLassoOptions();
-        THOTH.Toolbox.cleanupLasso();
-        THOTH.Toolbox.clearMeasure();
-        THOTH.FE.handleToolHighlight('measure', THOTH.FE.toolMap);
-    });
-    
 };
 
 Events.setupModelEvents = () => {
-    // Add model
+    // Add/Delete
     THOTH.on("addModel", (l) => {
         // Local
         THOTH.Models.addModel(l.id);
@@ -438,7 +398,6 @@ Events.setupModelEvents = () => {
             id  : l.id
         });
     });
-    // Delete model
     THOTH.on("deleteModel", (l) => {
         // Local
         THOTH.Models.deleteModel(l.id);
@@ -450,7 +409,7 @@ Events.setupModelEvents = () => {
             id  : l.id
         });
     });
-    // Model Transform
+    // Transform
     THOTH.on("modelTransformPosInput", (l) => {
         const pos = THOTH.Models.modelMap.get(l.modelName).position
         const prevValue = {
@@ -470,7 +429,6 @@ Events.setupModelEvents = () => {
             prevValue: prevValue
         });
     }); 
-
     THOTH.on("modelTransformRot", (l) => {
         const rot = THOTH.Models.modelMap.get(l.modelName).rotation;
         const prevValue = {
@@ -492,62 +450,50 @@ Events.setupModelEvents = () => {
     }); 
 };
 
-Events.setupPhotonEvents = () => {
-    THOTH.onPhoton("createLayer", (layerId) => {
-        THOTH.Layers.createLayer(layerId);
-        THOTH.FE.addNewLayer(layerId);
-    });
-
-    THOTH.onPhoton("deleteLayer", (layerId) => {
-        THOTH.Scene.deleteLayer(layerId);
-        THOTH.FE.deleteLayer(layerId);
-    });
-
-    THOTH.onPhoton("editSceneMetadata", (l) => {
-        THOTH.Scene.editSceneMetadata(l.data);
-    });
-    
-    THOTH.onPhoton("editLayerMetadata", (l) => {
-        THOTH.Scene.editLayer(l.id, "metadata", l.value);
-    });
-
-    THOTH.onPhoton("addToSelection", (l) => {
-        THOTH.Layers.addToSelection(l.id, l.selection);
-    });
-    
-    THOTH.onPhoton("delFromSelection", (l) => {
-        THOTH.Layers.delFromSelection(l.id, l.selection);
-    });
-
-    THOTH.onPhoton("modelTransformRot", (l) => {
-        THOTH.Models.modelTransformRot(l.modelName, l.value);
-    });
-
-    THOTH.onPhoton("modelTransformPos", (l) => {
-        THOTH.Models.modelTransformPos(l.modelName, l.value);
-    });
-
-    THOTH.onPhoton("addModel", (l) => {
-        THOTH.Models.addModel(l.id);
-    });
-
-    THOTH.onPhoton("deleteModel", (l) => {
-        THOTH.Models.deleteModel(l.id);
-    });
-
-    // On new user join
-    THOTH.on("VRC_UserEnter", () => {
-        const currData = THOTH.Scene.currData;
-        THOTH.firePhoton("syncScene", currData);
-    });
-    
-    // Sync scene
-    THOTH.onPhoton("syncScene", (currData) => {
-        THOTH.Scene.syncScene(currData);
-    });
-};
-
 Events.setupToolboxEvents = () => {
+    // Select tool
+    THOTH.on("selectBrush", () => {
+        THOTH.Toolbox.activateBrush();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(false);
+        THOTH.FE.handleToolOptions('brush');
+        THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
+    });
+    THOTH.on("selectEraser", () => {
+        THOTH.Toolbox.activateEraser();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(false);
+        THOTH.FE.handleToolOptions('eraser');
+        THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
+    });
+    THOTH.on("selectLasso", () => {
+        THOTH.Toolbox.activateLasso();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(false);
+        THOTH.FE.handleToolOptions('lasso');
+        THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
+    });
+    THOTH.on("selectNone", () => {
+        THOTH.Toolbox.deactivate();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.setUserControl(true);
+        THOTH.FE.handleToolOptions('no_tool');
+        THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
+    });
+    THOTH.on("selectMeasure", () => {
+        THOTH.Toolbox.activateMeasure();
+        THOTH.setUserControl(false);
+        // THOTH.UI.hideBrushOptions();
+        // THOTH.UI.hideLassoOptions();
+        THOTH.Toolbox.cleanupLasso();
+        THOTH.Toolbox.clearMeasure();
+        THOTH.FE.handleToolHighlight('measure', THOTH.FE.toolMap);
+    });
+    // Use tool
     THOTH.on("useBrush", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         
@@ -585,7 +531,15 @@ Events.setupToolboxEvents = () => {
 
         THOTH.Toolbox.tempSelection = null;
     });
-    
+    THOTH.on("startLasso", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
+        THOTH.Toolbox.startLasso();
+    });
+    THOTH.on("updateLasso", () => {
+        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
+        THOTH.Toolbox.updateLasso();
+    });
+    // End tool
     THOTH.on("useEraser", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         if (THOTH.Toolbox.tempSelection === null) {
@@ -622,15 +576,6 @@ Events.setupToolboxEvents = () => {
         });
 
         THOTH.Toolbox.tempSelection = null;
-    });
-
-    THOTH.on("startLasso", () => {
-        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
-        THOTH.Toolbox.startLasso();
-    });
-    THOTH.on("updateLasso", () => {
-        if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
-        THOTH.Toolbox.updateLasso();
     });
     THOTH.on("endLassoAdd", (l) => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
@@ -685,6 +630,54 @@ Events.setupToolboxEvents = () => {
     });
     THOTH.on("endAllToolOps", () => {
         THOTH.fire("endLasso");
+    });
+};
+
+Events.setupPhotonEvents = () => {
+    // Layer
+    THOTH.onPhoton("createLayer", (layerId) => {
+        THOTH.Layers.createLayer(layerId);
+        THOTH.FE.addNewLayer(layerId);
+    });
+    THOTH.onPhoton("deleteLayer", (layerId) => {
+        THOTH.Scene.deleteLayer(layerId);
+        THOTH.FE.deleteLayer(layerId);
+    });
+    THOTH.onPhoton("editSceneMetadata", (l) => {
+        THOTH.Scene.editSceneMetadata(l.data);
+    });
+    THOTH.onPhoton("editLayerMetadata", (l) => {
+        THOTH.Scene.editLayer(l.id, "metadata", l.value);
+    });
+    THOTH.onPhoton("addToSelection", (l) => {
+        THOTH.Layers.addToSelection(l.id, l.selection);
+    });
+    THOTH.onPhoton("delFromSelection", (l) => {
+        THOTH.Layers.delFromSelection(l.id, l.selection);
+    });
+    // Model
+    THOTH.onPhoton("addModel", (l) => {
+        THOTH.Models.addModel(l.id);
+    });
+    THOTH.onPhoton("deleteModel", (l) => {
+        THOTH.Models.deleteModel(l.id);
+    });
+    THOTH.onPhoton("modelTransformRot", (l) => {
+        THOTH.Models.modelTransformRot(l.modelName, l.value);
+    });
+    THOTH.onPhoton("modelTransformPos", (l) => {
+        THOTH.Models.modelTransformPos(l.modelName, l.value);
+    });
+
+    // On new user join
+    THOTH.on("VRC_UserEnter", () => {
+        const currData = THOTH.Scene.currData;
+        THOTH.firePhoton("syncScene", currData);
+    });
+    
+    // Sync scene
+    THOTH.onPhoton("syncScene", (currData) => {
+        THOTH.Scene.syncScene(currData);
     });
 };
 
