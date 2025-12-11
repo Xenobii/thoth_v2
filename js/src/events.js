@@ -321,7 +321,7 @@ Events.setupLayerEvents = () => {
         // Local
         THOTH.Layers.createLayer(layerId);
         // Photon
-        THOTH.firePhoton("createLayer", (layerId));
+        THOTH.firePhoton("createLayer", layerId);
         // History
         THOTH.History.pushAction({
             type: THOTH.History.ACTIONS.CREATE_LAYER,
@@ -332,7 +332,7 @@ Events.setupLayerEvents = () => {
         // Local
         THOTH.Layers.deleteLayer(layerId);
         // Photon
-        THOTH.firePhoton("deleteLayer", (layerId));
+        THOTH.firePhoton("deleteLayer", layerId);
         // History
         THOTH.History.pushAction({
             type: THOTH.History.ACTIONS.DELETE_LAYER,
@@ -346,7 +346,7 @@ Events.setupLayerEvents = () => {
         const prevData = l.prevData;
         
         // Local
-        THOTH.Layers.editLayer(layerId, "metadata", data);
+        THOTH.Layers.editLayerMetadata(layerId, data);
         // Photon
         THOTH.firePhoton("editLayerMetadata", ({
             id   : layerId,
@@ -361,10 +361,23 @@ Events.setupLayerEvents = () => {
         });
     });
     THOTH.on("renameLayer", (l) => {
+        const id   = l.id;
+        const data = l.data;
+
         // Local
-        THOTH.Layers.renameLayer(l.id, l.data);
+        THOTH.Layers.renameLayer(id, data);
         // Photon
+        THOTH.firePhoton("renameLayer", ({
+            id   : id,
+            value: data
+        }));
         // History
+        THOTH.History.pushAction({
+            type     : THOTH.History.ACTIONS.RENAME_LAYER,
+            id       : l.id,
+            value    : l.data,
+            prevValue: l.prevData,
+        });
     });
     THOTH.on("editSceneMetadata", (l) => {
         const data     = l.data;
@@ -373,9 +386,7 @@ Events.setupLayerEvents = () => {
         // Local event
         THOTH.Scene.editSceneMetadata(data);
         // Photon event
-        THOTH.firePhoton("editSceneMetadata", ({
-            value: data
-        }));
+        THOTH.firePhoton("editSceneMetadata", data);
         // History 
         THOTH.History.pushAction({
             type     : THOTH.History.ACTIONS.EDIT_METADATA_SCENE,
@@ -387,26 +398,26 @@ Events.setupLayerEvents = () => {
 
 Events.setupModelEvents = () => {
     // Add/Delete
-    THOTH.on("addModel", (l) => {
+    THOTH.on("addModel", (id) => {
         // Local
-        THOTH.Models.addModel(l.id);
+        THOTH.Models.addModel(id);
         // Photon
-        THOTH.firePhoton("addModel");
+        THOTH.firePhoton("addModel", id);
         // History
         THOTH.History.pushAction({
             type: THOTH.History.ACTIONS.ADD_MODEL,
-            id  : l.id
+            id  : id
         });
     });
-    THOTH.on("deleteModel", (l) => {
+    THOTH.on("deleteModel", (id) => {
         // Local
-        THOTH.Models.deleteModel(l.id);
+        THOTH.Models.deleteModel(id);
         // Photon
-        THOTH.firePhoton("deleteModels");
+        THOTH.firePhoton("deleteModels", id);
         // History
         THOTH.History.pushAction({
             type: THOTH.History.ACTIONS.DEL_MODEL,
-            id  : l.id
+            id  : id
         });
     });
     // Transform
@@ -637,17 +648,15 @@ Events.setupPhotonEvents = () => {
     // Layer
     THOTH.onPhoton("createLayer", (layerId) => {
         THOTH.Layers.createLayer(layerId);
-        THOTH.FE.addNewLayer(layerId);
     });
     THOTH.onPhoton("deleteLayer", (layerId) => {
         THOTH.Scene.deleteLayer(layerId);
-        THOTH.FE.deleteLayer(layerId);
     });
-    THOTH.onPhoton("editSceneMetadata", (l) => {
-        THOTH.Scene.editSceneMetadata(l.data);
+    THOTH.onPhoton("editSceneMetadata", (data) => {
+        THOTH.Scene.editSceneMetadata(data);
     });
     THOTH.onPhoton("editLayerMetadata", (l) => {
-        THOTH.Scene.editLayer(l.id, "metadata", l.value);
+        THOTH.Layers.editLayerMetadata(l.id, l.value);
     });
     THOTH.onPhoton("addToSelection", (l) => {
         THOTH.Layers.addToSelection(l.id, l.selection);
@@ -656,11 +665,11 @@ Events.setupPhotonEvents = () => {
         THOTH.Layers.delFromSelection(l.id, l.selection);
     });
     // Model
-    THOTH.onPhoton("addModel", (l) => {
-        THOTH.Models.addModel(l.id);
+    THOTH.onPhoton("addModel", (id) => {
+        THOTH.Models.addModel(id);
     });
-    THOTH.onPhoton("deleteModel", (l) => {
-        THOTH.Models.deleteModel(l.id);
+    THOTH.onPhoton("deleteModel", (id) => {
+        THOTH.Models.deleteModel(id);
     });
     THOTH.onPhoton("modelTransformRot", (l) => {
         THOTH.Models.modelTransformRot(l.modelName, l.value);

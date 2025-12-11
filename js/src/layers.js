@@ -88,13 +88,13 @@ Layers.resurrectLayer = (layerId) => {
     THOTH.updateVisibility();
 };
 
-Layers.editLayer = (layerId, attr, value) => {
+Layers.editLayerMetadata = (layerId, value) => {
     if (layerId === undefined) return;
     
     const layer = Layers.layerMap.get(layerId);
     if (!layer) return;
     
-    layer[attr] = value;
+    layer.metadata = value;
 };
 
 Layers.renameLayer = (layerId, newName) => {

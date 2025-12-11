@@ -30,12 +30,12 @@ History.ACTIONS.SELEC_ADD    = 4;
 History.ACTIONS.SELEC_DEL    = 5;
 
 History.ACTIONS.EDIT_METADATA_LAYER  = 3;
-History.ACTIONS.EDIT_METADATA_OBJECT = 6;
+History.ACTIONS.EDIT_METADATA_SCENE = 6;
 
 History.ACTIONS.TRANSFORM_MODEL_POS = 7;
 History.ACTIONS.TRANSFORM_MODEL_ROT = 8;
 
-History.ACTIONS.ADD_MODEL    = 9;
+History.ACTIONS.ADD_MODEL = 9;
 History.ACTIONS.DEL_MODEL = 10;
 
 // Setup
@@ -62,273 +62,21 @@ History.pushAction = (action) => {
 History.undo = () => {
     if (History.undoStack.length === 0) return;
 
-    const action = History.undoStack.pop();
-    
-    const type      = action.type;
-    const id        = action.id;
-    let   value     = action.value;
-    let   prevValue = action.prevValue;
-
-    let inverseType = null;
-
-    // Re-enact the inverse action
-    switch(type) {
-        case History.ACTIONS.CREATE_LAYER:
-            inverseType = History.ACTIONS.DELETE_LAYER;
-            THOTH.Layers.deleteLayer(id);
-            THOTH.firePhoton("deleteLayer", id);
-            break;
-            
-        case History.ACTIONS.DELETE_LAYER:
-            inverseType = History.ACTIONS.CREATE_LAYER;
-            THOTH.Layers.createLayer(id);
-            THOTH.FE.addNewLayer(id);
-            THOTH.firePhoton("createLayer", id);
-            break;
-
-        case History.ACTIONS.RENAME_LAYER:
-            inverseType = History.ACTIONS.RENAME_LAYER;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-            THOTH.fire("editLayerScene", {
-                id   : id,
-                attr : "name",
-                value: value
-            }); 
-            THOTH.firePhoton("editLayerScene", {
-                id   : id,
-                attr : "name",
-                value: value
-            });
-            break;
-
-        case History.ACTIONS.EDIT_METADATA_LAYER:
-            inverseType = History.ACTIONS.EDIT_METADATA_LAYER;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-            THOTH.Scene.editLayer(id, "metadata", value);
-            THOTH.firePhoton("editLayerMetadata", {
-                id   : id,
-                value: value
-            });
-            break;
-
-        case History.ACTIONS.EDIT_METADATA_OBJECT:
-            inverseType = History.ACTIONS.EDIT_METADATA_OBJECT;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-            THOTH.Scene.editSceneMetadata(value);
-            THOTH.firePhoton("editSceneMetadata", {
-                value: value
-            });
-            break;
-
-        case History.ACTIONS.SELEC_ADD:
-            inverseType = History.ACTIONS.SELEC_DEL;
-            THOTH.Layers.delFromSelection(id, value);
-            THOTH.firePhoton("delFromSelection", {
-                id       : id,
-                selection: value
-            });
-            break;
-
-        case History.ACTIONS.SELEC_DEL:
-            inverseType = History.ACTIONS.SELEC_ADD;
-            THOTH.Layers.delFromSelection(id, value);
-            THOTH.firePhoton("addToSelectionScene", {
-                id       : id,
-                selection: value
-            });
-            break;
-        
-        case History.ACTIONS.TRANSFORM_MODEL_POS:
-            inverseType = History.ACTIONS.TRANSFORM_MODEL_POS;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-
-            THOTH.Models.modelTransformPos(id, value);
-            THOTH.firePhoton("modelTransformPos", {
-                modelName: id,
-                value    : value
-            });
-            break;
-        
-        case History.ACTIONS.TRANSFORM_MODEL_ROT:
-            inverseType = History.ACTIONS.TRANSFORM_MODEL_ROT;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-
-            THOTH.Models.modelTransformRot(id, value);
-            THOTH.firePhoton("modelTransformRot", {
-                modelName: id,
-                value    : value
-            });
-            break;
-        
-        case History.ACTIONS.ADD_MODEL:
-            inverseType = History.ACTIONS.DEL_MODEL;
-            THOTH.Models.deleteModel(id);
-            THOTH.firePhoton("deleteModel", id);
-            break;
-
-        case History.ACTIONS.DEL_MODEL:
-            inverseType = History.ACTIONS.ADD_MODEL;
-            THOTH.Models.addModel(id);
-            THOTH.firePhoton("addModel");
-            break; 
-
-        default:
-            THOTH.UI.showToast("Invalid action type: " + type);
-            console.warn("Invalid action: " + type);
-            return;
-    }
+    const action        = History.undoStack.pop();
+    const inverseAction = History.fireAndInverse(action);
 
     // Store inverse action in redo stack
-    const inverseAction = {
-        type     : inverseType,
-        id       : id,
-        value    : value,
-        prevValue: prevValue
-    };
-
     History.redoStack.push(inverseAction);
     History.historyIdx -= 1;
 };
 
 History.redo = () => {
     if (History.redoStack.length === 0) return;
-
-    const action = History.redoStack.pop();
-
-    const type      = action.type;
-    const id        = action.id;
-    let   value     = action.value;
-    let   prevValue = action.prevValue;
-
-    let inverseType = undefined;
-
-    // Re-enact the inverse action
-    switch(type) {
-        case History.ACTIONS.CREATE_LAYER:
-            inverseType = History.ACTIONS.DELETE_LAYER;
-            THOTH.Layers.deleteLayer(id);
-            THOTH.FE.deleteLayer(id);
-            THOTH.firePhoton("deleteLayer", id);
-            break;
-
-        case History.ACTIONS.DELETE_LAYER:
-            inverseType = History.ACTIONS.CREATE_LAYER;
-            THOTH.Layers.createLayer(id);
-            THOTH.FE.addNewLayer(id);
-            THOTH.firePhoton("createLayer", id);
-            break;
-
-        case History.ACTIONS.RENAME_LAYER:
-            inverseType = History.ACTIONS.RENAME_LAYER;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-            THOTH.fire("editLayerScene", {
-                id   : id,
-                attr : "name",
-                value: value
-            }); 
-            THOTH.firePhoton("editLayerScene", {
-                id   : id,
-                attr : "name",
-                value: value
-            });
-            break;
-
-        case History.ACTIONS.EDIT_METADATA_LAYER:
-            inverseType = History.ACTIONS.EDIT_METADATA_LAYER;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-            THOTH.Layers.editLayer(id, "metadata", value);
-            THOTH.firePhoton("editLayerMetadata", {
-                id   : id,
-                attr : "metadata",
-                value: value
-            });
-            break;
-
-        case History.ACTIONS.EDIT_METADATA_OBJECT:
-            inverseType = History.ACTIONS.EDIT_METADATA_OBJECT;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-            THOTH.Scene.editSceneMetadata(value);
-            THOTH.firePhoton("editSceneMetadata", {
-                value   : value
-            });
-            break;
-
-        case History.ACTIONS.SELEC_ADD:
-            inverseType = History.ACTIONS.SELEC_DEL;
-            THOTH.Layers.delFromSelection(id, value);
-            THOTH.firePhoton("delFromSelection", {
-                id       : id,
-                selection: value
-            });
-            break;
-            
-        case History.ACTIONS.SELEC_DEL:
-            inverseType = History.ACTIONS.SELEC_ADD;
-            THOTH.Layers.addToSelection(id, value);
-            THOTH.firePhoton("addToSelection", {
-                id       : id,
-                selection: value
-            });
-            break;
-
-        case History.ACTIONS.TRANSFORM_MODEL_POS:
-            inverseType = History.ACTIONS.TRANSFORM_MODEL_POS;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-
-            THOTH.Models.modelTransformPos(id, value);
-            THOTH.firePhoton("modelTransformPos", {
-                modelName: id,
-                value    : value
-            });
-            break;
-
-        case History.ACTIONS.TRANSFORM_MODEL_ROT:
-            inverseType = History.ACTIONS.TRANSFORM_MODEL_ROT;
-            // Swap
-            [value, prevValue] = [prevValue, value];
-
-            THOTH.Models.modelTransformRot(id, value);
-            THOTH.firePhoton("modelTransformRot", {
-                modelName: id,
-                value    : value
-            });
-            break;
-        
-        case History.ACTIONS.ADD_MODEL:
-            inverseType = History.ACTIONS.DEL_MODEL;
-            THOTH.Models.deleteModel(id);
-            THOTH.firePhoton("deleteModel", id);
-            break;
-
-        case History.ACTIONS.DEL_MODEL:
-            inverseType = History.ACTIONS.ADD_MODEL;
-            THOTH.Models.addModel(id);
-            THOTH.firePhoton("addModel");
-            break; 
-            
-        default:
-            THOTH.UI.showToast("Invalid action type: " + type);
-            console.warn("Invalid action: " + type);
-            return;
-    }
-
+    
+    const action        = History.redoStack.pop();
+    const inverseAction = History.fireAndInverse(action);
+    
     // Store inverse action in undo stack
-    const inverseAction   = {
-        type     : inverseType,
-        id       : id,
-        value    : value,
-        prevValue: prevValue
-    };
-
     History.undoStack.push(inverseAction);
     History.historyIdx += 1;
 };
@@ -349,6 +97,117 @@ History.historyJump = (idx) => {
         }
     }
     return;
+};
+
+History.fireAndInverse = (action) => {
+    const type      = action.type;
+    const id        = action.id;
+    let   value     = action.value;
+    let   prevValue = action.prevValue;
+
+    let inverseType = null;
+
+    // Re-enact the inverse action
+    switch(type) {
+        // Layers
+        case History.ACTIONS.CREATE_LAYER:
+            inverseType = History.ACTIONS.DELETE_LAYER;
+            THOTH.Layers.deleteLayer(id);
+            THOTH.firePhoton("deleteLayer", id);
+            break;
+        case History.ACTIONS.DELETE_LAYER:
+            inverseType = History.ACTIONS.CREATE_LAYER;
+            THOTH.Layers.createLayer(id);
+            THOTH.firePhoton("createLayer", id);
+            break;
+        case History.ACTIONS.RENAME_LAYER:
+            inverseType = History.ACTIONS.RENAME_LAYER;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.Layers.renameLayer(id, value);
+            THOTH.firePhoton("renameLayer", {
+                id   : id,
+                value: value
+            });
+            break;
+        case History.ACTIONS.EDIT_METADATA_LAYER:
+            inverseType = History.ACTIONS.EDIT_METADATA_LAYER;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.Layers.editLayerMetadata(id, value);
+            THOTH.firePhoton("editLayerMetadata", {
+                id   : id,
+                value: value
+            });
+            break;
+        case History.ACTIONS.EDIT_METADATA_SCENE:
+            inverseType = History.ACTIONS.EDIT_METADATA_SCENE;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.Scene.editSceneMetadata(value);
+            THOTH.firePhoton("editSceneMetadata", value);
+            break;
+        case History.ACTIONS.SELEC_ADD:
+            inverseType = History.ACTIONS.SELEC_DEL;
+            THOTH.Layers.delFromSelection(id, value);
+            THOTH.firePhoton("delFromSelection", {
+                id       : id,
+                selection: value
+            });
+            break;
+        case History.ACTIONS.SELEC_DEL:
+            inverseType = History.ACTIONS.SELEC_ADD;
+            THOTH.Layers.delFromSelection(id, value);
+            THOTH.firePhoton("addToSelectionScene", {
+                id       : id,
+                selection: value
+            });
+            break;
+        // Models
+        case History.ACTIONS.TRANSFORM_MODEL_POS:
+            inverseType = History.ACTIONS.TRANSFORM_MODEL_POS;
+            [value, prevValue] = [prevValue, value];
+            THOTH.Models.modelTransformPos(id, value);
+            THOTH.firePhoton("modelTransformPos", {
+                modelName: id,
+                value    : value
+            });
+            break;
+        case History.ACTIONS.TRANSFORM_MODEL_ROT:
+            inverseType = History.ACTIONS.TRANSFORM_MODEL_ROT;
+            // Swap
+            [value, prevValue] = [prevValue, value];
+            THOTH.Models.modelTransformRot(id, value);
+            THOTH.firePhoton("modelTransformRot", {
+                modelName: id,
+                value    : value
+            });
+            break;
+        case History.ACTIONS.ADD_MODEL:
+            inverseType = History.ACTIONS.DEL_MODEL;
+            THOTH.Models.deleteModel(id);
+            THOTH.firePhoton("deleteModel", id);
+            break;
+        case History.ACTIONS.DEL_MODEL:
+            inverseType = History.ACTIONS.ADD_MODEL;
+            THOTH.Models.addModel(id);
+            THOTH.firePhoton("addModel");
+            break; 
+
+        default:
+            THOTH.UI.showToast("Invalid action type: " + type);
+            console.warn("Invalid action: " + type);
+            return;
+    }
+
+    const inverseAction = {
+        type     : inverseType,
+        id       : id,
+        value    : value,
+        prevValue: prevValue
+    };
+
+    return inverseAction;
 };
 
 

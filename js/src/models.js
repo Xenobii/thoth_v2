@@ -63,6 +63,24 @@ Models.getModelMeshes = (modelName) => {
     return meshes;
 };
 
+Models.getModelTransforms = (modelName) => {
+    if (!modelName) return;
+    const model = Models.modelMap.get(modelName);
+
+    return {
+        position: [
+            Number(model.position.x),
+            Number(model.position.y), 
+            Number(model.position.z)
+        ],
+        rotation: [
+            Number(model.rotation.x),
+            Number(model.rotation.y), 
+            Number(model.rotation.z)
+        ]
+    };
+};
+
 
 // Model Management
 
@@ -216,6 +234,25 @@ Models.modelTransformRot = (modelName, value) => {
     model.rotation.set(value.x, value.y, value.z);
 };
 
+
+// Export
+
+Models.getExportData = () => {
+    let scenegraph = {};
+    scenegraph.edges = THOTH.Scene.initData.scenegraph.edges;
+    scenegraph.nodes = {};
+
+    for (const modelName of Models.modelMap.keys()) {
+        const urls = [Models.getModelURL(modelName)];
+        const transforms = Models.getModelTransforms(modelName);
+
+        scenegraph.nodes[modelName] = {};
+        scenegraph.nodes[modelName].urls = urls;
+        scenegraph.nodes[modelName].transform = transforms;
+    }
+
+    return scenegraph;
+};
 
 
 export default Models;

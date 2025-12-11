@@ -168,10 +168,10 @@ UI.createVectorControl = (options, transform)=>{
             },
         }
         if (transform === "position") {
-            THOTH.fire("modelTransformPosInput", (l));
+            THOTH.fire("modelTransformPosInput", l);
         }
         else if (transform === "rotation") {
-            THOTH.fire("modelTransformRotInput", (l));
+            THOTH.fire("modelTransformRotInput", l);
         }
         if (options.onupdate) options.onupdate();
     };
@@ -278,9 +278,7 @@ UI.createModelController = (modelName) => {
         itemsLeft : elLeft,
         itemsRight: ATON.UI.createButton({
             icon   : "trash",
-            onpress: () => THOTH.fire("deleteModel", {
-                id: modelName
-            }),
+            onpress: () => THOTH.fire("deleteModel", modelName),
         }),
     });
     
@@ -792,9 +790,7 @@ UI.modalAddModel = () => {
                     const elFooter = UI.createModalFooter({
                         onsuccess  : () => {
                             for (const modelURL of Array.from(modelList)) {
-                                THOTH.fire("addModel", {
-                                    id: modelURL
-                                });
+                                THOTH.fire("addModel", modelURL);
                             }
                             ATON.UI.hideModal();
                         },
@@ -946,7 +942,7 @@ UI.modalLayerDetails = (layerId, data_temp) => {
     if (data_temp === undefined) data_temp = structuredClone(layer.metadata) || {};
     
     const schemaName = data_temp?.schemaName;
-    const prev_data  = layer.metadata || {};
+    const prev_data  = structuredClone(layer.metadata) || {};
     const schema     = THOTH.Scene.schemaMap.get(schemaName);
 
     const metadataBody = ATON.UI.createContainer({classes: "row g-0 w-100"});
@@ -992,8 +988,9 @@ UI.modalLayerDetails = (layerId, data_temp) => {
                     label   : "Layer name",
                     value   : layer.name,
                     onchange: (v) => THOTH.fire("renameLayer", {
-                        id  : layerId,
-                        data: v
+                        id      : layerId,
+                        data    : v,
+                        prevData: structuredClone(layer.name) || "",
                     }),
                 })
             },

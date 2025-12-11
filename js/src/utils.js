@@ -9,6 +9,7 @@
 let Utils = {};
 
 
+
 Utils.rgb2hex = (r, g, b) => {
     const componentToHex = (c) => {
         var hex = c.toString(16);

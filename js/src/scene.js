@@ -32,6 +32,7 @@ Scene.createBackup = () => {
 
     A.layers        = structuredClone(Scene.currData.layers);
     A.sceneMetadata = structuredClone(Scene.currData.sceneMetadata);
+    A.scenegraph    = structuredClone(Scene.currData.scenegraph);
 
     return A;
 };
@@ -162,14 +163,12 @@ Scene.exportChanges = () => {
     console.log("Exporting changes...");
 
     let A = {};
-
+    // Model data
+    A.scenegraph = THOTH.Models.getExportData();
     // Layer data
     A.layers = THOTH.Layers.getExportData();
     // Scene metadata
     A.sceneMetadata = structuredClone(Scene.currData.sceneMetadata);
-    
-    // Model data
-    // TODO
     
     // Remove all annotation objects and ADD them again with changes
     Scene.patch(Scene.initData, Scene.MODE_DEL, () => {});
