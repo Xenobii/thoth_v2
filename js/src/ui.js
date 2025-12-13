@@ -6,7 +6,7 @@
     Author: steliosalvanos@gmail.com
 
 ===========================================================================*/
-let UI = {}
+let UI = {};
 
 
 
@@ -589,7 +589,7 @@ UI.modalExport = () => {
     // Footer
     const elFooter = UI.createModalFooter({
         onsuccess: () => {
-            THOTH.Scene.exportChanges();
+            THOTH.exportChanges();
             ATON.UI.hideModal();
         },
         successText: "Export changes"
@@ -603,7 +603,7 @@ UI.modalExport = () => {
 };
 
 UI.modalBuildVP = (modelName) => {
-    THOTH.Scene.readColmap(modelName).then((colmapMap) => {
+    THOTH.SVP.readColmap(modelName).then((colmapMap) => {
         if (!colmapMap) {
             THOTH.FE.showToast("No COLMAP text detected");
             return;
@@ -943,7 +943,7 @@ UI.modalLayerDetails = (layerId, data_temp) => {
     
     const schemaName = data_temp?.schemaName;
     const prev_data  = structuredClone(layer.metadata) || {};
-    const schema     = THOTH.Scene.schemaMap.get(schemaName);
+    const schema     = THOTH.MD.schemaMap.get(schemaName);
 
     const metadataBody = ATON.UI.createContainer({classes: "row g-0 w-100"});
     metadataBody.append(
@@ -951,7 +951,7 @@ UI.modalLayerDetails = (layerId, data_temp) => {
             text   : "Inherit from Scene",
             variant: "info",
             onpress: () => {
-                data_temp = structuredClone(THOTH.Scene.currData.sceneMetadata);
+                data_temp = structuredClone(THOTH.sceneMetadata);
                 UI.modalLayerDetails(layerId, data_temp);
             }
         }),
@@ -1007,11 +1007,11 @@ UI.modalLayerDetails = (layerId, data_temp) => {
                 content: ATON.UI.createInputText({
                     label      : "Build metadata from schema",
                     value      : schemaName,
-                    list       : Array.from(THOTH.Scene.schemaMap.keys()),
+                    list       : Array.from(THOTH.MD.schemaMap.keys()),
                     placeholder: "Choose chema",
                     onchange   : (v) => {
                         if (v !== schemaName) {
-                            data_temp = THOTH.Scene.createPropertiesfromSchema(v);
+                            data_temp = THOTH.MD.createPropertiesfromSchema(v);
                             UI.modalLayerDetails(layerId, data_temp);
                         }
                     }
@@ -1046,11 +1046,11 @@ UI.modalLayerDetails = (layerId, data_temp) => {
 }; 
 
 UI.modalSceneMetadata = (data_temp) => {
-    if (data_temp === undefined) data_temp = structuredClone(THOTH.Scene.currData.sceneMetadata) || {};
+    if (data_temp === undefined) data_temp = structuredClone(THOTH.sceneMetadata) || {};
     
     const schemaName = data_temp?.schemaName;
-    const prev_data  = THOTH.Scene.currData.sceneMetadata || {};
-    const schema     = THOTH.Scene.schemaMap.get(schemaName);
+    const prev_data  = THOTH.sceneMetadata || {};
+    const schema     = THOTH.MD.schemaMap.get(schemaName);
 
     // Body
     const elBody = ATON.UI.createTreeGroup({
@@ -1062,11 +1062,11 @@ UI.modalSceneMetadata = (data_temp) => {
                 content: ATON.UI.createInputText({
                     label      : "Build metadata from schema",
                     value      : schemaName,
-                    list       : Array.from(THOTH.Scene.schemaMap.keys()),
+                    list       : Array.from(THOTH.MD.schemaMap.keys()),
                     placeholder: "Choose chema",
                     onchange   : (v) => {
                         if (v !== schemaName) {
-                            data_temp = THOTH.Scene.createPropertiesfromSchema(v);
+                            data_temp = THOTH.MD.createPropertiesfromSchema(v);
                             UI.modalSceneMetadata(data_temp);
                         }
                     }

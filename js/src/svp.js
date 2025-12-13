@@ -10,6 +10,35 @@ let SVP = {};
 
 
 
+SVP.readColmap = (modelName) => {
+    const modelURL = THOTH.Models.getModelURL(modelName); 
+    if (!modelURL) return Promise.resolve(null);
+    
+    const colmapPath = ATON.Utils.resolveCollectionURL(
+        modelURL.split('/').slice(0, -1).join('/') + "/colmap/images.txt"
+    );
+    
+    return fetch(colmapPath + '?' + new Date().getTime())
+        .then(res => {
+            if (!res.ok) throw new Error("Colmap retrieval failed: " + res.status);
+            return res.text()
+        })
+        .then(text => {
+            const colmapCameras = text.split('\n').filter(line => line.includes('jpg'));
+            const colmapMap = new Map();
+            for (const cam of colmapCameras) {
+                const [id, ...vals] = cam.split(" ");
+                colmapMap.set(id, vals);
+            }
+            return colmapMap;
+        })
+        .catch(err => {
+            console.error("Failed to load " + colmapPath + ": " + err);
+            THOTH.FE.showToast("No COLMAP txt detected")
+            return null;
+        });
+};
+
 // Build
 
 SVP.buildVPNodes = (vpMap, modelName) => {
@@ -29,7 +58,7 @@ SVP.buildVPNodes = (vpMap, modelName) => {
         const pos = SVP.getPosThree(Q, tx, ty, tz);
 
         // Get image url
-        const modelURL = THOTH.Scene.modelMap.get(modelName).url;
+        const modelURL = THOTH.Models.modelMap.get(modelName).url;
         const imageURL = modelURL.split('/').slice(0, -1).join('/') + "/images/" + image;
         
         // Get target
@@ -51,7 +80,7 @@ SVP.buildVPNodes = (vpMap, modelName) => {
     };
 
     // Attach to model
-    viewpoints.attachTo(THOTH.Scene.modelMap.get(modelName).modelData);
+    viewpoints.attachTo(THOTH.Models.modelMap.get(modelName).modelData);
 };
 
 SVP.createSVPNode = (id, pos) => {
@@ -95,7 +124,7 @@ SVP.createSVPNode = (id, pos) => {
 
 SVP.deleteSVPNodes = (modelName) => {
     if (!modelName) return;
-    const modelEntry = THOTH.Scene.modelMap.get(modelName);
+    const modelEntry = THOTH.Models.modelMap.get(modelName);
     if (!modelEntry || !modelEntry.modelData) return;
 
     const modelData = modelEntry.modelData;

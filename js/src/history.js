@@ -26,10 +26,10 @@ History.ACTIONS.CREATE_LAYER = 0;
 History.ACTIONS.DELETE_LAYER = 1;
 History.ACTIONS.RENAME_LAYER = 2;
 
-History.ACTIONS.SELEC_ADD    = 4;
-History.ACTIONS.SELEC_DEL    = 5;
+History.ACTIONS.SELEC_ADD = 4;
+History.ACTIONS.SELEC_DEL = 5;
 
-History.ACTIONS.EDIT_METADATA_LAYER  = 3;
+History.ACTIONS.EDIT_METADATA_LAYER = 3;
 History.ACTIONS.EDIT_METADATA_SCENE = 6;
 
 History.ACTIONS.TRANSFORM_MODEL_POS = 7;
@@ -72,8 +72,8 @@ History.undo = () => {
 
 History.redo = () => {
     if (History.redoStack.length === 0) return;
-    
     const action        = History.redoStack.pop();
+    console.log(action)
     const inverseAction = History.fireAndInverse(action);
     
     // Store inverse action in undo stack
@@ -134,7 +134,7 @@ History.fireAndInverse = (action) => {
             inverseType = History.ACTIONS.EDIT_METADATA_LAYER;
             // Swap
             [value, prevValue] = [prevValue, value];
-            THOTH.Layers.editLayerMetadata(id, value);
+            THOTH.MD.editLayerMetadata(id, value);
             THOTH.firePhoton("editLayerMetadata", {
                 id   : id,
                 value: value
@@ -144,7 +144,7 @@ History.fireAndInverse = (action) => {
             inverseType = History.ACTIONS.EDIT_METADATA_SCENE;
             // Swap
             [value, prevValue] = [prevValue, value];
-            THOTH.Scene.editSceneMetadata(value);
+            THOTH.MD.editSceneMetadata(value);
             THOTH.firePhoton("editSceneMetadata", value);
             break;
         case History.ACTIONS.SELEC_ADD:
@@ -190,7 +190,7 @@ History.fireAndInverse = (action) => {
             break;
         case History.ACTIONS.DEL_MODEL:
             inverseType = History.ACTIONS.ADD_MODEL;
-            THOTH.Models.addModel(id);
+            THOTH.Models.addModelFromURL(id);
             THOTH.firePhoton("addModel");
             break; 
 

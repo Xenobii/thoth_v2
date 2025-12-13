@@ -8,7 +8,6 @@
 ===========================================================================*/
 import UI from "./src/ui.js";
 import Utils from "./src/utils.js";
-import Scene from "./src/scene.js";
 import Toolbox from "./src/toolbox.js";
 import History from "./src/history.js";
 import Events from "./src/events.js";
@@ -16,6 +15,7 @@ import SVP from "./src/svp.js";
 import Layers from "./src/layers.js";
 import Models from "./src/models.js";
 import FE from "./src/fe.js";
+import MD from "./src/metadata.js";
 
 
 // Realize 
@@ -26,7 +26,6 @@ window.THOTH = THOTH;
 // Import
 THOTH.UI      = UI;
 THOTH.Utils   = Utils;
-THOTH.Scene   = Scene;
 THOTH.Toolbox = Toolbox;
 THOTH.History = History;
 THOTH.Events  = Events;
@@ -34,56 +33,76 @@ THOTH.SVP     = SVP;
 THOTH.Models  = Models;
 THOTH.Layers  = Layers;
 THOTH.FE      = FE;
+THOTH.MD      = MD;
 
 
 THOTH.BASE_URL        = "../thoth_v2";
-THOTH.PATH_RES        = `${THOTH.BASE_URL}/js/res/`;
 THOTH.PATH_RES_ICONS  = `${THOTH.BASE_URL}/js/res/icons/`;
 THOTH.PATH_RES_SCHEMA = `${THOTH.BASE_URL}/js/res/schema/`;
+
+
+THOTH.sid = THOTH.params.get('s');
+THOTH.mid = THOTH.params.get('m');
 
 
 
 // Init 
 
-THOTH.setSceneToLoad = () => {
-	const sid = THOTH.params.get('s');
-	THOTH._sidToLoad = sid;
-};
-
 THOTH.setup = () => {
-    THOTH._bLoaded = false;
-
-	// Realize base ATON and add base UI events
+    // Realize base ATON and add base UI events
     ATON.realize();
     ATON.UI.addBasicEvents();
-
-	// Load Scene
-	ATON.on("AllFlaresReady",  () => {
-        if (THOTH._sidToLoad) THOTH.loadScene(THOTH._sidToLoad);
-		else ATON.UI.showModal({
-            header: "Invalid Scene Id"
-		});
-	});
     
-    // Setup THOTH modules
-    ATON.on("AllNodeRequestsCompleted", () => {
-        if (THOTH._bLoaded) return;
+    // Load config
+    ATON.REQ.get(
+        "../../a/thoth_v2/config.json",
+        data => {
+            THOTH.config = data;
+            ATON.fire("ConfigLoaded");
+        },
+        err => ATON.UI.showModal("Error loading schema" + err)
+    );
+    
+    ATON.on("AllFlaresReady", () =>{
+        ATON.on("ConfigLoaded", () => {
+            // Init models
+            ATON.SceneHub.addSceneParser("scenegraph", scenegraph => {
+                THOTH.Models.parseSceneGraph(scenegraph)
+            });
+            // Init layers
+            ATON.SceneHub.addSceneParser("layers", layers => {
+                THOTH.Layers.parseLayers(layers);
+            });
+            // Init scene metadata
+            ATON.SceneHub.addSceneParser("sceneMetadata", data => {
+                THOTH.MD.parseSceneMetadata(data);
+            });
+            // Init metadata
+            THOTH.MD.setup();
+            // Init history
+            THOTH.History.setup();
+            // Init events
+            THOTH.Events.setup();
+            // Init toolbox
+            THOTH.Toolbox.setup();
+            // Init front end 
+            THOTH.FE.setup();
+            
+            if (THOTH.sid) {
+                ATON.SceneHub.load(
+                    THOTH.config.baseSceneUrl + THOTH.sid,
+                    THOTH.sid,
+                    () => {
+                        THOTH.initData = ATON.SceneHub.currData;
+                    }
+                );
 
-        THOTH.parseAtonElements();
-        
-        THOTH.Scene.setup(THOTH._sidToLoad);
-        THOTH.Events.setup();
-        THOTH.History.setup();
-        THOTH.Toolbox.setup();
-        THOTH.Models.setup();
-        THOTH.Layers.setup();
-        THOTH.FE.setup();
-        
-        THOTH.initRC();
-
-        THOTH._bLoaded = true;
-        THOTH.updateVisibility();
-    });
+            }
+            else if (THOTH.mid) {
+                //
+            }
+        })
+    })
 };
 
 THOTH.update = () => {
@@ -95,34 +114,6 @@ THOTH.update = () => {
     THOTH.hoveredMesh  = THOTH._queryData?.o?.name;
 };
 
-THOTH.initRC = () => {
-    // Use new raycaster
-    THOTH._raycaster = new THREE.Raycaster();
-    THOTH._raycaster.layers.set(THOTH.RCLayer);
-    THOTH._raycaster.firstHitOnly = true;
-};
-
-THOTH.parseAtonElements = () => {
-	// General
-	THOTH.on	= ATON.on;
-	THOTH.fire 	= ATON.fire;
-
-	THOTH._renderer	= ATON._renderer;
-    THOTH._camera   = ATON.Nav._camera;
-
-	// Photon
-	THOTH.onPhoton		= ATON.Photon.on;
-	THOTH.firePhoton	= ATON.Photon.fire;
-
-    // Nav
-    THOTH.setUserControl = ATON.Nav.setUserControl;
-
-	// Utils
-	THOTH.textureLoader	= ATON.Utils.textureLoader;
-    THOTH.discardAtonEventHandler = ATON.EventHub.clearEventHandlers;
-};
-
-
 // Visualization
 
 THOTH.highlightSelection = (selection, highlightColor, modelName, meshName) => {
@@ -131,6 +122,8 @@ THOTH.highlightSelection = (selection, highlightColor, modelName, meshName) => {
 
     const meshes = THOTH.Models.getModelMeshes(modelName);
     const mesh   = meshes.get(meshName);
+
+    if (mesh === undefined) return;
 
     const colorAttr = mesh.geometry.attributes.color;
     const indexAttr = mesh.geometry.index;
@@ -146,38 +139,38 @@ THOTH.highlightSelection = (selection, highlightColor, modelName, meshName) => {
         for (const face of selection) {
             const face3 = face * 3;
             
-            const idx0  = indices[face3] * stride;
-            const idx1  = indices[face3 + 1] * stride;
-            const idx2  = indices[face3 + 2] * stride;
+            const idx0 = indices[face3] * stride;
+            const idx1 = indices[face3 + 1] * stride;
+            const idx2 = indices[face3 + 2] * stride;
             
-            colors[idx0]        = r;
-            colors[idx0 + 1]    = g;
-            colors[idx0 + 2]    = b;
+            colors[idx0]     = r;
+            colors[idx0 + 1] = g;
+            colors[idx0 + 2] = b;
             
-            colors[idx1]        = r;
-            colors[idx1 + 1]    = g;
-            colors[idx1 + 2]    = b;
+            colors[idx1]     = r;
+            colors[idx1 + 1] = g;
+            colors[idx1 + 2] = b;
             
-            colors[idx2]        = r;
-            colors[idx2 + 1]    = g;
-            colors[idx2 + 2]    = b;
+            colors[idx2]     = r;
+            colors[idx2 + 1] = g;
+            colors[idx2 + 2] = b;
         }
     } else {
         const stride3 = stride * 3;
         for (const face of selection) {
             const faceStart = face * stride3;
             
-            colors[faceStart]       = r;
-            colors[faceStart + 1]   = g;
-            colors[faceStart + 2]   = b;
+            colors[faceStart]     = r;
+            colors[faceStart + 1] = g;
+            colors[faceStart + 2] = b;
             
-            colors[faceStart + stride]      = r;
-            colors[faceStart + stride + 1]  = g;
-            colors[faceStart + stride + 2]  = b;
+            colors[faceStart + stride]     = r;
+            colors[faceStart + stride + 1] = g;
+            colors[faceStart + stride + 2] = b;
             
-            colors[faceStart + stride * 2]      = r;
-            colors[faceStart + stride * 2 + 1]  = g;
-            colors[faceStart + stride * 2 + 2]  = b;
+            colors[faceStart + stride * 2]     = r;
+            colors[faceStart + stride * 2 + 1] = g;
+            colors[faceStart + stride * 2 + 2] = b;
         }
     }
     
@@ -208,9 +201,12 @@ THOTH.highlightAllLayers = () => {
 
 THOTH.clearHighlights = () => {
     for (const modelName of THOTH.Models.modelMap.keys()) {
-        const meshes = THOTH.Models.getModelMeshes(modelName)
+        const meshes = THOTH.Models.getModelMeshes(modelName);
         for (const mesh of meshes.values()) {
             const colorAttr  = mesh.geometry.attributes.color;
+            
+            if (!colorAttr) continue;
+
             const colorArray = colorAttr.array;
             for (let i=0; i < colorArray.length; i++) {
                 colorArray[i] = 1;
@@ -297,4 +293,44 @@ THOTH.setupPhoton = () => {
 THOTH.collabExists = () => {
     // placeholder logic
     return false;
+};
+
+
+// Export
+
+THOTH.exportChanges = () => {
+    console.log("Exporting changes...");
+
+    let A = structuredClone(THOTH.initData);
+    // Model data
+    A.scenegraph = THOTH.Models.getExportData();
+    // Layer data
+    A.layers = THOTH.Layers.getExportData();
+    // Scene metadata
+    A.sceneMetadata = structuredClone(THOTH.sceneMetadata);
+    
+    // Remove all annotation objects and ADD them again with changes
+    // ATON.REQ.patch(
+    //     THOTH.config.baseSceneUrl + THOTH.sid,
+    //     {
+    //         data: THOTH.initData,
+    //         mode: "DEL"
+    //     },
+    // );
+
+    // Patch changes
+    ATON.REQ.patch(
+        THOTH.config.baseSceneUrl + THOTH.sid,
+        {
+            data: A,
+            mode: "ADD"
+        }, 
+        () => {
+            THOTH.FE.showToast("Changes exported successfully!")
+            // Update for next export;
+            THOTH.initData = A;
+        },
+        err => THOTH.FE.showToast("Export failed: " + err)
+    )
+
 };

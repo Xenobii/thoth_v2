@@ -12,17 +12,16 @@ let Layers = {};
 
 // Init
 
-Layers.setup = () => {
-    // Init layers if undefined
-    if (ATON.SceneHub.currData.layers === undefined) {
-        ATON.SceneHub.currData.layers = {};
-    }
-
+Layers.parseLayers = (layers) => {
     // Create layer map for easy access
-    const layerGraph = ATON.SceneHub.currData.layers;
     Layers.layerMap = new Map();
-    for (const id in layerGraph) {
-        Layers.layerMap.set(Number(id), layerGraph[id])
+
+    if (layers === undefined) return;
+
+    for (const layerId in layers) {
+        const layer = layers[layerId];
+        Layers.layerMap.set(Number(layerId), layer);
+        THOTH.FE.addNewLayer(Number(layerId));
     };
 
     // Active layer
@@ -88,15 +87,6 @@ Layers.resurrectLayer = (layerId) => {
     THOTH.updateVisibility();
 };
 
-Layers.editLayerMetadata = (layerId, value) => {
-    if (layerId === undefined) return;
-    
-    const layer = Layers.layerMap.get(layerId);
-    if (!layer) return;
-    
-    layer.metadata = value;
-};
-
 Layers.renameLayer = (layerId, newName) => {
     if (layerId === undefined) return;
     
@@ -142,11 +132,6 @@ Layers.delFromSelection = (layerId, selection) => {
     THOTH.updateVisibility();
 };
 
-Layers.changeLayerSchema = (layerId, schemaName) => {
-    const layer = Layers.layerMap.get(layerId);
-    layer.metadata.schemaName = schemaName;
-};
-
 
 // Visibility
 
@@ -190,13 +175,10 @@ Layers.toggleVisibility = (layerId) => {
 // Export
 
 Layers.getExportData = () => {
-    const layerObjects = Object.fromEntries(Layers.layerMap);
-
-    if (layerObjects === undefined) return {}; 
-
-    // Exclude trashed items
-    for (const layerId in layerObjects) {
-        if (layerObjects[layerId].trash === true) layerObjects.delete(layerId)
+    const layerObjects = {};
+    for (const [id, layer] of Layers.layerMap.entries()) {
+        if (!layer || layer.trash === true) continue;
+        layerObjects[id] = layer;
     }
     return layerObjects;
 };

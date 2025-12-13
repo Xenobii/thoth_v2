@@ -11,30 +11,35 @@ let FE = {};
 
 
 FE.setup = () => {
-    // Maps for accessibility
-    FE.modelMap     = FE.initModelMap();
-    FE.layerNameMap = FE.initLayerNameMap();
-    FE.layerMap     = FE.initLayerMap();
-    FE.toolMap      = FE.initToolMap();
-    FE.toolOptMap   = FE.initToolOptMap();
+    // General
+    FE.topToolbar    = FE.setupTopToolbar();
+    FE.userToolbar   = FE.setupUserToolbar();
+    FE.settingsPanel = FE.setupSettingsPanel();
+
+    // Tools
+    if (THOTH.config.toolbox) {
+        FE.toolMap        = FE.initToolMap();
+        FE.toolOptMap     = FE.initToolOptMap();
+        FE.toolOptToolbar = FE.setupToolOptToolbar();
+        FE.mainToolbar    = FE.setupMainToolbar(FE.toolMap);
+    }
+
+    FE.modelMap     = new Map();
+    FE.layerNameMap = new Map();
+    FE.layerMap     = new Map();
     
     // Lists
-    FE.modelList = FE.setupModelList(FE.modelMap);
-    FE.layerList = FE.setupLayerList(FE.layerMap);
-    // FE.historyList = FE.setupHistoryList();
-
+    FE.modelList = ATON.UI.createContainer();
+    FE.layerList = ATON.UI.createContainer();
+    // FE.historyList = ATON.UI.createContainer();
+    
     // Toolbars
-    FE.topToolbar     = FE.setupTopToolbar();
-    FE.userToolbar    = FE.setupUserToolbar();
-    FE.mainToolbar    = FE.setupMainToolbar(FE.toolMap);
-    FE.toolOptToolbar = FE.setupToolOptToolbar();
     // FE.historyToolbar = FE.setupHistoryToolbar(FE.historyList);
-
+    
     // Panels
-    FE.settingsPanel = FE.setupSettingsPanel();
     FE.modelsPanel   = FE.setupModelsPanel(FE.modelList);
     FE.layersPanel   = FE.setupLayersPanel(FE.layerList);
-
+    
     // Toast
     FE.toast = FE.createToast();
 
@@ -44,24 +49,6 @@ FE.setup = () => {
 
 
 // Maps
-
-FE.initModelMap = () => {
-    const modelMap = new Map();
-    for (const modelName of THOTH.Models.modelMap.keys()) {
-        const modelController = THOTH.UI.createModelController(modelName);
-        modelMap.set(modelName, modelController);
-    }
-    return modelMap;
-};
-
-FE.initLayerMap = () => {
-    const layerMap = new Map();
-    for (const layerName of THOTH.Layers.layerMap.keys()) {
-        const layerControler = THOTH.UI.createLayerController(layerName);
-        layerMap.set(layerName, layerControler);
-    }
-    return layerMap;
-};
 
 FE.initLayerNameMap = () => {
     const layerNameMap = new Map();
@@ -173,7 +160,7 @@ FE.setupModelList = (modelMap) => {
 };
 
 FE.setupLayerList = (layerMap) => {
-    const elLayerList = ATON.UI.createContainer({classes: ""});
+    const elLayerList = ATON.UI.createContainer();
     
     for (const [ , elLayerController] of layerMap) {
         elLayerList.append(elLayerController)
@@ -260,6 +247,8 @@ FE.setupUserToolbar = () => {
 };
 
 FE.setupMainToolbar = (toolMap) => {
+    if (!toolMap) return;
+    
     const mainToolbar = ATON.UI.get("mainToolbar");
 
     for (const [ , toolElement] of toolMap) {

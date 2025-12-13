@@ -56,19 +56,7 @@ Utils.getFirstUnusedKey = (objOrMap) => {
     }
 
     return id;
-};
-
-
-Utils.getJSON = (jsonurl, onLoad)=>{
-    fetch(jsonurl, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-    })
-    .then(response => response.json())
-    .then(response => {
-        if (onLoad) onLoad(response);
-    });
-};
+}; 
 
 Utils.computeRadius = (r) => {
     return (0.25 * 1.2**r);

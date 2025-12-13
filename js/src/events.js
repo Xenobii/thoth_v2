@@ -10,21 +10,28 @@ let Events = {};
 
 
 Events.setup = () => {
+    // Ease of access
+    THOTH.on   = ATON.on;
+    THOTH.fire = ATON.fire;
+    
+    THOTH.onPhoton   = ATON.Photon.on;
+    THOTH.firePhoton = ATON.Photon.fire;
+
     Events.setupInputEL();
     Events.setupActiveEL();
     Events.setupWindowEL();
-
-    Events.setupToolboxEvents();
-    Events.setupPhotonEvents();
-    Events.setupLayerEvents();
     Events.setupModelEvents();
+    Events.setupLayerEvents();
+    Events.setupPhotonEvents();
+
+    if (THOTH.config.toolbox) Events.setupToolboxEvents();
 };
 
 
 // Event listeners
 
 Events.setupInputEL = () => {
-    let el = THOTH._renderer.domElement;
+    let el = ATON._renderer.domElement;
     // Mouse down
     el.addEventListener("mousedown", (e) => {
         if (e.button === 0) {
@@ -54,7 +61,7 @@ Events.setupInputEL = () => {
     // Key down
     window.addEventListener("keydown", (e) => THOTH.fire("KeyDown", (e.code), false));
     // Discard existing keyup event since it doesn't support caps/other languages
-    THOTH.discardAtonEventHandler("KeyUp");
+    ATON.EventHub.clearEventHandlers("KeyUp");
     // Key up
     window.addEventListener("keyup", (e) => {
         THOTH.fire("KeyUp", (e.code), false);
@@ -222,28 +229,8 @@ Events.setupActiveEL = () => {
             if (THOTH._bShiftDown) THOTH.UI.modalAddModel();
         }
 
-        // Tools
-        if (k === "KeyB") {
-            THOTH.fire("selectBrush");
-        }
         if (k === "KeyE") {
             if (THOTH._bShiftDown) THOTH.UI.modalExport();
-            else THOTH.fire("selectEraser");
-        }
-        if (k === "KeyL") {
-            THOTH.fire("selectLasso");
-        }
-        if (k === "KeyM") {
-            // THOTH.fire("selectMeasure");
-        }
-
-        // Tool size
-        if (k === "BracketLeft") {
-            THOTH.Toolbox.decreaseSelectorSize();
-            // Todo update the ui as well
-        }
-        if (k === "BracketRight") {
-            THOTH.Toolbox.increaseSelectorSize();
         }
 
         // History
@@ -263,17 +250,6 @@ Events.setupActiveEL = () => {
             THOTH._bCtrlDown = true;
         }
 
-        // Nav
-        if (k === "Space") {
-            if (THOTH.Toolbox.enabled) {
-                THOTH.setUserControl(true);
-                THOTH.Toolbox.pause();
-                THOTH.Toolbox.cleanupLasso();
-                THOTH.Toolbox.clearMeasure();
-            }
-        }
-
-        // Export
     });
     THOTH.on("KeyUp", (k) => {
         // Shift
@@ -288,7 +264,7 @@ Events.setupActiveEL = () => {
         // Nav
         if (k === "Space") {
             if (THOTH.Toolbox.paused) {
-                THOTH.setUserControl(false);
+                ATON.Nav.setUserControl(false);
                 THOTH.Toolbox.resume();
             }
         }
@@ -300,10 +276,9 @@ Events.setupWindowEL = () => {
 
     // Resizes
     w.addEventListener('resize', () => {
-        THOTH._camera.aspect = w.innerWidth / w.innerHeight;
-        THOTH._camera.updateProjectionMatrix();
-        THOTH._renderer.setSize(w.innerWidth, w.innerHeight);
-        THOTH.Toolbox.resizeLassoCanvas();
+        ATON.Nav._camera.aspect = w.innerWidth / w.innerHeight;
+        ATON.Nav._camera.updateProjectionMatrix();
+        ATON._renderer.setSize(w.innerWidth, w.innerHeight);
     }, false);
 
     w.addEventListener("blur", () => {
@@ -384,7 +359,7 @@ Events.setupLayerEvents = () => {
         const prevData = l.prevData;
 
         // Local event
-        THOTH.Scene.editSceneMetadata(data);
+        THOTH.MD.editSceneMetadata(data);
         // Photon event
         THOTH.firePhoton("editSceneMetadata", data);
         // History 
@@ -400,7 +375,7 @@ Events.setupModelEvents = () => {
     // Add/Delete
     THOTH.on("addModel", (id) => {
         // Local
-        THOTH.Models.addModel(id);
+        THOTH.Models.addModelFromURL(id);
         // Photon
         THOTH.firePhoton("addModel", id);
         // History
@@ -462,12 +437,57 @@ Events.setupModelEvents = () => {
 };
 
 Events.setupToolboxEvents = () => {
+    // Resize
+    window.addEventListener('resize', () => {
+        THOTH.Toolbox.resizeLassoCanvas();
+    }, false);
+
+    // Keybinds
+    THOTH.on("KeyDown", (k) => {
+        if (ATON.UI._bModal) return;
+
+        // Tools
+        if (k === "KeyB") {
+            THOTH.fire("selectBrush");
+        }
+        if (k === "KeyE") {
+            THOTH.fire("selectEraser");
+        }
+        if (k === "KeyL") {
+            THOTH.fire("selectLasso");
+        }
+        if (k === "BracketLeft") {
+            THOTH.Toolbox.decreaseSelectorSize();
+            // Todo update the ui as well
+        }
+        if (k === "BracketRight") {
+            THOTH.Toolbox.increaseSelectorSize();
+        }
+
+        if (k === "Space") {
+            if (THOTH.Toolbox.enabled) {
+                ATON.Nav.setUserControl(true);
+                THOTH.Toolbox.pause();
+                THOTH.Toolbox.cleanupLasso();
+                THOTH.Toolbox.clearMeasure();
+            }
+        }
+    });
+    THOTH.on("KeyUp", (k) => {
+        if (k === "Space") {
+            if (THOTH.Toolbox.paused) {
+                ATON.Nav.setUserControl(false);
+                THOTH.Toolbox.resume();
+            }
+        }
+    });
+
     // Select tool
     THOTH.on("selectBrush", () => {
         THOTH.Toolbox.activateBrush();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(false);
+        ATON.Nav.setUserControl(false);
         THOTH.FE.handleToolOptions('brush');
         THOTH.FE.handleElementHighlight('brush', THOTH.FE.toolMap);
     });
@@ -475,7 +495,7 @@ Events.setupToolboxEvents = () => {
         THOTH.Toolbox.activateEraser();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(false);
+        ATON.Nav.setUserControl(false);
         THOTH.FE.handleToolOptions('eraser');
         THOTH.FE.handleElementHighlight('eraser', THOTH.FE.toolMap);
     });
@@ -483,7 +503,7 @@ Events.setupToolboxEvents = () => {
         THOTH.Toolbox.activateLasso();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(false);
+        ATON.Nav.setUserControl(false);
         THOTH.FE.handleToolOptions('lasso');
         THOTH.FE.handleElementHighlight('lasso', THOTH.FE.toolMap);
     });
@@ -491,19 +511,11 @@ Events.setupToolboxEvents = () => {
         THOTH.Toolbox.deactivate();
         THOTH.Toolbox.cleanupLasso();
         THOTH.Toolbox.clearMeasure();
-        THOTH.setUserControl(true);
+        ATON.Nav.setUserControl(true);
         THOTH.FE.handleToolOptions('no_tool');
         THOTH.FE.handleElementHighlight('no_tool', THOTH.FE.toolMap);
     });
-    THOTH.on("selectMeasure", () => {
-        THOTH.Toolbox.activateMeasure();
-        THOTH.setUserControl(false);
-        // THOTH.UI.hideBrushOptions();
-        // THOTH.UI.hideLassoOptions();
-        THOTH.Toolbox.cleanupLasso();
-        THOTH.Toolbox.clearMeasure();
-        THOTH.FE.handleToolHighlight('measure', THOTH.FE.toolMap);
-    });
+
     // Use tool
     THOTH.on("useBrush", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
@@ -550,6 +562,7 @@ Events.setupToolboxEvents = () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
         THOTH.Toolbox.updateLasso();
     });
+
     // End tool
     THOTH.on("useEraser", () => {
         if (!THOTH.Toolbox.enabled || THOTH.Toolbox.paused) return;
@@ -636,9 +649,6 @@ Events.setupToolboxEvents = () => {
 
         THOTH.Toolbox.tempSelection = null;
     });
-    THOTH.on("addMeasurement", (l) => {
-        THOTH.Toolbox.addMeasurementPoint();
-    });
     THOTH.on("endAllToolOps", () => {
         THOTH.fire("endLasso");
     });
@@ -650,13 +660,13 @@ Events.setupPhotonEvents = () => {
         THOTH.Layers.createLayer(layerId);
     });
     THOTH.onPhoton("deleteLayer", (layerId) => {
-        THOTH.Scene.deleteLayer(layerId);
+        THOTH.Layers.deleteLayer(layerId);
     });
     THOTH.onPhoton("editSceneMetadata", (data) => {
-        THOTH.Scene.editSceneMetadata(data);
+        THOTH.MD.editSceneMetadata(data);
     });
     THOTH.onPhoton("editLayerMetadata", (l) => {
-        THOTH.Layers.editLayerMetadata(l.id, l.value);
+        THOTH.MD.editLayerMetadata(l.id, l.value);
     });
     THOTH.onPhoton("addToSelection", (l) => {
         THOTH.Layers.addToSelection(l.id, l.selection);
@@ -666,7 +676,7 @@ Events.setupPhotonEvents = () => {
     });
     // Model
     THOTH.onPhoton("addModel", (id) => {
-        THOTH.Models.addModel(id);
+        THOTH.Models.addModelFromURL(id);
     });
     THOTH.onPhoton("deleteModel", (id) => {
         THOTH.Models.deleteModel(id);
@@ -680,13 +690,14 @@ Events.setupPhotonEvents = () => {
 
     // On new user join
     THOTH.on("VRC_UserEnter", () => {
-        const currData = THOTH.Scene.currData;
-        THOTH.firePhoton("syncScene", currData);
+        // const currData = THOTH.currData;
+        // THOTH.firePhoton("syncScene", currData);
+        //
     });
     
     // Sync scene
     THOTH.onPhoton("syncScene", (currData) => {
-        THOTH.Scene.syncScene(currData);
+        //
     });
 };
 

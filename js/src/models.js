@@ -12,28 +12,65 @@ let Models = {};
 
 // Setup
 
-Models.setup = () => {
-    // Init scenegraph if undefined
-    if (ATON.SceneHub.currData.scenegraph === undefined) {
-        ATON.SceneHub.currData.scenegraph = {};
-    };
-    
+Models.parseSceneGraph = (sg) => {
     // Create model map for easy access
-    const modelGraph = ATON.SceneHub.currData.scenegraph.nodes || {};
     Models.modelMap = new Map();
+    
+    if (sg === undefined) return;
 
-    for (const name in modelGraph) {
-        const N = ATON.getSceneNode(name);
-        if (N.parent === null) {
-            N.attachToRoot();
+    const nodes = sg.nodes;
+    const edges = sg.edges;
+
+    // nodes
+    for (const nid in nodes) {
+
+        const N = nodes[nid];
+        const G = ATON.getOrCreateSceneNode(nid).removeChildren();
+        ATON.SceneHub._applyJSONTransformToNode(N.transform, G);
+
+        let urls = N.urls;
+        if (urls) {
+            if (Array.isArray(urls)) {
+                urls.forEach(u => {
+                    G.load(u, () => Models.onLoad(G));
+                });
+            }
+            else {
+                G.load(urls, () => Models.onLoad(G));
+            }
         }
-        Models.modelMap.set(name, N);
-    };
-
-    // Initialize raycasting for models
-    for (const modelName of Models.modelMap.keys()) {
-        Models.initModelForRC(modelName);
+        
+        if (N.toYup) G.setYup();
     }
+    // edges
+    for (const parid in edges) {
+        const children = edges[parid];
+        
+        const P = ATON.getSceneNode(parid);
+        
+        if (P !== undefined) {
+            for (const c in children){
+                const  childid = children[c];
+                const  C = ATON.getSceneNode(childid);
+                if (C !== undefined) C.attachTo(P);
+            } 
+        }
+    }
+    // after connection
+    for (const nid in nodes) {
+        const N = ATON.getSceneNode(nid);
+        Models.modelMap.set(nid, N);
+    }
+};
+
+Models.onLoad = (model) => {
+    model.traverse(N => {
+        if (N.isMesh) {
+            Models.initMeshColors(N);
+        }
+    });
+    THOTH.FE.addModel(model.name);
+    THOTH.updateVisibility();
 };
 
 
@@ -53,7 +90,7 @@ Models.getModelMeshes = (modelName) => {
     if (!modelName) return;
     const model = Models.modelMap.get(modelName);
     if (model === undefined) return;
-
+    
     const meshes = new Map()
     model.traverse(N => {
         if (N.isMesh) {
@@ -84,10 +121,10 @@ Models.getModelTransforms = (modelName) => {
 
 // Model Management
 
-Models.addModel = (modelURL) => {
+Models.addModelFromURL = (modelURL) => {
     if (!modelURL) return;
 
-    // modelURL can act as modelName 
+    // modelURL can act as modelName
     const modelName = modelURL.split('/').filter(Boolean).pop();
     
     if (ATON.getSceneNode(modelName) !== undefined) {
@@ -97,20 +134,14 @@ Models.addModel = (modelURL) => {
 
     // Create node
     const N = ATON.createSceneNode(modelName);
+    ATON.SceneHub._applyJSONTransformToNode(modelName, N);
 
     N.load(modelURL, () => {
-        // Attach to root
         N.attachToRoot();
-        
-        // Add to modelMap
-        Models.modelMap.set(modelName, N);
-        
-        // Init RC
-        Models.initModelForRC(modelName);
+        Models.onLoad(N);
+    });
 
-        // Update FE
-        THOTH.FE.addModel(modelName);
-    })
+    Models.modelMap.set(modelName, N);
 };
 
 Models.deleteModel = (modelURL) => {
@@ -135,34 +166,30 @@ Models.resurrectModel = (modelName) => {
     model.attachToRoot();
     
     // Update FE
-    THOTH.FE.addModel(modelName)
+    THOTH.FE.addModel(modelName);
 };
 
-Models.initModelForRC = (modelName) => {
-    const meshes = Models.getModelMeshes(modelName);
-    for (const [name, mesh] of meshes) {
-        // Bounds Tree
-        if (!mesh.geometry.boundsTree) {
-            console.log(`Computing bounds tree for ${name} (${modelName})`);
-            mesh.geometry.computeBoundsTree();
-        }
+Models.initMeshColors = (mesh) => {
+    // Bounds Tree
+    if (!mesh.geometry.boundsTree) {
+        mesh.geometry.computeBoundsTree();
+    }
 
-        // Color properties for face selection
-        mesh.material.vertexColors = true;
-        mesh.material.needsUpdate  = true;
-    
-        // Vertex colors
-        if (!mesh.geometry.attributes.color) {
-            const defaultColor = new THREE.Color(0xffffff);
-            let colorArray = new Float32Array(mesh.geometry.attributes.position.count * 3);
-            for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
-                colorArray[i * 3 + 0] = defaultColor.r;
-                colorArray[i * 3 + 1] = defaultColor.g;
-                colorArray[i * 3 + 2] = defaultColor.b;
-            }
-            let colorAttr = new THREE.BufferAttribute(colorArray, 3);
-            mesh.geometry.setAttribute('color', colorAttr);
+    // Color properties for face selection
+    mesh.material.vertexColors = true;
+    mesh.material.needsUpdate  = true;
+
+    // Vertex colors
+    if (!mesh.geometry.attributes.color) {
+        const defaultColor = new THREE.Color(0xffffff);
+        let colorArray = new Float32Array(mesh.geometry.attributes.position.count * 3);
+        for (let i = 0; i < mesh.geometry.attributes.position.count; i++) {
+            colorArray[i * 3 + 0] = defaultColor.r;
+            colorArray[i * 3 + 1] = defaultColor.g;
+            colorArray[i * 3 + 2] = defaultColor.b;
         }
+        let colorAttr = new THREE.BufferAttribute(colorArray, 3);
+        mesh.geometry.setAttribute('color', colorAttr);
     }
 };
 
@@ -239,16 +266,23 @@ Models.modelTransformRot = (modelName, value) => {
 
 Models.getExportData = () => {
     let scenegraph = {};
-    scenegraph.edges = THOTH.Scene.initData.scenegraph.edges;
+    
     scenegraph.nodes = {};
-
-    for (const modelName of Models.modelMap.keys()) {
+    scenegraph.edges = {};
+    scenegraph.edges["."] = [];
+    for (const [modelName, model] of Models.modelMap.entries()) {
+        if (model.parent === null) continue;
+        
         const urls = [Models.getModelURL(modelName)];
         const transforms = Models.getModelTransforms(modelName);
-
+        
+        // Nodes
         scenegraph.nodes[modelName] = {};
         scenegraph.nodes[modelName].urls = urls;
         scenegraph.nodes[modelName].transform = transforms;
+        
+        // Edges
+        scenegraph.edges["."].push(modelName);
     }
 
     return scenegraph;

@@ -35,7 +35,7 @@ Toolbox.setup = () => {
     Toolbox.selectorMesh   = Toolbox.createSelectorMesh(Toolbox.selectorRadius);
     
     // Add to scene
-    THOTH.Scene.root.add(Toolbox.selectorMesh);
+    ATON._rootVisible.add(Toolbox.selectorMesh);
     
     // Create lasso canvas
     Toolbox.createLassoCanvas();
@@ -106,11 +106,11 @@ Toolbox.createLassoCanvas = () => {
 Toolbox.resizeLassoCanvas = () => {
     const dpr = window.devicePixelRatio || 1;
 
-    Toolbox.canvas.width    = THOTH._renderer.domElement.clientWidth * dpr;
-    Toolbox.canvas.height   = THOTH._renderer.domElement.clientHeight * dpr;
+    Toolbox.canvas.width    = ATON._renderer.domElement.clientWidth * dpr;
+    Toolbox.canvas.height   = ATON._renderer.domElement.clientHeight * dpr;
 
-    Toolbox.canvas.style.width  = THOTH._renderer.domElement.clientWidth + 'px';
-    Toolbox.canvas.style.height = THOTH._renderer.domElement.clientHeight + 'px';
+    Toolbox.canvas.style.width  = ATON._renderer.domElement.clientWidth + 'px';
+    Toolbox.canvas.style.height = ATON._renderer.domElement.clientHeight + 'px';
     
     Toolbox.lassoCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -122,7 +122,7 @@ Toolbox.resizeLassoCanvas = () => {
 // Update functions
 
 Toolbox.getPixelPointerCoords = (e) => {
-    const rect = THOTH._renderer.domElement.getBoundingClientRect();
+    const rect = ATON._renderer.domElement.getBoundingClientRect();
     Toolbox.pixelPointerCoords = {
         x: (e.clientX - rect.left),
         y: (e.clientY - rect.top)
@@ -131,11 +131,11 @@ Toolbox.getPixelPointerCoords = (e) => {
 
 Toolbox.moveSelector = () => {
     if (THOTH._queryData === undefined || !(Toolbox.brushEnabled || Toolbox.eraserEnabled) || Toolbox.paused) {
-        THOTH._renderer.domElement.style.cursor = 'default';
+        ATON._renderer.domElement.style.cursor = 'default';
         Toolbox.selectorMesh.visible = false;
         return;
     }
-    THOTH._renderer.domElement.style.cursor = 'none';
+    ATON._renderer.domElement.style.cursor = 'none';
     Toolbox.selectorMesh.visible = true;
     Toolbox.selectorMesh.position.copy(THOTH._queryData.p);
 };
@@ -383,7 +383,7 @@ Toolbox.processLassoSelection = (mesh) => {
     if (mesh === undefined) return
 
     const geometry  = mesh.geometry;
-    const camera    = THOTH._camera;
+    const camera    = ATON.Nav._camera;
     const width     = Toolbox.canvas.width;
     const height    = Toolbox.canvas.height;
     const lassoPts  = Toolbox.lassoPoints;
