@@ -310,13 +310,18 @@ THOTH.exportChanges = () => {
     A.sceneMetadata = structuredClone(THOTH.sceneMetadata);
     
     // Remove all annotation objects and ADD them again with changes
-    // ATON.REQ.patch(
-    //     THOTH.config.baseSceneUrl + THOTH.sid,
-    //     {
-    //         data: THOTH.initData,
-    //         mode: "DEL"
-    //     },
-    // );
+    ATON.REQ.patch(
+        THOTH.config.baseSceneUrl + THOTH.sid,
+        {
+            data: A,
+            mode: "DEL"
+        },
+        () => {},
+        err => {
+            console.log(err);
+            return;
+        } 
+    );
 
     // Patch changes
     ATON.REQ.patch(
@@ -330,7 +335,7 @@ THOTH.exportChanges = () => {
             // Update for next export;
             THOTH.initData = A;
         },
-        err => THOTH.FE.showToast("Export failed: " + err)
+        (err) => console.log(err)
     )
 
 };

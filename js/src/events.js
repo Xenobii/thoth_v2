@@ -321,7 +321,7 @@ Events.setupLayerEvents = () => {
         const prevData = l.prevData;
         
         // Local
-        THOTH.Layers.editLayerMetadata(layerId, data);
+        THOTH.MD.editLayerMetadata(layerId, data);
         // Photon
         THOTH.firePhoton("editLayerMetadata", ({
             id   : layerId,
@@ -396,7 +396,7 @@ Events.setupModelEvents = () => {
         });
     });
     // Transform
-    THOTH.on("modelTransformPosInput", (l) => {
+    THOTH.on("modelTransformPos", (l) => {
         const pos = THOTH.Models.modelMap.get(l.modelName).position
         const prevValue = {
             x: pos.x,
@@ -406,7 +406,7 @@ Events.setupModelEvents = () => {
         // Local
         THOTH.Models.modelTransformPos(l.modelName, l.value);
         // Photon
-        THOTH.firePhoton("modelTransformPosScene", (l));
+        THOTH.firePhoton("modelTransformPos", (l));
         // History
         THOTH.History.pushAction({
             type     : THOTH.History.ACTIONS.TRANSFORM_MODEL_POS,

@@ -400,7 +400,7 @@ FE.setupLayersPanel = (elLayerList) => {
             onpress: () => THOTH.fire("createLayer"),
         }),
     );
-    elBody.append(elSceneController, elTopOptions, elLayerList);
+    elBody.append(elTopOptions, elSceneController, elLayerList);
 
     return elBody;
 };

@@ -144,15 +144,13 @@ Models.addModelFromURL = (modelURL) => {
     Models.modelMap.set(modelName, N);
 };
 
-Models.deleteModel = (modelURL) => {
-    if (!modelURL) return;
+Models.deleteModel = (modelName) => {
+    if (!modelName) return;
 
-    // modelURL can act as modelName 
-    const modelName = modelURL.split('/').filter(Boolean).pop();
-    const model     = Models.modelMap.get(modelName);
+    const model = Models.modelMap.get(modelName);
     
     // Dettach node
-    model.parent.remove(model);
+    if (model.parent) model.parent.remove(model);
     
     // Update FE
     THOTH.FE.deleteModel(modelName);

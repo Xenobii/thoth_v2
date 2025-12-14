@@ -70,7 +70,7 @@ Layers.deleteLayer = (layerId) => {
     layer.trash = true;
     THOTH.Layers.setActiveLayer(null);
 
-    // Update UI
+    // Update FE
     THOTH.FE.deleteLayer(layerId);
     
     THOTH.updateVisibility();
@@ -80,10 +80,13 @@ Layers.resurrectLayer = (layerId) => {
     if (layerId === undefined) return;
 
     const layer = Layers.layerMap.get(layerId);
-
     if (!layer.trash) return;
     
     layer.trash = false;
+    
+    // Update FE
+    THOTH.FE.addNewLayer(layerId);
+    
     THOTH.updateVisibility();
 };
 
@@ -144,10 +147,10 @@ Layers.hideLayer = (layerId) => {
     THOTH.updateVisibility();
 };
 
-Layers.showLayer = (layerName) => {
-    if (layerName === undefined) return;
+Layers.showLayer = (layerId) => {
+    if (layerId === undefined) return;
 
-    const layer = Layers.layerMap.get(layerName);
+    const layer = Layers.layerMap.get(layerId);
 
     layer.visible = true;
     THOTH.updateVisibility();

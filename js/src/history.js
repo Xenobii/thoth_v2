@@ -73,30 +73,11 @@ History.undo = () => {
 History.redo = () => {
     if (History.redoStack.length === 0) return;
     const action        = History.redoStack.pop();
-    console.log(action)
     const inverseAction = History.fireAndInverse(action);
     
     // Store inverse action in undo stack
     History.undoStack.push(inverseAction);
     History.historyIdx += 1;
-};
-
-History.historyJump = (idx) => {
-    if (idx === History.historyIdx) return;
-
-    // Earlier step
-    if (idx < History.historyIdx && idx > 0) {
-        while (History.historyIdx > idx) {
-            History.undo();
-        }
-    }
-    // Later step
-    if (idx > History.historyIdx && idx < History.historyIdx + History.redoStack) {
-        while (History.historyIdx < idx) {
-            History.redo();
-        }
-    }
-    return;
 };
 
 History.fireAndInverse = (action) => {
@@ -157,8 +138,8 @@ History.fireAndInverse = (action) => {
             break;
         case History.ACTIONS.SELEC_DEL:
             inverseType = History.ACTIONS.SELEC_ADD;
-            THOTH.Layers.delFromSelection(id, value);
-            THOTH.firePhoton("addToSelectionScene", {
+            THOTH.Layers.addToSelection(id, value);
+            THOTH.firePhoton("addToSelection", {
                 id       : id,
                 selection: value
             });

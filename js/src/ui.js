@@ -158,7 +158,7 @@ UI.createVectorControl = (options, transform)=>{
     let elInputY = el.children[1];
     let elInputZ = el.children[2];
 
-    elInputX.oninput = () => {
+    elInputX.onchange = () => {
         const l = {
             modelName: options.modelName,
             value    : {
@@ -168,15 +168,15 @@ UI.createVectorControl = (options, transform)=>{
             },
         }
         if (transform === "position") {
-            THOTH.fire("modelTransformPosInput", l);
+            THOTH.fire("modelTransformPos", l);
         }
         else if (transform === "rotation") {
-            THOTH.fire("modelTransformRotInput", l);
+            THOTH.fire("modelTransformRot", l);
         }
         if (options.onupdate) options.onupdate();
     };
 
-    elInputY.oninput = () => {
+    elInputY.onchange = () => {
         const l = {
             modelName: options.modelName,
             value    : {
@@ -194,7 +194,7 @@ UI.createVectorControl = (options, transform)=>{
         if (options.onupdate) options.onupdate();
     };
 
-    elInputZ.oninput = ()=>{
+    elInputZ.onchange = ()=>{
         const l = {
             modelName: options.modelName,
             value    : {
@@ -771,7 +771,8 @@ UI.modalAddModel = () => {
     ATON.checkAuth(
         (u) => {
             ATON.REQ.get(
-                "items/"+u.username+"/models",
+                // THOTH.config.maseDomain+"items/"+u.username+"/models",
+                "items/"+u.username+"/models/",
                 entries => {
                     // Body
                     const modelList = new Set();
@@ -803,10 +804,9 @@ UI.modalAddModel = () => {
                         footer: elFooter,
                     });
         
-                }, error => {
-                    console.log(error)
-                    THOTH.FE.showToast("Error loading models:" + error)
-                });
+                }, 
+                error => THOTH.FE.showToast("Error loading models:" + error),
+            );
         },
         () => {
             THOTH.FE.showToast("Cannot add model: unauthorized");
