@@ -53,6 +53,19 @@ THOTH.setup = () => {
     ATON.realize();
     ATON.UI.addBasicEvents();
     
+    // Model parser
+    ATON.SceneHub.addSceneParser("scenegraph", scenegraph => {
+        THOTH.Models.parseSceneGraph(scenegraph)
+    });
+    // Layer parsers
+    ATON.SceneHub.addSceneParser("layers", layers => {
+        THOTH.Layers.parseLayers(layers);
+    });
+    // Metadata parser
+    ATON.SceneHub.addSceneParser("sceneMetadata", data => {
+        THOTH.MD.parseSceneMetadata(data);
+    });
+
     // Load config
     ATON.REQ.get(
         "../../a/thoth_v2/config.json",
@@ -65,18 +78,10 @@ THOTH.setup = () => {
     
     ATON.on("AllFlaresReady", () =>{
         ATON.on("ConfigLoaded", () => {
-            // Init models
-            ATON.SceneHub.addSceneParser("scenegraph", scenegraph => {
-                THOTH.Models.parseSceneGraph(scenegraph)
-            });
             // Init layers
-            ATON.SceneHub.addSceneParser("layers", layers => {
-                THOTH.Layers.parseLayers(layers);
-            });
-            // Init scene metadata
-            ATON.SceneHub.addSceneParser("sceneMetadata", data => {
-                THOTH.MD.parseSceneMetadata(data);
-            });
+            THOTH.Layers.setup();
+            // Init models
+            THOTH.Models.setup();
             // Init metadata
             THOTH.MD.setup();
             // Init history
@@ -313,7 +318,7 @@ THOTH.exportChanges = () => {
     ATON.REQ.patch(
         THOTH.config.baseSceneUrl + THOTH.sid,
         {
-            data: A,
+            data: THOTH.initData,
             mode: "DEL"
         },
         () => {},

@@ -12,10 +12,12 @@ let Models = {};
 
 // Setup
 
-Models.parseSceneGraph = (sg) => {
+Models.setup = () => {
     // Create model map for easy access
     Models.modelMap = new Map();
-    
+};
+
+Models.parseSceneGraph = (sg) => {
     if (sg === undefined) return;
 
     const nodes = sg.nodes;
