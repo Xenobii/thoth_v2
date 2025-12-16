@@ -20,11 +20,8 @@ Events.setup = () => {
     Events.setupInputEL();
     Events.setupActiveEL();
     Events.setupWindowEL();
-    Events.setupModelEvents();
-    Events.setupLayerEvents();
-    Events.setupPhotonEvents();
 
-    if (THOTH.config.toolbox) Events.setupToolboxEvents();
+    Events.setupCollaborativeEvents();
 };
 
 
@@ -210,29 +207,6 @@ Events.setupActiveEL = () => {
         // Ignore if modal
         if (ATON.UI._bModal) return;
 
-        // Layers
-        if (k.startsWith("Digit")) {
-            const id = Number(k.replace("Digit", ""));
-            if (THOTH._bShiftDown) THOTH.UI.modalLayerDetails(id);
-            else THOTH.Layers.setActiveLayer(id);
-        }
-        if (k === "KeyN") {
-            if (THOTH._bShiftDown) THOTH.fire("createLayer");
-            else THOTH.fire("selectNone");
-        }
-        if (k === "KeyS") {
-            if (THOTH._bShiftDown) THOTH.UI.modalSceneMetadata();
-        }
-
-        // Models
-        if (k === "KeyA") {
-            if (THOTH._bShiftDown) THOTH.UI.modalAddModel();
-        }
-
-        if (k === "KeyE") {
-            if (THOTH._bShiftDown) THOTH.UI.modalExport();
-        }
-
         // History
         if (k === "KeyZ") {
             if (THOTH._bCtrlDown) THOTH.History.undo();
@@ -369,9 +343,43 @@ Events.setupLayerEvents = () => {
             prevValue: prevData
         });
     });
+
+    // Layer keybinds
+    THOTH.on("KeyDown", (k) => {
+        // Ignore if modal
+        if (ATON.UI._bModal) return;
+
+        // Layers
+        if (k.startsWith("Digit")) {
+            const id = Number(k.replace("Digit", ""));
+            if (THOTH._bShiftDown) THOTH.UI.modalLayerDetails(id);
+            else THOTH.Layers.setActiveLayer(id);
+        }
+        if (k === "KeyN") {
+            if (THOTH._bShiftDown) THOTH.fire("createLayer");
+            else THOTH.fire("selectNone");
+        }
+        if (k === "KeyS") {
+            if (THOTH._bShiftDown) THOTH.UI.modalSceneMetadata();
+        }
+    });
 };
 
 Events.setupModelEvents = () => {
+    // Keybinds
+    THOTH.on("KeyDown", (k) => {
+        // Ignore if modal
+        if (ATON.UI._bModal) return;
+
+        // Models
+        if (k === "KeyA") {
+            if (THOTH._bShiftDown) THOTH.UI.modalAddModel();
+        }
+        if (k === "KeyE") {
+            if (THOTH._bShiftDown) THOTH.UI.modalExport();
+        }
+    });
+
     // Add/Delete
     THOTH.on("addModel", (id) => {
         // Local
@@ -541,7 +549,7 @@ Events.setupToolboxEvents = () => {
         // Local
         THOTH.Layers.addToSelection(layerId, selection);
         // Photon
-        THOTH.firePhoton("addToSelectionScene", {
+        THOTH.firePhoton("addToSelection", {
             id       : layerId,
             selection: selection
         });
@@ -674,6 +682,10 @@ Events.setupPhotonEvents = () => {
     THOTH.onPhoton("delFromSelection", (l) => {
         THOTH.Layers.delFromSelection(l.id, l.selection);
     });
+    THOTH.onPhoton("renameLayer", (l) => {
+        THOTH.Layers.renameLayer(l.id, l.data);
+    });
+
     // Model
     THOTH.onPhoton("addModel", (id) => {
         THOTH.Models.addModelFromURL(id);
@@ -681,23 +693,26 @@ Events.setupPhotonEvents = () => {
     THOTH.onPhoton("deleteModel", (id) => {
         THOTH.Models.deleteModel(id);
     });
-    THOTH.onPhoton("modelTransformRot", (l) => {
-        THOTH.Models.modelTransformRot(l.modelName, l.value);
-    });
     THOTH.onPhoton("modelTransformPos", (l) => {
         THOTH.Models.modelTransformPos(l.modelName, l.value);
     });
-
-    // On new user join
-    THOTH.on("VRC_UserEnter", () => {
-        // const currData = THOTH.currData;
-        // THOTH.firePhoton("syncScene", currData);
-        //
+    THOTH.onPhoton("modelTransformRot", (l) => {
+        THOTH.Models.modelTransformRot(l.modelName, l.value);
     });
-    
-    // Sync scene
-    THOTH.onPhoton("syncScene", (currData) => {
-        //
+};
+
+
+// Collaborative
+
+Events.setupCollaborativeEvents = () => {
+    // On other user login
+    THOTH.on("VRC_UserEnter", () => {
+        const currData = THOTH.getExportData();
+        THOTH.firePhoton("syncScene", (currData));
+    });
+    // Sync scene on login to existing 
+    THOTH.onPhoton("syncScene", currData => {
+        THOTH.Collab.syncScene(currData);
     });
 };
 

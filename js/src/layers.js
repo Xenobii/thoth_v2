@@ -10,12 +10,14 @@ let Layers = {};
 
 
 
-// Init
+// Setup
 
-Layers.parseLayers = (layers) => {
+Layers.setup = () => {
     // Create layer map for easy access
     Layers.layerMap = new Map();
+};
 
+Layers.parseLayers = (layers) => {
     if (layers === undefined) return;
 
     for (const layerId in layers) {

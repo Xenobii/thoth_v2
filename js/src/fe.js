@@ -16,6 +16,30 @@ FE.setup = () => {
     FE.userToolbar   = FE.setupUserToolbar();
     FE.settingsPanel = FE.setupSettingsPanel();
 
+    FE.setupLayerElements();
+    FE.setupModelElements();
+
+    // Toast
+    FE.toast = FE.createToast();
+    
+    // VP
+    FE.viewpointCard = FE.setupVPCard();
+};
+
+FE.setupLayerElements = () => {
+    FE.layerNameMap = new Map();
+    FE.layerMap     = new Map();
+    FE.layerList    = ATON.UI.createContainer();
+    FE.layersPanel  = FE.setupLayersPanel(FE.layerList);
+};
+
+FE.setupModelElements = () => {
+    FE.modelMap    = new Map();
+    FE.modelList   = ATON.UI.createContainer();
+    FE.modelsPanel = FE.setupModelsPanel(FE.modelList);
+};
+
+FE.setupToolboxElements = () => {
     // Tools
     if (THOTH.config.toolbox) {
         FE.toolMap        = FE.initToolMap();
@@ -23,28 +47,6 @@ FE.setup = () => {
         FE.toolOptToolbar = FE.setupToolOptToolbar();
         FE.mainToolbar    = FE.setupMainToolbar(FE.toolMap);
     }
-
-    FE.modelMap     = new Map();
-    FE.layerNameMap = new Map();
-    FE.layerMap     = new Map();
-    
-    // Lists
-    FE.modelList = ATON.UI.createContainer();
-    FE.layerList = ATON.UI.createContainer();
-    // FE.historyList = ATON.UI.createContainer();
-    
-    // Toolbars
-    // FE.historyToolbar = FE.setupHistoryToolbar(FE.historyList);
-    
-    // Panels
-    FE.modelsPanel   = FE.setupModelsPanel(FE.modelList);
-    FE.layersPanel   = FE.setupLayersPanel(FE.layerList);
-    
-    // Toast
-    FE.toast = FE.createToast();
-
-    // VP
-    FE.viewpointCard = FE.setupVPCard();
 };
 
 
@@ -238,7 +240,7 @@ FE.setupUserToolbar = () => {
         THOTH.UI.createUserButton(),
         ATON.UI.createButton({
             icon    : "vrc",
-            onpress : () => THOTH.setupPhoton(),
+            onpress : () => {},
             tooltip : "Connect to Photon"
         })
     );

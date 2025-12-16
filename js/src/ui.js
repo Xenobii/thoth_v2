@@ -238,7 +238,7 @@ UI.createSplitRow = (options) => {
 UI.createUserButton = ()=>{
     UI._elUserBTN = ATON.UI.createButton({
         icon    : "user",
-        onpress : UI.modalUser,
+        onpress : () => UI.modalUser(),
         tooltip : "User"
     });
 
@@ -534,7 +534,7 @@ UI.createLassoOptions = () => {
 
 // Modals
 
-UI.modalUser = () => {
+UI.modalUser = (msg) => {
     ATON.checkAuth(
         // Logged
         (u)=>{
@@ -545,7 +545,7 @@ UI.modalUser = () => {
                     icon   : "exit",
                     classes: "aton-btn-highlight",
                     onpress: ()=>{
-                        ATON.REQ.logout();
+                        ATON.REQ.logout(() => location.reload(true));
                         ATON.UI.hideModal();
                         if (UI._elUserBTN) UI._elUserBTN.classList.remove("aton-btn-highlight");
                     }
@@ -558,19 +558,24 @@ UI.modalUser = () => {
             })
         },
         // Not logged
-        ()=>{
+        () => {
+            const elBody = ATON.UI.createLoginForm({
+                onSuccess: (r) => {
+                    ATON.UI.hideModal();
+                    THOTH.onLogin(r);
+                    if (UI._elUserBTN) UI._elUserBTN.classList.add("aton-btn-highlight");
+                },
+                onFail: () => {
+                    UI.modalUser("Authentication failed");
+                }
+            });
+            if (msg !== undefined) elBody.append(ATON.UI.createButton({
+                text: msg
+            })); 
             ATON.UI.showModal({
                 header: "User",
-                body: ATON.UI.createLoginForm({
-                    onSuccess: (r)=>{
-                        ATON.UI.hideModal();
-                        if (UI._elUserBTN) UI._elUserBTN.classList.add("aton-btn-highlight");
-                    },
-                    onFail: ()=>{
-                        // TODO:
-                    }
-                })
-            })
+                body: elBody
+            });
         }
     );
 };
@@ -578,13 +583,8 @@ UI.modalUser = () => {
 UI.modalExport = () => {
     // Body
     const elInfo = ATON.UI.createContainer();
-    if (THOTH.collabExists()) {
-        elInfo.textContent = `AN EXISTING VERSION OF THIS SCENE EXISTS. OVERWRITE IT?`;
-    }
-    else {
-        elInfo.textContent = "OVERWRITE CURRENT SCENE DATA?" + 
-        "THIS WILL OVERWRITE ANY EXISTING DATA";
-    }
+    elInfo.textContent = "OVERWRITE CURRENT SCENE DATA?" + 
+    "THIS WILL OVERWRITE ANY EXISTING DATA";
 
     // Footer
     const elFooter = UI.createModalFooter({
