@@ -136,8 +136,8 @@ THOTH.update = () => {
     
     THOTH._queryData = ATON._queryDataScene;
     
-    THOTH.hoveredModel = THOTH._queryData?.o?.parent?.parent?.name;
     THOTH.hoveredMesh  = THOTH._queryData?.o?.name;
+    THOTH.hoveredModel = THOTH.Models.getParent(THOTH._queryData?.o);
 };
 
 // Visualization

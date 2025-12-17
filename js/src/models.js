@@ -88,6 +88,19 @@ Models.getModelURL = (modelName) => {
     return url;
 };
 
+Models.getParent = (object) => {
+    let parent = object?.parent;
+
+    while (parent) {
+        if (parent.type !== "Mesh" && parent.type !== "Group" && parent.type !== "Object3D") {
+            return parent.name;
+        }
+        parent = parent.parent;
+    }
+
+    return null;
+};
+
 Models.getModelMeshes = (modelName) => {
     if (!modelName) return;
     const model = Models.modelMap.get(modelName);
