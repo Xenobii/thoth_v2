@@ -16,6 +16,7 @@ import Layers from "./src/layers.js";
 import Models from "./src/models.js";
 import FE from "./src/fe.js";
 import MD from "./src/metadata.js";
+import Collab from "./src/collab.js";
 
 
 // Realize 
@@ -34,6 +35,7 @@ THOTH.Models  = Models;
 THOTH.Layers  = Layers;
 THOTH.FE      = FE;
 THOTH.MD      = MD;
+THOTH.Collab  = Collab;
 
 
 THOTH.BASE_URL        = "../thoth_v2";
@@ -76,6 +78,22 @@ THOTH.setup = () => {
         err => ATON.UI.showModal("Error loading schema" + err)
     );
     
+    ATON.SceneHub.addSceneParser("scenegraph", scenegraph => {
+        THOTH.Models.parseSceneGraph(scenegraph)
+    });
+    // Init layers
+    ATON.SceneHub.addSceneParser("layers", layers => {
+        THOTH.Layers.parseLayers(layers);
+    });
+    // Init scene metadata
+    ATON.SceneHub.addSceneParser("sceneMetadata", data => {
+        THOTH.MD.parseSceneMetadata(data);
+    });
+    // Init collaborative
+    ATON.SceneHub.addSceneParser("collaborative", data => {
+        THOTH.Collab.parseCollab(data);
+    });
+
     ATON.on("AllFlaresReady", () =>{
         ATON.on("ConfigLoaded", () => {
             // Init layers
@@ -99,9 +117,12 @@ THOTH.setup = () => {
                     THOTH.sid,
                     () => {
                         THOTH.initData = ATON.SceneHub.currData;
+                        ATON.REQ.get("user", (u) => {
+                            if (u === false) THOTH.UI.modalUser();
+                            else THOTH.onLogin(u);
+                        });
                     }
                 );
-
             }
             else if (THOTH.mid) {
                 //
@@ -288,31 +309,12 @@ THOTH.updateTextureMap = (path, mesh) => {
 };
 
 
-// Photon
-
-THOTH.setupPhoton = () => {
-    ATON.Photon.connect();
-    THOTH.connected = true;
-};
-
-THOTH.collabExists = () => {
-    // placeholder logic
-    return false;
-};
-
-
 // Export
 
 THOTH.exportChanges = () => {
     console.log("Exporting changes...");
 
-    let A = structuredClone(THOTH.initData);
-    // Model data
-    A.scenegraph = THOTH.Models.getExportData();
-    // Layer data
-    A.layers = THOTH.Layers.getExportData();
-    // Scene metadata
-    A.sceneMetadata = structuredClone(THOTH.sceneMetadata);
+    let A = THOTH.getExportData();
     
     // Remove all annotation objects and ADD them again with changes
     ATON.REQ.patch(
@@ -343,4 +345,33 @@ THOTH.exportChanges = () => {
         (err) => console.log(err)
     )
 
+};
+
+THOTH.getExportData = () => {
+    let A = structuredClone(THOTH.initData);
+    // Model data
+    A.scenegraph = THOTH.Models.getExportData();
+    // Layer data
+    A.layers = THOTH.Layers.getExportData();
+    // Scene metadata
+    A.sceneMetadata = structuredClone(THOTH.sceneMetadata);
+
+    return A;
+};
+
+
+// User 
+
+THOTH.onLogin = (u) => {
+    // Allow events
+    THOTH.Events.setupPhotonEvents();
+    THOTH.Events.setupLayerEvents();
+    THOTH.Events.setupModelEvents();
+    if (THOTH.config.toolbox) THOTH.Events.setupToolboxEvents();
+    
+    // Update FE
+    THOTH.FE.setupToolboxElements();
+    
+    // Join collaborative
+    if (THOTH.collaborative) ATON.Photon.connect();
 };

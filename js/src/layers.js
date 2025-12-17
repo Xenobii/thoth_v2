@@ -10,7 +10,7 @@ let Layers = {};
 
 
 
-// Init
+// Setup
 
 Layers.setup = () => {
     // Create layer map for easy access
