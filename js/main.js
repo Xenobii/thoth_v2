@@ -38,7 +38,7 @@ THOTH.MD      = MD;
 THOTH.Collab  = Collab;
 
 
-THOTH.BASE_URL        = "../thoth_v2";
+THOTH.BASE_URL        = "../thoth";
 THOTH.PATH_RES_ICONS  = `${THOTH.BASE_URL}/js/res/icons/`;
 THOTH.PATH_RES_SCHEMA = `${THOTH.BASE_URL}/js/res/schema/`;
 
@@ -70,7 +70,7 @@ THOTH.setup = () => {
 
     // Load config
     ATON.REQ.get(
-        "../../a/thoth_v2/config.json",
+        "../../a/thoth/config.json",
         data => {
             THOTH.config = data;
             ATON.fire("ConfigLoaded");
