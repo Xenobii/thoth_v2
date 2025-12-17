@@ -107,7 +107,7 @@ THOTH.setup = () => {
             // Init events
             THOTH.Events.setup();
             // Init toolbox
-            THOTH.Toolbox.setup();
+            THOTH.Toolbox.setup(THOTH.config.toolboxDefaults);
             // Init front end 
             THOTH.FE.setup();
             
@@ -349,6 +349,7 @@ THOTH.exportChanges = () => {
 
 THOTH.getExportData = () => {
     let A = structuredClone(THOTH.initData);
+    console.log(A)
     // Model data
     A.scenegraph = THOTH.Models.getExportData();
     // Layer data

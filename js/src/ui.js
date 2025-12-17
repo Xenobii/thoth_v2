@@ -466,7 +466,10 @@ UI.createBrushOptions = () => {
             tooltop: "Select the size of the tool",
         }),
         itemsRight: ATON.UI.createSlider({
-            range  : [0, 10],
+            range  : [
+                THOTH.Toolbox.selectorSizeMin,
+                THOTH.Toolbox.selectorSizeMax
+            ],
             value  : THOTH.Toolbox.selectorSize,
             oninput: (v) => THOTH.Toolbox.setSelectorSize(v)
         })

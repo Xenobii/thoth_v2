@@ -14,11 +14,14 @@ let Toolbox = {};
 
 // Setup
 
-Toolbox.setup = () => {
+Toolbox.setup = (toolboxDefaults) => {
     // Adjustable params
-    Toolbox.lassoPrecision  = 0.1;  // between 0.1 and 1
-    Toolbox.normalThreshold = 0;    // between -1 and 1
-    Toolbox.selectObstructedFaces = false;
+    Toolbox.lassoPrecision        = toolboxDefaults?.lassoPrecision ?? 0.1;           // between 0.1 and 1
+    Toolbox.normalThreshold       = toolboxDefaults?.normalThreshold ?? 1;            // between -1 and 1
+    Toolbox.selectObstructedFaces = toolboxDefaults?.selectObstructedFaces ?? false;
+    Toolbox.selectorSize          = toolboxDefaults?.selectorSize ?? 1;
+    Toolbox.selectorSizeMin       = toolboxDefaults?.selectorSizeMin ?? 0;
+    Toolbox.selectorSizeMax       = toolboxDefaults?.selectorSizeMax ?? 10;
 
     Toolbox.enabled       = false;
     Toolbox.brushEnabled  = false;
@@ -30,7 +33,6 @@ Toolbox.setup = () => {
     Toolbox.tempSelection = null;
 
     // Create selector mesh
-    Toolbox.selectorSize   = 1;
     Toolbox.selectorRadius = THOTH.Utils.computeRadius(Toolbox.selectorSize)
     Toolbox.selectorMesh   = Toolbox.createSelectorMesh(Toolbox.selectorRadius);
     
@@ -66,13 +68,13 @@ Toolbox.createSelectorMesh = (radius) => {
 };
 
 Toolbox.increaseSelectorSize = () => {
-    if (Toolbox.selectorSize < 10) Toolbox.selectorSize += 1;
+    if (Toolbox.selectorSize < Toolbox.selectorSizeMax) Toolbox.selectorSize += 1;
     Toolbox.selectorRadius = THOTH.Utils.computeRadius(Toolbox.selectorSize);
     Toolbox.selectorMesh.scale.setScalar(Toolbox.selectorRadius);
 };
 
 Toolbox.decreaseSelectorSize = () => {
-    if (Toolbox.selectorSize > 0) Toolbox.selectorSize -= 1;
+    if (Toolbox.selectorSize > Toolbox.selectorSizeMin) Toolbox.selectorSize -= 1;
     Toolbox.selectorRadius = THOTH.Utils.computeRadius(Toolbox.selectorSize);
     Toolbox.selectorMesh.scale.setScalar(Toolbox.selectorRadius);
 };
