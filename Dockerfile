@@ -14,8 +14,8 @@ WORKDIR /aton
 RUN npm install
 
 # 3. Copy thoth items into ATON wapps as THOTH
-RUN mkdir -p /aton/wapps/THOTH
-COPY . /aton/wapps/THOTH
+RUN mkdir -p /aton/wapps/thoth
+COPY . /aton/wapps/thoth
 
 # 4. Run ATON
 WORKDIR /aton
