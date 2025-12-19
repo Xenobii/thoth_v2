@@ -2,14 +2,16 @@
     "baseDomain"   : "http://localhost:8080/api/v2/",
     "baseSceneUrl" : "http://localhost:8080/api/v2/scenes/",
     "baseModelUrl" : "http://localhost:8080/api/v2/items/samples/models/",
-    "schemaListUrl": "http://localhost:8080/a/thoth/js/res/schema/list_of_schemas.json",
+    "schemaListUrl": "http://thoth.textailes.athenarc.gr/a/thoth/js/res/schema/list_of_schemas.json",
     "toolbox"      : true,
     "toolboxDefaults" : {
-        "lassoPrecision": 0.1,
-        "normalThreshold": 0,
+        "lassoPrecision"       : 0.1,
+        "normalThreshold"      : 0,
         "selectObstructedFaces": false,
-        "selectorSize": 10,
-        "selectorSizeMax": 50,
-        "selectorSizeMin": 0
-    }
+        "selectorSize"         : 10,
+        "selectorSizeMax"      : 50,
+        "selectorSizeMin"      : 0
+    },
+    "hestiaToken"   : "",
+    "hestiaEndpoint": "https://localhost:5000/annotations/"
 }

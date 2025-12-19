@@ -1,4 +1,4 @@
 [
-    "http://localhost:8080/a/thoth/js/res/schema/annotation_schema.json",
-    "http://localhost:8080/a/thoth/js/res/schema/test_schema.json"
+    "https://thoth.textailes.athenarc.gr/a/thoth/js/res/schema/test_schema.json",
+    "https://thoth.textailes.athenarc.gr/a/thoth/js/res/schema/annotation_schema.json"
 ]

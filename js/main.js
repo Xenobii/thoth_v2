@@ -347,6 +347,48 @@ THOTH.exportChanges = () => {
 
 };
 
+THOTH.exportToHestia = async () => {
+    console.log("Exporting to Hestia");
+
+    const endpoint = THOTH.config.endpoint;
+    const token    = THOTH.config.token;
+
+    // FORM DATA
+    const formData = new FormData();
+    // Scene id
+    formData.append("scene_id", THOTH.sid);
+    // Model urls
+    for (const modelName in THOTH.Models.modelMap) {
+        formData.append("file", THOTH.Models.getModelURL(modelName));
+    }
+    // Payload
+    const payload = THOTH.getExportData();
+    formData.append("scene", JSON.stringify(payload));
+    
+    // POST
+    const response = await fetch(endpoint, {
+        method: "POST",
+        header: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData
+    });
+    
+    // RESPONSE
+    if (!response.ok) {
+        const text = await response.text;
+        THOTH.FE.showToast(text)
+        throw new Error(
+            `Export failed (${response.status}): ${text}`
+        );
+    }
+    else {
+        THOTH.FE.showToast("Export successful!");
+    }
+
+    return response.json();
+};
+
 THOTH.getExportData = () => {
     let A = structuredClone(THOTH.initData);
     console.log(A)
