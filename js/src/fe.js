@@ -368,12 +368,12 @@ FE.setupModelsPanel = (elModelList) => {
             tooltip: "Export changes",
             onpress: () => THOTH.UI.modalExport()
         }),
-        ATON.UI.createButton({
-            icon   : "add",
-            text   : "Add model",
-            variant: "info",
-            onpress: () => THOTH.UI.modalAddModel(),
-        }),
+        // ATON.UI.createButton({
+        //     icon   : "add",
+        //     text   : "Add model",
+        //     variant: "info",
+        //     onpress: () => THOTH.UI.modalAddModel(),
+        // }),
     );
     elBody.append(elTopOptions, elModelList);
     

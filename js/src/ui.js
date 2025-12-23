@@ -411,11 +411,11 @@ UI.createModelEditor = (modelName) => {
                 open   : true,
                 content: UI.createMeshList(modelName)
             },
-            {
-                title  : "Viewpoints",
-                open   : true,
-                content: elVPOptions
-            },
+            // {
+            //     title  : "Viewpoints",
+            //     open   : true,
+            //     content: elVPOptions
+            // },
             {
                 title  : "Transform",
                 open   : true,
@@ -592,10 +592,11 @@ UI.modalExport = () => {
     // Footer
     const elFooter = UI.createModalFooter({
         onsuccess: () => {
-            THOTH.exportChanges();
+            THOTH.downloadScene();
+            // THOTH.exportChanges();
             ATON.UI.hideModal();
         },
-        successText: "Export changes"
+        successText: "Download scene"
     }) 
 
     ATON.UI.showModal({

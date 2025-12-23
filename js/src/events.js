@@ -372,9 +372,9 @@ Events.setupModelEvents = () => {
         if (ATON.UI._bModal) return;
 
         // Models
-        if (k === "KeyA") {
-            if (THOTH._bShiftDown) THOTH.UI.modalAddModel();
-        }
+        // if (k === "KeyA") {
+        //     if (THOTH._bShiftDown) THOTH.UI.modalAddModel();
+        // }
         if (k === "KeyE") {
             if (THOTH._bShiftDown) THOTH.UI.modalExport();
         }

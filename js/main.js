@@ -111,10 +111,10 @@ THOTH.setup = () => {
             // Init front end 
             THOTH.FE.setup();
             
-            if (THOTH.sid) {
-                ATON.SceneHub.load(
-                    THOTH.config.baseSceneUrl + THOTH.sid,
-                    THOTH.sid,
+            if (THOTH.sid === "benaki") {
+                THOTH.loadScene(
+                    "benaki",
+                    "benaki",
                     () => {
                         THOTH.initData = ATON.SceneHub.currData;
                         ATON.REQ.get("user", (u) => {
@@ -123,6 +123,17 @@ THOTH.setup = () => {
                         });
                     }
                 );
+                // ATON.SceneHub.load(
+                //     THOTH.config.baseSceneUrl + THOTH.sid,
+                //     THOTH.sid,
+                //     () => {
+                //         THOTH.initData = ATON.SceneHub.currData;
+                //         ATON.REQ.get("user", (u) => {
+                //             if (u === false) THOTH.UI.modalUser();
+                //             else THOTH.onLogin(u);
+                //         });
+                //     }
+                // );
             }
             else if (THOTH.mid) {
                 //
@@ -139,6 +150,48 @@ THOTH.update = () => {
     THOTH.hoveredMesh  = THOTH._queryData?.o?.name;
     THOTH.hoveredModel = THOTH.Models.getParent(THOTH._queryData?.o);
 };
+
+
+// Temp bullshit
+
+THOTH.loadScene = (reqpath, sid, onSuccess)=>{
+    ATON.SceneHub._bLoading = true;
+    console.log("Loading Scene: "+sid);
+
+    // return $.getJSON( reqpath, ( data )=>{
+    const tempData = {
+        "status": "complete",
+        "environment": {
+            "lightprobes": {
+                "auto": false
+            }
+        },
+        "scenegraph": {
+            "nodes": {
+                "main": {
+                    "urls": [
+                        "https://textailes.athenarc.gr/archive/assets/5289af2d-9b98-4e42-8b09-91dbbc229f6e"
+                    ]
+                }
+            },
+            "edges": {
+                ".": [
+                    "main"
+                ]
+            }
+        }
+    };
+    ATON.SceneHub.currData  = tempData;
+    ATON.SceneHub.currID    = sid;
+    ATON.SceneHub._bLoading = false;
+
+    ATON.SceneHub.parseScene(tempData);
+
+    if (onSuccess) onSuccess();
+    ATON.fire("SceneJSONLoaded", sid);
+    // });
+};
+
 
 // Visualization
 
@@ -387,6 +440,28 @@ THOTH.exportToHestia = async () => {
     }
 
     return response.json();
+};
+
+THOTH.downloadScene = () => {
+    console.log("Downloading scene json");
+
+    const A = THOTH.getExportData();
+    try {
+        const json = JSON.stringify(A, null, 2);
+        const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const filename = `${THOTH.sid ?? "scene"}.json`;
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+        console.error("Download failed", err);
+        if (THOTH.FE && THOTH.FE.showToast) THOTH.FE.showToast("Download failed");
+    }
 };
 
 THOTH.getExportData = () => {
